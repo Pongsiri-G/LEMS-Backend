@@ -7,7 +7,7 @@ import (
 
 func main() {
 	server := di.InitializeAPI()
-	if err:= server.Start(); err != nil {
+	if err := server.Start(); err != nil {
 		log.Panic().Err(err).Msg("Failed to start server")
 	}
 }

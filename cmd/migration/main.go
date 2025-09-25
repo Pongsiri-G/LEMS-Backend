@@ -11,11 +11,11 @@ import (
 
 func main() {
 	config := configs.NewConfig()
-	db := database.NewPostgrest(config);
+	db := database.NewPostgrest(config)
 
 	err := db.AutoMigrate(
 		&models.User{},
-	)	
+	)
 	if err != nil {
 		log.Fatal().Msgf("Migration failed: %v", err)
 	}

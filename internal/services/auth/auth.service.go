@@ -19,7 +19,7 @@ type authService struct {
 
 func NewAuthService(
 	config *configs.Config,
-	repo  	repositories.UserRepoistory,
+	repo repositories.UserRepoistory,
 ) AuthService {
 	return &authService{
 		config: config,
