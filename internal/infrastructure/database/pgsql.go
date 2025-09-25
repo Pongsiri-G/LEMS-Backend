@@ -9,22 +9,22 @@ import (
 	"gorm.io/gorm"
 )
 
-var DB *gorm.DB
-
-func InitPostgres(cfg *configs.Config) {
+// @WireSet("Infrastructure")
+func NewPostgrest(cfg *configs.Config) *gorm.DB {
 	connection := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Bangkok",
-		cfg.DatabaseHost, 
-		cfg.DatabaseUsername, 
-		cfg.DatabasePassword, 
+		cfg.DatabaseHost,
+		cfg.DatabaseUsername,
+		cfg.DatabasePassword,
 		cfg.DatabaseName,
 		cfg.DatabasePort,
 	)
 
 	db, err := gorm.Open(postgres.Open(connection), &gorm.Config{})
 	if err != nil {
-		log.Printf("Failed to connect to DB: %v", err)
+		log.Fatal().Err(err).Msg("Failed to connect to DB")
 	}
+	fmt.Println("💾 Connected to DB successfully")
 
-	DB = db
+	return db
 }
