@@ -7,13 +7,13 @@ import (
 )
 
 type Config struct {
-	Port 				int16 	`env:"PORT"`
+	Port string `env:"PORT"`
 
-	DatabaseHost		string	`env:"DATABASE_HOST"`
-	DatabaseName     	string	`env:"DATABASE_NAME"`
-	DatabaseUsername 	string	`env:"DATABASE_USERNAME"`
-	DatabasePassword 	string	`env:"DATABASE_PASSWORD"`
-	DatabasePort     	int16	`env:"DATABASE_PORT"`
+	DatabaseHost     string `env:"DATABASE_HOST"`
+	DatabaseName     string `env:"DATABASE_NAME"`
+	DatabaseUsername string `env:"DATABASE_USERNAME"`
+	DatabasePassword string `env:"DATABASE_PASSWORD"`
+	DatabasePort     string `env:"DATABASE_PORT"`
 }
 
 func NewConfig() *Config {
@@ -27,5 +27,5 @@ func NewConfig() *Config {
 		log.Panic().Err(err).Msg("Failed to parse environment variables")
 	}
 
-	return nil
+	return config
 }
