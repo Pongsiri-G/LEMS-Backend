@@ -5,13 +5,13 @@ import (
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/configs"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/router"
 	"github.com/labstack/echo/v4"
-	// echoMiddleware "github.com/labstack/echo/v4/middleware"
 )
 
 type EchoServer struct {
-	config *configs.Config
-	handlers       *handlers.Handlers
+	config   *configs.Config
+	handlers *handlers.Handlers
 	// authMiddleware middlewares.AuthMiddleware
 }
 
@@ -21,8 +21,8 @@ func NewEchoServer(
 	// authMiddleware middlewares.AuthMiddleware,
 ) *EchoServer {
 	return &EchoServer{
-		config: config,
-		handlers: handlers,	
+		config:   config,
+		handlers: handlers,
 	}
 }
 
@@ -40,9 +40,9 @@ func (s *EchoServer) Start() error {
 	// 	AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
 	// }))
 
-	// router := router.NewRouter(e, s.handlers, s.authMiddleware)
+	router := router.NewRouter(e, s.handlers)
 
-	// router.RegisterAPIRoutes()
+	router.RegisterAPIRoutes()
 
 	return e.Start(fmt.Sprintf(":%s", s.config.Port))
 }
