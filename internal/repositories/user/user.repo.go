@@ -2,6 +2,8 @@ package user
 
 import (
 	"context"
+	"errors"
+	"time"
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
@@ -25,19 +27,54 @@ func NewUserRepository(db *gorm.DB) Repository {
 	return &repository{db: db}
 }
 
-// ---- Phase 1: dummy implementations ----
-
 func (r *repository) FindByEmail(ctx context.Context, email string) (*models.User, error) {
-	// TODO: Phase 2 implement with GORM
-	return nil, nil
+	var u models.User
+	if err := r.db.WithContext(ctx).
+		Where("user_email = ?", email).
+		First(&u).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+	return &u, nil
 }
 
 func (r *repository) Create(ctx context.Context, u *models.User) error {
-	// TODO: Phase 2 implement with GORM
-	return nil
+	now := time.Now()
+	u.CreatedAt = now
+	u.UpdatedAt = now
+	return r.db.WithContext(ctx).Create(u).Error
 }
 
 func (r *repository) FindOrCreateByProvider(ctx context.Context, provider enums.AuthProvider, email string, seed *models.User) (*models.User, error) {
-	// TODO: Phase 2 implement with GORM
-	return nil, nil
+	var u models.User
+	tx := r.db.WithContext(ctx)
+
+	err := tx.Where("user_email = ?", email).First(&u).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			if seed == nil {
+				seed = &models.User{}
+			}
+			seed.UserEmail = email
+			seed.AuthProvider = provider
+			now := time.Now()
+			seed.CreatedAt = now
+			seed.UpdatedAt = now
+			if err := tx.Create(seed).Error; err != nil {
+				return nil, err
+			}
+			return seed, nil
+		}
+		return nil, err
+	}
+	if u.AuthProvider != provider {
+		u.AuthProvider = provider
+		u.UpdatedAt = time.Now()
+		if err := tx.Save(u).Error; err != nil {
+			return nil, err
+		}
+	}
+	return &u, nil
 }
