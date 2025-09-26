@@ -1,33 +1,43 @@
-package repositories
+package user
 
 import (
 	"context"
 
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
 	"gorm.io/gorm"
 )
 
-type UserRepoistory interface {
-	Create(ctx context.Context, user *models.User) error
-	FindByEmail(ctx context.Context, email string) error
+type Repository interface {
+	FindByEmail(ctx context.Context, email string) (*models.User, error)
+	Create(ctx context.Context, u *models.User) error
+
+	// ใช้สำหรับ provider-based login โดยไม่แยกตาราง
+	// ข้อกำหนด: ลิงก์ด้วยอีเมลเสมอ ถ้าอีเมลมีอยู่แล้ว ให้ใช้งาน user เดิมและอัปเดต AuthProvider ตามความเหมาะสม
+	FindOrCreateByProvider(ctx context.Context, provider enums.AuthProvider, email string, seed *models.User) (*models.User, error)
 }
 
-type userRepository struct {
+type repository struct {
 	db *gorm.DB
 }
 
-func NewUserRepository(db *gorm.DB) UserRepoistory {
-	return &userRepository{
-		db: db,
-	}
+func NewUserRepository(db *gorm.DB) Repository {
+	return &repository{db: db}
 }
 
-// Create implements UserRepoistory.
-func (u *userRepository) Create(ctx context.Context, user *models.User) error {
-	panic("unimplemented")
+// ---- Phase 1: dummy implementations ----
+
+func (r *repository) FindByEmail(ctx context.Context, email string) (*models.User, error) {
+	// TODO: Phase 2 implement with GORM
+	return nil, nil
 }
 
-// FindByEmail implements UserRepoistory.
-func (u *userRepository) FindByEmail(ctx context.Context, email string) error {
-	panic("unimplemented")
+func (r *repository) Create(ctx context.Context, u *models.User) error {
+	// TODO: Phase 2 implement with GORM
+	return nil
+}
+
+func (r *repository) FindOrCreateByProvider(ctx context.Context, provider enums.AuthProvider, email string, seed *models.User) (*models.User, error) {
+	// TODO: Phase 2 implement with GORM
+	return nil, nil
 }

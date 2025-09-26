@@ -3,36 +3,26 @@ package services
 import (
 	"context"
 
-	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/configs"
-	repositories "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
+	userrepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/jwt"
 )
 
-type AuthService interface {
-	LocalSignIn(ctx context.Context, username string, password string) error
-	GoogleSignIn(ctx context.Context, gmail string) error
+type AuthService struct {
+	strategies map[string]strategy.AuthStrategy
+	users      userrepo.Repository
+	jwt        *jwt.JWTService
 }
 
-type authService struct {
-	repo   repositories.UserRepoistory
-	config *configs.Config
+func NewAuthService(strategies map[string]strategy.AuthStrategy, users userrepo.Repository, jwt *jwt.JWTService) *AuthService {
+	return &AuthService{strategies: strategies, users: users, jwt: jwt}
 }
 
-func NewAuthService(
-	config *configs.Config,
-	repo repositories.UserRepoistory,
-) AuthService {
-	return &authService{
-		config: config,
-		repo:   repo,
-	}
+func (s *AuthService) Login(ctx context.Context, key string, req *strategy.AuthenticateRequest) (*models.User, error) {
+	return nil, nil
 }
 
-// GoogleSignIn implements AuthService.
-func (a *authService) GoogleSignIn(ctx context.Context, gmail string) error {
-	panic("unimplemented")
-}
-
-// LocalSignIn implements AuthService.
-func (a *authService) LocalSignIn(ctx context.Context, username string, password string) error {
-	panic("unimplemented")
+func (s *AuthService) Register(ctx context.Context, u *models.User) (*models.User, error) {
+	return nil, nil
 }

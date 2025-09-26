@@ -1,14 +1,27 @@
 package di
 
 import (
+	"github.com/google/wire"
+
+	// Configs
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/configs"
+
+	// Handlers
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers"
 	authHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/auth"
+
+	// Infrastructure
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/context"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/database"
+	googleinfra "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/google"
+
+	// Repositories
 	userRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
-	authSv "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth"
-	"github.com/google/wire"
+
+	// Services
+	authSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/jwt"
 )
 
 var ConfigSet = wire.NewSet(
@@ -18,15 +31,42 @@ var ConfigSet = wire.NewSet(
 var InfrastructureSet = wire.NewSet(
 	context.NewContext,
 	database.NewPostgrest,
+	googleinfra.NewGoogleOAuthClient,
 )
 
 var RepositorySet = wire.NewSet(
 	userRepo.NewUserRepository,
 )
 
-var ServiceSet = wire.NewSet(
-	authSv.NewAuthService,
+// ---- Strategies ----
+
+type strategyDeps struct {
+	Local  *strategy.LocalStrategy
+	Google *strategy.GoogleStrategy
+}
+
+func newStrategyMap(d strategyDeps) map[string]strategy.AuthStrategy {
+	return map[string]strategy.AuthStrategy{
+		"local":  d.Local,
+		"google": d.Google,
+	}
+}
+
+var StrategySet = wire.NewSet(
+	strategy.NewLocalStrategy,
+	strategy.NewGoogleStrategy,
+	wire.Struct(new(strategyDeps), "*"),
+	newStrategyMap,
 )
+
+// ---- Services ----
+
+var ServiceSet = wire.NewSet(
+	jwt.NewJWTService,
+	authSvc.NewAuthService,
+)
+
+// ---- Handlers ----
 
 var HandlerSet = wire.NewSet(
 	handlers.NewHandlers,
