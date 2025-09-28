@@ -12,17 +12,26 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type AuthService struct {
+type AuthService interface {
+	Register(ctx context.Context, r *RegisterRequest) (*models.User, error)
+	Login(ctx context.Context, key string, req *strategy.AuthenticateRequest) (*models.User, string, error)
+}
+
+type authService struct {
 	strategies map[string]strategy.AuthStrategy
 	users      userrepo.Repository
 	jwt        *jwt.JWTService
 }
 
-func NewAuthService(strategies map[string]strategy.AuthStrategy, users userrepo.Repository, jwt *jwt.JWTService) *AuthService {
-	return &AuthService{strategies: strategies, users: users, jwt: jwt}
+func NewAuthService(strategies map[string]strategy.AuthStrategy, users userrepo.Repository, jwt *jwt.JWTService) AuthService {
+	return &authService{
+		strategies: strategies,
+		users:      users,
+		jwt:        jwt,
+	}
 }
 
-func (s *AuthService) Login(ctx context.Context, key string, req *strategy.AuthenticateRequest) (*models.User, string, error) {
+func (s *authService) Login(ctx context.Context, key string, req *strategy.AuthenticateRequest) (*models.User, string, error) {
 	strategy, ok := s.strategies[key]
 	if !ok {
 		return nil, "", errors.New("strategy not found")
@@ -47,7 +56,7 @@ type RegisterRequest struct {
 
 var ErrEmailAlreadyExists = errors.New("email already exists")
 
-func (s *AuthService) Register(ctx context.Context, r *RegisterRequest) (*models.User, error) {
+func (s *authService) Register(ctx context.Context, r *RegisterRequest) (*models.User, error) {
 	if _, err := s.users.FindByEmail(ctx, r.Email); err == nil {
 		return nil, ErrEmailAlreadyExists
 	} else if !errors.Is(err, userrepo.ErrNotFound) {

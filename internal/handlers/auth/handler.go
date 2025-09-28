@@ -6,18 +6,30 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
 	"github.com/labstack/echo/v4"
+	"golang.org/x/oauth2"
 )
 
-type AuthHandler struct {
-	svc *services.AuthService
+type AuthHandler interface {
+	Register(c echo.Context) error
+	Login(c echo.Context) error
+	GoogleLogin() echo.HandlerFunc
+	GoogleCallback(c echo.Context) error
 }
 
-func NewAuthHandler(svc *services.AuthService) *AuthHandler {
-	return &AuthHandler{svc: svc}
+type authHandler struct {
+	svc   services.AuthService
+	oauth *oauth2.Config
+}
+
+func NewAuthHandler(svc services.AuthService, oauth *oauth2.Config) AuthHandler {
+	return &authHandler{
+		svc:   svc,
+		oauth: oauth,
+	}
 }
 
 // POST /api/v1/auth/register (LOCAL)
-func (h *AuthHandler) Register(c echo.Context) error {
+func (h *authHandler) Register(c echo.Context) error {
 	var body struct {
 		FullName string `json:"full_name"`
 		Email    string `json:"email"`
@@ -45,7 +57,7 @@ func (h *AuthHandler) Register(c echo.Context) error {
 	return c.JSON(http.StatusCreated, map[string]string{"message": "register success"})
 }
 
-func (h *AuthHandler) Login(c echo.Context) error {
+func (h *authHandler) Login(c echo.Context) error {
 	var body struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
@@ -63,11 +75,35 @@ func (h *AuthHandler) Login(c echo.Context) error {
 }
 
 // GET /api/v1/auth/google/login
-func (h *AuthHandler) GoogleLogin(c echo.Context) error {
-	return c.JSON(http.StatusOK, map[string]string{"message": "dummy google login"})
+func (h *authHandler) GoogleLogin() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		url := h.oauth.AuthCodeURL("random-state-string", oauth2.AccessTypeOffline)
+		return c.Redirect(http.StatusTemporaryRedirect, url)
+	}
 }
 
 // GET /api/v1/auth/google/callback?code=...
-func (h *AuthHandler) GoogleCallback(c echo.Context) error {
-	return c.JSON(http.StatusOK, map[string]string{"message": "dummy google callback"})
+func (h *authHandler) GoogleCallback(c echo.Context) error {
+	code := c.QueryParam("code")
+
+	user, token, err := h.svc.Login(
+		c.Request().Context(),
+		"google",
+		&strategy.AuthenticateRequest{
+			ProviderToken: code,
+		},
+	)
+
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+	}
+
+	return c.JSON(
+		http.StatusOK,
+		map[string]any{
+			"user":  user,
+			"token": token,
+		},
+	)
+
 }

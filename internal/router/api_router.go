@@ -32,6 +32,6 @@ func (r *Router) RegisterAPIRoutes() {
 	auth := v1.Group("/auth")
 	auth.POST("/register", r.handlers.Auth.Register)
 	auth.POST("/login", r.handlers.Auth.Login)
-	auth.GET("/google/login", r.handlers.Auth.GoogleLogin)
+	auth.GET("/google/login", r.handlers.Auth.GoogleLogin())
 	auth.GET("/google/callback", r.handlers.Auth.GoogleCallback)
 }

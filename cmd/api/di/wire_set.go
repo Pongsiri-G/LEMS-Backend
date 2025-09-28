@@ -11,9 +11,9 @@ import (
 	authHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/auth"
 
 	// Infrastructure
+	authInfra "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/context"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/database"
-	googleinfra "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/google"
 
 	// Repositories
 	userRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
@@ -31,7 +31,7 @@ var ConfigSet = wire.NewSet(
 var InfrastructureSet = wire.NewSet(
 	context.NewContext,
 	database.NewPostgrest,
-	googleinfra.NewGoogleOAuthClient,
+	authInfra.NewGoogleOAuthClient,
 )
 
 var RepositorySet = wire.NewSet(

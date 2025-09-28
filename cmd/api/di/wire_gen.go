@@ -10,9 +10,9 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/cmd/api/server"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/configs"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers"
-	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/auth"
+	auth2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/auth"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/database"
-	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/google"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
@@ -26,8 +26,8 @@ func InitializeAPI() *server.EchoServer {
 	db := database.NewPostgrest(config)
 	repository := user.NewUserRepository(db)
 	localStrategy := strategy.NewLocalStrategy(repository)
-	googleOAuthClient := google.NewGoogleOAuthClient(config)
-	googleStrategy := strategy.NewGoogleStrategy(googleOAuthClient, repository, config)
+	oauth2Config := auth.NewGoogleOAuthClient(config)
+	googleStrategy := strategy.NewGoogleStrategy(oauth2Config, repository, config)
 	diStrategyDeps := strategyDeps{
 		Local:  localStrategy,
 		Google: googleStrategy,
@@ -35,7 +35,7 @@ func InitializeAPI() *server.EchoServer {
 	v := newStrategyMap(diStrategyDeps)
 	jwtService := jwt.NewJWTService(config)
 	authService := services.NewAuthService(v, repository, jwtService)
-	authHandler := auth.NewAuthHandler(authService)
+	authHandler := auth2.NewAuthHandler(authService, oauth2Config)
 	handlersHandlers := handlers.NewHandlers(authHandler)
 	echoServer := server.NewEchoServer(config, handlersHandlers)
 	return echoServer
