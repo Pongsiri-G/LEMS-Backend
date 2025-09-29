@@ -9,11 +9,14 @@ package di
 import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/cmd/api/server"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/configs"
-	handlers2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers"
-	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/auth"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers"
+	auth2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/auth"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/database"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/jwt"
 )
 
 // Injectors from wire.go:
@@ -21,10 +24,19 @@ import (
 func InitializeAPI() *server.EchoServer {
 	config := configs.NewConfig()
 	db := database.NewPostgrest(config)
-	userRepoistory := repositories.NewUserRepository(db)
-	authService := services.NewAuthService(config, userRepoistory)
-	authHandler := handlers.NewAuthHandler(authService)
-	handlersHandlers := handlers2.NewHandlers(authHandler)
+	repository := user.NewUserRepository(db)
+	localStrategy := strategy.NewLocalStrategy(repository)
+	oauth2Config := auth.NewGoogleOAuthClient(config)
+	googleStrategy := strategy.NewGoogleStrategy(oauth2Config, repository, config)
+	diStrategyDeps := strategyDeps{
+		Local:  localStrategy,
+		Google: googleStrategy,
+	}
+	v := newStrategyMap(diStrategyDeps)
+	jwtService := jwt.NewJWTService(config)
+	authService := services.NewAuthService(v, repository, jwtService)
+	authHandler := auth2.NewAuthHandler(authService, oauth2Config)
+	handlersHandlers := handlers.NewHandlers(authHandler)
 	echoServer := server.NewEchoServer(config, handlersHandlers)
 	return echoServer
 }

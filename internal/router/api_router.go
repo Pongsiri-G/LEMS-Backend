@@ -22,10 +22,16 @@ func NewRouter(echo *echo.Echo, handlers *handlers.Handlers) *Router {
 func (r *Router) RegisterAPIRoutes() {
 	// Health Check
 	r.echo.GET("/health", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, map[string]string{
-			"status": "ok",
-		})
+		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 	})
 
-	// v1Public := r.echo.Group("/api/vi")
+	// v1 group
+	v1 := r.echo.Group("/api/v1")
+
+	// auth group
+	auth := v1.Group("/auth")
+	auth.POST("/register", r.handlers.Auth.Register)
+	auth.POST("/login", r.handlers.Auth.Login)
+	auth.GET("/google/login", r.handlers.Auth.GoogleLogin())
+	auth.GET("/google/callback", r.handlers.Auth.GoogleCallback)
 }

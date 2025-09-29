@@ -1,5 +1,12 @@
 package enums
 
+type AuthProvider string
+
+const (
+	Local  AuthProvider = "LOCAL"
+	Google AuthProvider = "GOOGLE"
+)
+
 type UserStatus string
 
 const (
@@ -12,6 +19,6 @@ const (
 type UsesrRole string
 
 const (
-	user  UsesrRole = "USER"
-	admin UsesrRole = "ADMIN"
+	User  UsesrRole = "USER"
+	Admin UsesrRole = "ADMIN"
 )

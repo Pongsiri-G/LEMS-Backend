@@ -21,3 +21,5 @@ type User struct {
 	UpdatedAt      time.Time          `db:"updated_at" json:"updated_at"`
 	LastLoggedIn   *time.Time         `db:"last_logged_in" json:"last_logged_in,omitempty"`
 }
+
+func (User) TableName() string { return "users" }
