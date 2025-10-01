@@ -73,9 +73,9 @@ func (s *authService) Register(ctx context.Context, r *RegisterRequest) (*models
 		UserEmail:    r.Email,
 		UserPhone:    r.Phone,
 		UserPassword: string(hashed),
-		UserRole:     enums.UsesrRole("USER"),
-		UserStatus:   enums.UserStatus("PENDING"),
-		AuthProvider: enums.AuthProvider("LOCAL"),
+		UserRole:     enums.UsesrRole(enums.User),
+		UserStatus:   enums.UserStatus(enums.Pending),
+		AuthProvider: enums.AuthProvider(enums.Local),
 	}
 
 	if err := s.users.Create(ctx, u); err != nil {
