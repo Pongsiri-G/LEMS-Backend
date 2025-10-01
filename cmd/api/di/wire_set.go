@@ -40,23 +40,10 @@ var RepositorySet = wire.NewSet(
 
 // ---- Strategies ----
 
-type strategyDeps struct {
-	Local  *strategy.LocalStrategy
-	Google *strategy.GoogleStrategy
-}
-
-func newStrategyMap(d strategyDeps) map[string]strategy.AuthStrategy {
-	return map[string]strategy.AuthStrategy{
-		"local":  d.Local,
-		"google": d.Google,
-	}
-}
-
 var StrategySet = wire.NewSet(
+	strategy.NewStrategyMap,
 	strategy.NewLocalStrategy,
 	strategy.NewGoogleStrategy,
-	wire.Struct(new(strategyDeps), "*"),
-	newStrategyMap,
 )
 
 // ---- Services ----

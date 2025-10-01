@@ -27,12 +27,8 @@ func InitializeAPI() *server.EchoServer {
 	repository := user.NewUserRepository(db)
 	localStrategy := strategy.NewLocalStrategy(repository)
 	oauth2Config := auth.NewGoogleOAuthClient(config)
-	googleStrategy := strategy.NewGoogleStrategy(oauth2Config, repository, config)
-	diStrategyDeps := strategyDeps{
-		Local:  localStrategy,
-		Google: googleStrategy,
-	}
-	v := newStrategyMap(diStrategyDeps)
+	googleStrategy := strategy.NewGoogleStrategy(oauth2Config, repository)
+	v := strategy.NewStrategyMap(localStrategy, googleStrategy)
 	jwtService := jwt.NewJWTService(config)
 	authService := services.NewAuthService(v, repository, jwtService)
 	authHandler := auth2.NewAuthHandler(authService, oauth2Config)
