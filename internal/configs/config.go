@@ -11,14 +11,37 @@ import (
 type Config struct {
 	Port string `env:"PORT"`
 
-	DatabaseHost       string `env:"DATABASE_HOST"`
-	DatabaseName       string `env:"DATABASE_NAME"`
-	DatabaseUsername   string `env:"DATABASE_USERNAME"`
-	DatabasePassword   string `env:"DATABASE_PASSWORD"`
-	DatabasePort       string `env:"DATABASE_PORT"`
-	GoogleClientID     string `env:"GOOGLE_CLIENT_ID"`
-	GoogleClientSecret string `env:"GOOGLE_CLIENT_SECRET"`
-	GoogleRedirectURL  string `env:"GOOGLE_REDIRECT_URL"`
+	Database DBConfig     `envPrefix:"DATABASE_"`
+	Google   GoogleConfig `envPrefix:"GOOGLE_"`
+	PG       PGConfig     `envPrefix:"PG_"`
+	MINIO    MINIOConfig  `envPrefix:"MINIO_"`
+}
+
+type DBConfig struct {
+	Host     string `env:"HOST"`
+	Name     string `env:"NAME"`
+	Username string `env:"USERNAME"`
+	Password string `env:"PASSWORD"`
+	Port     string `env:"PORT"`
+}
+
+type GoogleConfig struct {
+	ClientID     string `env:"CLIENT_ID"`
+	ClientSecret string `env:"CLIENT_SECRET"`
+	RedirectURL  string `env:"REDIRECT_URL"`
+}
+
+type PGConfig struct {
+	Email    string `env:"EMAIL"`
+	Password string `env:"PASSWORD"`
+}
+
+type MINIOConfig struct {
+	Endpoint string `env:"ENDPOINT"`
+	User     string `env:"USER"`
+	Password string `env:"PASSWORD"`
+	Bucket   string `env:"BUCKET"`
+	UseSSL   bool   `env:"USE_SSL"`
 }
 
 func NewConfig() *Config {

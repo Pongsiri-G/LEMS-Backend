@@ -13,11 +13,11 @@ import (
 func NewPostgrest(cfg *configs.Config) *gorm.DB {
 	connection := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Bangkok",
-		cfg.DatabaseHost,
-		cfg.DatabaseUsername,
-		cfg.DatabasePassword,
-		cfg.DatabaseName,
-		cfg.DatabasePort,
+		cfg.Database.Host,
+		cfg.Database.Username,
+		cfg.Database.Password,
+		cfg.Database.Name,
+		cfg.Database.Port,
 	)
 
 	db, err := gorm.Open(postgres.Open(connection), &gorm.Config{})
