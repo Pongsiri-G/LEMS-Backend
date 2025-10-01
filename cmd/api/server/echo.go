@@ -44,6 +44,7 @@ func (s *EchoServer) Start() error {
 
 	router.RegisterAPIRoutes()
 	router.RegisterMinioRoutes()
+	router.RegisterBorrowRouter()
 
 	return e.Start(fmt.Sprintf(":%s", s.config.Port))
 }

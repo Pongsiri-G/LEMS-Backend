@@ -9,6 +9,7 @@ import (
 	// Handlers
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers"
 	authHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/auth"
+	borrowHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/borrow"
 	minioHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/minio"
 
 	// Infrastructure
@@ -18,12 +19,14 @@ import (
 	minioInfra "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/minio"
 
 	// Repositories
+	borrowRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrow_log"
 	minioRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/minio"
 	userRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
 
 	// Services
 	authSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
+	borrowSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/borrow"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/jwt"
 	minioSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/minio"
 )
@@ -42,6 +45,7 @@ var InfrastructureSet = wire.NewSet(
 var RepositorySet = wire.NewSet(
 	userRepo.NewUserRepository,
 	minioRepo.NewMinioRepository,
+	borrowRepo.NewBorrowLogRepository,
 )
 
 // ---- Strategies ----
@@ -71,6 +75,7 @@ var ServiceSet = wire.NewSet(
 	jwt.NewJWTService,
 	authSvc.NewAuthService,
 	minioSvc.NewMinioService,
+	borrowSvc.NewBorrowService,
 )
 
 // ---- Handlers ----
@@ -79,4 +84,5 @@ var HandlerSet = wire.NewSet(
 	handlers.NewHandlers,
 	authHd.NewAuthHandler,
 	minioHd.NewFileHandler,
+	borrowHd.NewBorrowHandler,
 )
