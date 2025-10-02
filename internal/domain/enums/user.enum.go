@@ -16,9 +16,9 @@ const (
 	Deactivated UserStatus = "DEACTIVATED"
 )
 
-type UsesrRole string
+type UserRole string
 
 const (
-	User  UsesrRole = "USER"
-	Admin UsesrRole = "ADMIN"
+	User  UserRole = "USER"
+	Admin UserRole = "ADMIN"
 )
