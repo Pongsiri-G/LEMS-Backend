@@ -10,13 +10,13 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/cmd/api/server"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/configs"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers"
-	auth2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/auth"
+	auth3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/auth"
 	user3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/user"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/database"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/middlewares"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
-	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth"
+	auth2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
 	user2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/user"
 )
@@ -31,8 +31,8 @@ func InitializeAPI() *server.EchoServer {
 	oauth2Config := auth.NewGoogleOAuthClient(config)
 	googleStrategy := strategy.NewGoogleStrategy(oauth2Config, repository)
 	v := strategy.NewStrategyMap(localStrategy, googleStrategy)
-	authService := services.NewAuthService(v, repository, config)
-	authHandler := auth2.NewAuthHandler(authService, oauth2Config)
+	authService := auth2.NewAuthService(v, repository, config)
+	authHandler := auth3.NewAuthHandler(authService, oauth2Config)
 	userService := user2.NewUserService(repository, config)
 	userHandler := user3.NewUserHandler(userService, oauth2Config)
 	handlersHandlers := handlers.NewHandlers(authHandler, userHandler)

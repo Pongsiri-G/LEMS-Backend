@@ -18,11 +18,11 @@ type AuthHandler interface {
 }
 
 type authHandler struct {
-	svc   services.AuthService
+	svc   auth.AuthService
 	oauth *oauth2.Config
 }
 
-func NewAuthHandler(svc services.AuthService, oauth *oauth2.Config) AuthHandler {
+func NewAuthHandler(svc auth.AuthService, oauth *oauth2.Config) AuthHandler {
 	return &authHandler{
 		svc:   svc,
 		oauth: oauth,

@@ -23,7 +23,6 @@ import (
 	// Services
 	authSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
-	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/jwt"
 	userSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/user"
 )
 
@@ -52,7 +51,6 @@ var StrategySet = wire.NewSet(
 // ---- Services ----
 
 var ServiceSet = wire.NewSet(
-	jwt.NewJWTService,
 	authSvc.NewAuthService,
 	userSvc.NewUserService,
 )
