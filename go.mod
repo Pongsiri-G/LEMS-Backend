@@ -5,6 +5,7 @@ go 1.25.0
 require (
 	cloud.google.com/go/compute/metadata v0.3.0 // indirect
 	github.com/caarlos0/env/v11 v11.3.1 // indirect
+	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/google/wire v0.7.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
