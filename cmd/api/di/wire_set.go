@@ -5,6 +5,7 @@ import (
 
 	// Configs
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/configs"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/middlewares"
 
 	// Handlers
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers"
@@ -58,4 +59,9 @@ var ServiceSet = wire.NewSet(
 var HandlerSet = wire.NewSet(
 	handlers.NewHandlers,
 	authHd.NewAuthHandler,
+)
+
+// ---- Middlewares ----
+var MiddlewareSet = wire.NewSet(
+	middlewares.NewAuthMiddleware,
 )

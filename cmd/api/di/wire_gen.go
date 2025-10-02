@@ -13,10 +13,10 @@ import (
 	auth2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/database"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/middlewares"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
-	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/jwt"
 )
 
 // Injectors from wire.go:
@@ -29,10 +29,10 @@ func InitializeAPI() *server.EchoServer {
 	oauth2Config := auth.NewGoogleOAuthClient(config)
 	googleStrategy := strategy.NewGoogleStrategy(oauth2Config, repository)
 	v := strategy.NewStrategyMap(localStrategy, googleStrategy)
-	jwtService := jwt.NewJWTService(config)
-	authService := services.NewAuthService(v, repository, jwtService)
+	authService := services.NewAuthService(v, repository, config)
 	authHandler := auth2.NewAuthHandler(authService, oauth2Config)
 	handlersHandlers := handlers.NewHandlers(authHandler)
-	echoServer := server.NewEchoServer(config, handlersHandlers)
+	authMiddleware := middlewares.NewAuthMiddleware(config)
+	echoServer := server.NewEchoServer(config, handlersHandlers, authMiddleware)
 	return echoServer
 }

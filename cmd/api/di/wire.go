@@ -16,6 +16,7 @@ func InitializeAPI() *server.EchoServer {
 		StrategySet,
 		ServiceSet,
 		HandlerSet,
+		MiddlewareSet,
 		server.NewEchoServer,
 	)
 
