@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/configs"
-	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
-	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/responses"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/auth"
 	userrepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
@@ -17,11 +15,9 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthService interface {
-	Register(ctx context.Context, r *RegisterRequest) (*models.User, error)
 	Login(ctx context.Context, key string, req *strategy.AuthenticateRequest) (*responses.AuthResponse, error)
 	RefreshToken(ctx context.Context, tokenStr string) (*responses.AuthResponse, error)
 }
@@ -61,43 +57,6 @@ func (s *authService) Login(ctx context.Context, key string, req *strategy.Authe
 		AccessToken: accessToken, 
 		RefreshToken: refreshToken,
 	}, nil
-}
-
-type RegisterRequest struct {
-	FullName string
-	Email    string
-	Password string
-	Phone    string
-}
-
-var ErrEmailAlreadyExists = errors.New("email already exists")
-
-func (s *authService) Register(ctx context.Context, r *RegisterRequest) (*models.User, error) {
-	if _, err := s.users.FindByEmail(ctx, r.Email); err == nil {
-		return nil, ErrEmailAlreadyExists
-	} else if !errors.Is(err, userrepo.ErrNotFound) {
-		return nil, err
-	}
-
-	hashed, err := bcrypt.GenerateFromPassword([]byte(r.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, err
-	}
-
-	u := &models.User{
-		UserFullName: r.FullName,
-		UserEmail:    r.Email,
-		UserPhone:    r.Phone,
-		UserPassword: string(hashed),
-		UserRole:     enums.UserRole(enums.User),
-		UserStatus:   enums.UserStatus(enums.Pending),
-		AuthProvider: enums.AuthProvider(enums.Local),
-	}
-
-	if err := s.users.Create(ctx, u); err != nil {
-		return nil, err
-	}
-	return u, nil
 }
 
 func (s *authService) RefreshToken(ctx context.Context, tokenStr string) (*responses.AuthResponse, error) {

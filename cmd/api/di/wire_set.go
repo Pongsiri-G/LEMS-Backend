@@ -10,6 +10,7 @@ import (
 	// Handlers
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers"
 	authHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/auth"
+	userHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/user"
 
 	// Infrastructure
 	authInfra "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/auth"
@@ -23,6 +24,7 @@ import (
 	authSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/jwt"
+	userSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/user"
 )
 
 var ConfigSet = wire.NewSet(
@@ -52,6 +54,7 @@ var StrategySet = wire.NewSet(
 var ServiceSet = wire.NewSet(
 	jwt.NewJWTService,
 	authSvc.NewAuthService,
+	userSvc.NewUserService,
 )
 
 // ---- Handlers ----
@@ -59,6 +62,7 @@ var ServiceSet = wire.NewSet(
 var HandlerSet = wire.NewSet(
 	handlers.NewHandlers,
 	authHd.NewAuthHandler,
+	userHd.NewUserHandler,
 )
 
 // ---- Middlewares ----
