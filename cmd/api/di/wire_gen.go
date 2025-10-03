@@ -11,17 +11,24 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/configs"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers"
 	auth2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/auth"
+	borrow2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/borrow"
+	minio4 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/minio"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/database"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/minio"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrow_log"
+	minio2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/minio"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/borrow"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/jwt"
+	minio3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/minio"
 )
 
 // Injectors from wire.go:
 
-func InitializeAPI() *server.EchoServer {
+func InitializeAPI() (*server.EchoServer, error) {
 	config := configs.NewConfig()
 	db := database.NewPostgrest(config)
 	repository := user.NewUserRepository(db)
@@ -36,7 +43,17 @@ func InitializeAPI() *server.EchoServer {
 	jwtService := jwt.NewJWTService(config)
 	authService := services.NewAuthService(v, repository, jwtService)
 	authHandler := auth2.NewAuthHandler(authService, oauth2Config)
-	handlersHandlers := handlers.NewHandlers(authHandler)
+	client, err := minio.NewMinioConnection(config)
+	if err != nil {
+		return nil, err
+	}
+	minioRepository := minio2.NewMinioRepository(config, client)
+	service := minio3.NewMinioService(minioRepository)
+	fileHandler := minio4.NewFileHandler(service)
+	borrowlogRepository := borrowlog.NewBorrowLogRepository(db)
+	borrowService := borrow.NewBorrowService(borrowlogRepository)
+	borrowHandler := borrow2.NewBorrowHandler(borrowService)
+	handlersHandlers := handlers.NewHandlers(authHandler, fileHandler, borrowHandler)
 	echoServer := server.NewEchoServer(config, handlersHandlers)
-	return echoServer
+	return echoServer, nil
 }

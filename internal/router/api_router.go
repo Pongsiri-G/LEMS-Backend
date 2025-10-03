@@ -35,3 +35,14 @@ func (r *Router) RegisterAPIRoutes() {
 	auth.GET("/google/login", r.handlers.Auth.GoogleLogin())
 	auth.GET("/google/callback", r.handlers.Auth.GoogleCallback)
 }
+
+func (r *Router) RegisterMinioRoutes() {
+	v1 := r.echo.Group("/api/v1")
+	v1.POST("/upload", r.handlers.File.Upload)
+	v1.POST("/image", r.handlers.File.GetImage)
+}
+
+func (r *Router) RegisterBorrowRouter() {
+	v1 := r.echo.Group("/api/v1")
+	v1.POST("/borrow/return", r.handlers.Borrow.Return)
+}

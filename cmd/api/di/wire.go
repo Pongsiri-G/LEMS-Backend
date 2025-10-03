@@ -8,7 +8,7 @@ import (
 	"github.com/google/wire"
 )
 
-func InitializeAPI() *server.EchoServer {
+func InitializeAPI() (*server.EchoServer, error) {
 	wire.Build(
 		ConfigSet,
 		InfrastructureSet,
@@ -19,5 +19,5 @@ func InitializeAPI() *server.EchoServer {
 		server.NewEchoServer,
 	)
 
-	return &server.EchoServer{}
+	return &server.EchoServer{}, nil
 }
