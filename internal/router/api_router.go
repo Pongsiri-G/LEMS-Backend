@@ -45,6 +45,7 @@ func (r *Router) RegisterMinioRoutes() {
 func (r *Router) RegisterBorrowRouter() {
 	v1 := r.echo.Group("/api/v1")
 	v1.POST("/borrow/return", r.handlers.Borrow.Return)
+	v1.POST("/borrow", r.handlers.Borrow.Borrow)
 }
 
 func (r *Router) RegisterItemRouter()  {

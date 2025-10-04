@@ -12,10 +12,15 @@ import (
 type Repository interface {
 	CreateItem(ctx context.Context, item *models.Items) error
 	GetItemByID(ctx context.Context, itemID uuid.UUID) (*models.Items, error)
+	UpdateItem(ctx context.Context, item *models.Items) error
 }
 
 type repository struct {
 	db *gorm.DB
+}
+
+func (r *repository) UpdateItem(ctx context.Context, item *models.Items) error {
+	return r.db.Save(item).Error
 }
 
 func (r *repository) GetItemByID(ctx context.Context, itemID uuid.UUID) (*models.Items, error) {
