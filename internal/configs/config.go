@@ -7,7 +7,8 @@ import (
 )
 
 type Config struct {
-	Port string `env:"PORT"`
+	Port         string   `env:"PORT"`
+	AllowOrigins []string `env:"ALLOW_ORIGINS" envSeparator:","`
 
 	DatabaseHost     string `env:"DATABASE_HOST"`
 	DatabaseName     string `env:"DATABASE_NAME"`

@@ -7,6 +7,7 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/router"
 	"github.com/labstack/echo/v4"
+	echoMiddleware "github.com/labstack/echo/v4/middleware"
 )
 
 type EchoServer struct {
@@ -33,12 +34,12 @@ func (s *EchoServer) Start() error {
 
 	// e.HTTPErrorHandler = servererr.EchoHTTPErrorHandler
 
-	// e.Use(echoMiddleware.CORSWithConfig(echoMiddleware.CORSConfig{
-	// 	AllowOrigins:     s.config.CORS.AllowOrigins,
-	// 	AllowMethods:     []string{echo.GET, echo.POST, echo.PUT, echo.DELETE, echo.PATCH},
-	// 	AllowCredentials: true,
-	// 	AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
-	// }))
+	e.Use(echoMiddleware.CORSWithConfig(echoMiddleware.CORSConfig{
+		AllowOrigins:     s.config.AllowOrigins,
+		AllowMethods:     []string{echo.GET, echo.POST, echo.PUT, echo.DELETE, echo.PATCH},
+		AllowCredentials: true,
+		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
+	}))
 
 	router := router.NewRouter(e, s.handlers)
 
