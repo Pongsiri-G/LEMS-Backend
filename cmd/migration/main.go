@@ -11,6 +11,7 @@ import (
 
 func main() {
 	config := configs.NewConfig()
+	config.Database.Host = "localhost"
 	db := database.NewPostgrest(config)
 
 	err := db.AutoMigrate(

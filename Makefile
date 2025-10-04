@@ -10,7 +10,7 @@ wire-gen:
 start-app:
 	@echo "Starting the application..."
 
-	go run ./cmd/api/main.go
+	docker-compose up --build -d
 
 migrate-schema:
 	@echo "Strating the migrate schema"
