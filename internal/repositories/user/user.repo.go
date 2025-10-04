@@ -7,6 +7,7 @@ import (
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -42,6 +43,7 @@ func (r *repository) FindByEmail(ctx context.Context, email string) (*models.Use
 
 func (r *repository) Create(ctx context.Context, u *models.User) error {
 	now := time.Now()
+	u.UserID = uuid.New()
 	u.CreatedAt = now
 	u.UpdatedAt = now
 	return r.db.WithContext(ctx).Create(u).Error
@@ -57,6 +59,7 @@ func (r *repository) FindOrCreateByProvider(ctx context.Context, provider enums.
 			if seed == nil {
 				seed = &models.User{}
 			}
+			seed.UserID = uuid.New()
 			seed.UserEmail = email
 			seed.AuthProvider = provider
 			now := time.Now()
