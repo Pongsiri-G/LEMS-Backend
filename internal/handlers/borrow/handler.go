@@ -30,7 +30,7 @@ func (h *handler) Return(c echo.Context) error {
 		})
 	}
 
-	err := h.servicce.Return(c.Request().Context(), req)
+	err := h.servicce.Return(c.Request().Context(), &req)
 	if err != nil {
 		switch err {
 		case borrowSvc.ErrInvalidUUID:
