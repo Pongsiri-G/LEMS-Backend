@@ -12,16 +12,19 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers"
 	auth2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/auth"
 	borrow2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/borrow"
+	item3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/item"
 	minio4 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/minio"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/database"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/minio"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrow_log"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
 	minio2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/minio"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/borrow"
+	item2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/item"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/jwt"
 	minio3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/minio"
 )
@@ -53,7 +56,10 @@ func InitializeAPI() (*server.EchoServer, error) {
 	borrowlogRepository := borrowlog.NewBorrowLogRepository(db)
 	borrowService := borrow.NewBorrowService(borrowlogRepository)
 	borrowHandler := borrow2.NewBorrowHandler(borrowService)
-	handlersHandlers := handlers.NewHandlers(authHandler, fileHandler, borrowHandler)
+	itemRepository := item.NewItemRepository(db)
+	itemService := item2.NewItemService(itemRepository)
+	itemHandler := item3.NewItemHandler(itemService)
+	handlersHandlers := handlers.NewHandlers(authHandler, fileHandler, borrowHandler, itemHandler)
 	echoServer := server.NewEchoServer(config, handlersHandlers)
 	return echoServer, nil
 }

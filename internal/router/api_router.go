@@ -46,3 +46,8 @@ func (r *Router) RegisterBorrowRouter() {
 	v1 := r.echo.Group("/api/v1")
 	v1.POST("/borrow/return", r.handlers.Borrow.Return)
 }
+
+func (r *Router) RegisterItemRouter()  {
+	v1 := r.echo.Group("/api/v1")
+	v1.GET("/item/:itemID", r.handlers.Item.GetBorrowItem)
+}
