@@ -44,7 +44,7 @@ func (s *authService) Login(ctx context.Context, key string, req *strategy.Authe
 	u, err := strategy.Authenticate(ctx, req)
 	if err != nil {
 		fmt.Println(err)
-		return nil , errors.New(err.Error())
+		return nil, errors.New(err.Error())
 	}
 
 	accessToken, refreshToken, err := s.generateJWTToken(u.UserID.String(), u.UserEmail)
@@ -53,25 +53,29 @@ func (s *authService) Login(ctx context.Context, key string, req *strategy.Authe
 		log.Err(err)
 		return nil, err
 	}
+
+	// Update last login
+	s.users.UpdateLastLogin(ctx, u.UserID)
+
 	return &responses.AuthResponse{
-		AccessToken: accessToken, 
+		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}, nil
 }
 
 func (s *authService) RefreshToken(ctx context.Context, tokenStr string) (*responses.AuthResponse, error) {
-	token, err := jwt.ParseWithClaims(tokenStr, &auth.JWTClaims{}, func (token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenStr, &auth.JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(s.cfg.JWT.RefreshSecret), nil
 	})
-	
+
 	if err != nil {
 		log.Err(err).Msg("")
 		return nil, err
 	}
 
-	claims, ok := token.Claims.(*auth.JWTClaims);
-	if !ok || !token.Valid{
-		return nil, jwt.ErrTokenInvalidClaims	
+	claims, ok := token.Claims.(*auth.JWTClaims)
+	if !ok || !token.Valid {
+		return nil, jwt.ErrTokenInvalidClaims
 	}
 
 	access, refresh, err := s.generateJWTToken(claims.UserID, claims.Email)
@@ -80,7 +84,7 @@ func (s *authService) RefreshToken(ctx context.Context, tokenStr string) (*respo
 	}
 
 	return &responses.AuthResponse{
-		AccessToken: access,
+		AccessToken:  access,
 		RefreshToken: refresh,
 	}, nil
 }
@@ -104,7 +108,7 @@ func (s *authService) generateJWTToken(userID string, userEmail string) (string,
 
 	refreshExpiratedAt := now.Add(refreshExpiration)
 
-    claimsID := uuid.NewString()
+	claimsID := uuid.NewString()
 
 	claims := auth.JWTClaims{
 		UserID: userID,

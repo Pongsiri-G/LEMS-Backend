@@ -18,6 +18,8 @@ type Repository interface {
 	// ใช้สำหรับ provider-based login โดยไม่แยกตาราง
 	// ข้อกำหนด: ลิงก์ด้วยอีเมลเสมอ ถ้าอีเมลมีอยู่แล้ว ให้ใช้งาน user เดิมและอัปเดต AuthProvider ตามความเหมาะสม
 	FindOrCreateByProvider(ctx context.Context, provider enums.AuthProvider, email string, seed *models.User) (*models.User, error)
+
+	UpdateLastLogin(ctx context.Context, userID uuid.UUID) error
 }
 
 type repository struct {
@@ -80,4 +82,12 @@ func (r *repository) FindOrCreateByProvider(ctx context.Context, provider enums.
 		}
 	}
 	return &u, nil
+}
+
+func (r *repository) UpdateLastLogin(ctx context.Context, userID uuid.UUID) error {
+	now := time.Now()
+	return r.db.WithContext(ctx).
+		Model(&models.User{}).
+		Where("user_id = ?", userID).
+		Update("last_login", now).Error
 }
