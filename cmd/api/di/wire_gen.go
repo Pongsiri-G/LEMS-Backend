@@ -12,6 +12,7 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers"
 	auth3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/auth"
 	borrow2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/borrow"
+	item3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/item"
 	minio4 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/minio"
 	user3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/user"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/auth"
@@ -19,11 +20,14 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/minio"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/middlewares"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrow_log"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
 	minio2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/minio"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
 	auth2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/borrow"
+	item2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/item"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/jwt"
 	minio3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/minio"
 	user2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/user"
 )
@@ -48,12 +52,15 @@ func InitializeAPI() (*server.EchoServer, error) {
 	service := minio3.NewMinioService(minioRepository)
 	fileHandler := minio4.NewFileHandler(service)
 	borrowlogRepository := borrowlog.NewBorrowLogRepository(db)
-	borrowService := borrow.NewBorrowService(borrowlogRepository)
+	itemRepository := item.NewItemRepository(db)
+	borrowService := borrow.NewBorrowService(borrowlogRepository, itemRepository)
 	borrowHandler := borrow2.NewBorrowHandler(borrowService)
 	userService := user2.NewUserService(repository, config)
 	userHandler := user3.NewUserHandler(userService, oauth2Config)
-	handlersHandlers := handlers.NewHandlers(authHandler, fileHandler, borrowHandler, userHandler)
 	authMiddleware := middlewares.NewAuthMiddleware(config)
-	echoServer := server.NewEchoServer(config, handlersHandlers, authMiddleware)
+	itemService := item2.NewItemService(itemRepository)
+	itemHandler := item3.NewItemHandler(itemService)
+	handlersHandlers := handlers.NewHandlers(authHandler, fileHandler, borrowHandler, itemHandler)
+	echoServer := server.NewEchoServer(config, handlersHandlers)
 	return echoServer, nil
 }

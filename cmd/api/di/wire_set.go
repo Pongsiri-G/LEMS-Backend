@@ -11,6 +11,7 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers"
 	authHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/auth"
 	borrowHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/borrow"
+	itemHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/item"
 	minioHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/minio"
 	userHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/user"
 
@@ -22,6 +23,7 @@ import (
 
 	// Repositories
 	borrowRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrow_log"
+	itemRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
 	minioRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/minio"
 	userRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
 
@@ -29,6 +31,8 @@ import (
 	authSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
 	borrowSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/borrow"
+	itemSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/item"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/jwt"
 	minioSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/minio"
 	userSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/user"
 )
@@ -48,6 +52,7 @@ var RepositorySet = wire.NewSet(
 	userRepo.NewUserRepository,
 	minioRepo.NewMinioRepository,
 	borrowRepo.NewBorrowLogRepository,
+	itemRepo.NewItemRepository,
 )
 
 // ---- Strategies ----
@@ -65,6 +70,7 @@ var ServiceSet = wire.NewSet(
 	userSvc.NewUserService,
 	minioSvc.NewMinioService,
 	borrowSvc.NewBorrowService,
+	itemSvc.NewItemService,
 )
 
 // ---- Handlers ----
@@ -75,6 +81,7 @@ var HandlerSet = wire.NewSet(
 	userHd.NewUserHandler,
 	minioHd.NewFileHandler,
 	borrowHd.NewBorrowHandler,
+	itemHd.NewItemHandler,
 )
 
 // ---- Middlewares ----
