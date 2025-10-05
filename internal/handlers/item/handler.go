@@ -12,6 +12,8 @@ import (
 type ItemHandler interface {
 	CreateItem(c echo.Context) error
 	GetBorrowItem(c echo.Context) error
+	GetAll(c echo.Context) error
+	GetMyBorrow(c echo.Context) error
 }
 
 type handler struct {
@@ -68,4 +70,29 @@ func (h *handler) CreateItem(c echo.Context) error {
 	return c.JSON(http.StatusCreated, echo.Map{
 		"message": "item created successfully",
 	})
+}
+
+func (h *handler) GetAll(c echo.Context) error {
+	response, err := h.service.GetAll(c.Request().Context())
+
+	
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message" : "Internal Server Error",
+		})
+	}
+
+	return c.JSON(http.StatusOK, response)
+}
+
+func (h *handler) GetMyBorrow(c echo.Context) error {
+	response, err := h.service.GetMyBorrow(c.Request().Context(), c.Param("user_id"))
+	
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message" : "Internal Server Error",
+		})
+	}
+
+	return c.JSON(http.StatusOK, response)
 }
