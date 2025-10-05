@@ -32,7 +32,7 @@ func InitializeAPI() *server.EchoServer {
 	googleStrategy := strategy.NewGoogleStrategy(oauth2Config, repository)
 	v := strategy.NewStrategyMap(localStrategy, googleStrategy)
 	authService := auth2.NewAuthService(v, repository, config)
-	authHandler := auth3.NewAuthHandler(authService, oauth2Config)
+	authHandler := auth3.NewAuthHandler(authService, oauth2Config, config)
 	userService := user2.NewUserService(repository, config)
 	userHandler := user3.NewUserHandler(userService, oauth2Config)
 	handlersHandlers := handlers.NewHandlers(authHandler, userHandler)

@@ -1,8 +1,12 @@
 package auth
 
 import (
+	"fmt"
 	"net/http"
+	"net/url"
 
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/configs"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/responses"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
 	"github.com/labstack/echo/v4"
@@ -20,12 +24,14 @@ type AuthHandler interface {
 type authHandler struct {
 	svc   auth.AuthService
 	oauth *oauth2.Config
+	cfg   *configs.Config
 }
 
-func NewAuthHandler(svc auth.AuthService, oauth *oauth2.Config) AuthHandler {
+func NewAuthHandler(svc auth.AuthService, oauth *oauth2.Config, cfg *configs.Config) AuthHandler {
 	return &authHandler{
 		svc:   svc,
 		oauth: oauth,
+		cfg:   cfg,
 	}
 }
 
@@ -39,7 +45,8 @@ func (h *authHandler) Login(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid payload"})
 	}
 
-	res, err := h.svc.Login(c.Request().Context(),
+	res, err := h.svc.Login(
+		c.Request().Context(),
 		"local",
 		&strategy.AuthenticateRequest{Email: body.Email, Password: body.Password})
 	if err != nil {
@@ -54,7 +61,7 @@ func (h *authHandler) Login(c echo.Context) error {
 func (h *authHandler) GoogleLogin() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		url := h.oauth.AuthCodeURL("random-state-string", oauth2.AccessTypeOffline)
-		return c.Redirect(http.StatusTemporaryRedirect, url)
+		return c.JSON(http.StatusOK, url)
 	}
 }
 
@@ -71,18 +78,12 @@ func (h *authHandler) GoogleCallback(c echo.Context) error {
 	)
 
 	if err != nil {
-		log.Err(err)
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+		log.Err(err).Send()
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
 	}
 
-	return c.JSON(
-		http.StatusOK,
-		map[string]any{
-			"access_token":  res.AccessToken,
-			"refresh_token": res.RefreshToken,
-		},
-	)
-
+	return c.Redirect(http.StatusTemporaryRedirect, h.redirectWithTokens(res))
+	// return c.JSON(http.StatusOK, map[string]string{ "url": res.AccessToken })
 }
 
 func (h *authHandler) RefreshToken(c echo.Context) error {
@@ -102,4 +103,18 @@ func (h *authHandler) RefreshToken(c echo.Context) error {
 		"access_token":  res.AccessToken,
 		"refresh_token": res.RefreshToken,
 	})
+}
+
+func (h *authHandler) redirectWithTokens(response *responses.AuthResponse) string {
+	frontendURL := fmt.Sprintf("%s/oauth/callback", h.cfg.AllowOrigins[0])
+	fmt.Print(frontendURL)
+
+	resURL := fmt.Sprintf(
+		"%s?accessToken=%s&refreshToken=%s",
+		frontendURL,
+		url.QueryEscape(response.AccessToken),
+		url.QueryEscape(response.RefreshToken),
+	)
+
+	return resURL
 }

@@ -19,13 +19,13 @@ type UserService interface {
 
 type userService struct {
 	userRepo user.Repository
-	cfg   *configs.Config
+	cfg      *configs.Config
 }
 
 func NewUserService(userRepo user.Repository, cfg *configs.Config) UserService {
 	return &userService{
-		userRepo:      userRepo,
-		cfg:        cfg,
+		userRepo: userRepo,
+		cfg:      cfg,
 	}
 }
 
