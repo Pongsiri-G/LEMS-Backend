@@ -44,3 +44,14 @@ func (r *Router) RegisterAPIRoutes() {
 		return c.JSON(http.StatusOK, map[string]string{"msg": "success"})
 	})
 }
+
+func (r *Router) RegisterMinioRoutes() {
+	v1 := r.echo.Group("/api/v1")
+	v1.POST("/upload", r.handlers.File.Upload)
+	v1.POST("/image", r.handlers.File.GetImage)
+}
+
+func (r *Router) RegisterBorrowRouter() {
+	v1 := r.echo.Group("/api/v1")
+	v1.POST("/borrow/return", r.handlers.Borrow.Return)
+}

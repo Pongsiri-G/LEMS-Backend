@@ -11,19 +11,26 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/configs"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers"
 	auth3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/auth"
+	borrow2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/borrow"
+	minio4 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/minio"
 	user3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/user"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/database"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/minio"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/middlewares"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrow_log"
+	minio2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/minio"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
 	auth2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/borrow"
+	minio3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/minio"
 	user2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/user"
 )
 
 // Injectors from wire.go:
 
-func InitializeAPI() *server.EchoServer {
+func InitializeAPI() (*server.EchoServer, error) {
 	config := configs.NewConfig()
 	db := database.NewPostgrest(config)
 	repository := user.NewUserRepository(db)
@@ -33,10 +40,20 @@ func InitializeAPI() *server.EchoServer {
 	v := strategy.NewStrategyMap(localStrategy, googleStrategy)
 	authService := auth2.NewAuthService(v, repository, config)
 	authHandler := auth3.NewAuthHandler(authService, oauth2Config, config)
+	client, err := minio.NewMinioConnection(config)
+	if err != nil {
+		return nil, err
+	}
+	minioRepository := minio2.NewMinioRepository(config, client)
+	service := minio3.NewMinioService(minioRepository)
+	fileHandler := minio4.NewFileHandler(service)
+	borrowlogRepository := borrowlog.NewBorrowLogRepository(db)
+	borrowService := borrow.NewBorrowService(borrowlogRepository)
+	borrowHandler := borrow2.NewBorrowHandler(borrowService)
 	userService := user2.NewUserService(repository, config)
 	userHandler := user3.NewUserHandler(userService, oauth2Config)
-	handlersHandlers := handlers.NewHandlers(authHandler, userHandler)
+	handlersHandlers := handlers.NewHandlers(authHandler, fileHandler, borrowHandler, userHandler)
 	authMiddleware := middlewares.NewAuthMiddleware(config)
 	echoServer := server.NewEchoServer(config, handlersHandlers, authMiddleware)
-	return echoServer
+	return echoServer, nil
 }
