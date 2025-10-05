@@ -27,7 +27,6 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/borrow"
 	item2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/item"
-	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/jwt"
 	minio3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/minio"
 	user2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/user"
 )
@@ -57,10 +56,10 @@ func InitializeAPI() (*server.EchoServer, error) {
 	borrowHandler := borrow2.NewBorrowHandler(borrowService)
 	userService := user2.NewUserService(repository, config)
 	userHandler := user3.NewUserHandler(userService, oauth2Config)
-	authMiddleware := middlewares.NewAuthMiddleware(config)
 	itemService := item2.NewItemService(itemRepository)
 	itemHandler := item3.NewItemHandler(itemService)
-	handlersHandlers := handlers.NewHandlers(authHandler, fileHandler, borrowHandler, itemHandler)
-	echoServer := server.NewEchoServer(config, handlersHandlers)
+	handlersHandlers := handlers.NewHandlers(authHandler, fileHandler, borrowHandler, userHandler, itemHandler)
+	authMiddleware := middlewares.NewAuthMiddleware(config)
+	echoServer := server.NewEchoServer(config, handlersHandlers, authMiddleware)
 	return echoServer, nil
 }
