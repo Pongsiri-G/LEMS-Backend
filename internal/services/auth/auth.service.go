@@ -53,6 +53,10 @@ func (s *authService) Login(ctx context.Context, key string, req *strategy.Authe
 		log.Debug().Stack()
 		return nil, err
 	}
+
+	// Update last login
+	s.users.UpdateLastLogin(ctx, u.UserID)
+
 	return &responses.AuthResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
