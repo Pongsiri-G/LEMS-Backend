@@ -10,23 +10,26 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/cmd/api/server"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/configs"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers"
-	auth2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/auth"
+	auth3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/auth"
 	borrow2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/borrow"
 	item3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/item"
 	minio4 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/minio"
+	user3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/user"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/database"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/minio"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/middlewares"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrow_log"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
 	minio2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/minio"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
-	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth"
+	auth2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/borrow"
 	item2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/item"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/jwt"
 	minio3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/minio"
+	user2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/user"
 )
 
 // Injectors from wire.go:
@@ -37,15 +40,10 @@ func InitializeAPI() (*server.EchoServer, error) {
 	repository := user.NewUserRepository(db)
 	localStrategy := strategy.NewLocalStrategy(repository)
 	oauth2Config := auth.NewGoogleOAuthClient(config)
-	googleStrategy := strategy.NewGoogleStrategy(oauth2Config, repository, config)
-	diStrategyDeps := strategyDeps{
-		Local:  localStrategy,
-		Google: googleStrategy,
-	}
-	v := newStrategyMap(diStrategyDeps)
-	jwtService := jwt.NewJWTService(config)
-	authService := services.NewAuthService(v, repository, jwtService)
-	authHandler := auth2.NewAuthHandler(authService, oauth2Config)
+	googleStrategy := strategy.NewGoogleStrategy(oauth2Config, repository)
+	v := strategy.NewStrategyMap(localStrategy, googleStrategy)
+	authService := auth2.NewAuthService(v, repository, config)
+	authHandler := auth3.NewAuthHandler(authService, oauth2Config, config)
 	client, err := minio.NewMinioConnection(config)
 	if err != nil {
 		return nil, err
@@ -57,6 +55,9 @@ func InitializeAPI() (*server.EchoServer, error) {
 	itemRepository := item.NewItemRepository(db)
 	borrowService := borrow.NewBorrowService(borrowlogRepository, itemRepository)
 	borrowHandler := borrow2.NewBorrowHandler(borrowService)
+	userService := user2.NewUserService(repository, config)
+	userHandler := user3.NewUserHandler(userService, oauth2Config)
+	authMiddleware := middlewares.NewAuthMiddleware(config)
 	itemService := item2.NewItemService(itemRepository)
 	itemHandler := item3.NewItemHandler(itemService)
 	handlersHandlers := handlers.NewHandlers(authHandler, fileHandler, borrowHandler, itemHandler)

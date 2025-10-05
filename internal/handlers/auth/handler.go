@@ -1,60 +1,38 @@
 package auth
 
 import (
+	"fmt"
 	"net/http"
+	"net/url"
 
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/configs"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/responses"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
 	"github.com/labstack/echo/v4"
+	"github.com/rs/zerolog/log"
 	"golang.org/x/oauth2"
 )
 
 type AuthHandler interface {
-	Register(c echo.Context) error
 	Login(c echo.Context) error
 	GoogleLogin() echo.HandlerFunc
 	GoogleCallback(c echo.Context) error
+	RefreshToken(c echo.Context) error
 }
 
 type authHandler struct {
-	svc   services.AuthService
+	svc   auth.AuthService
 	oauth *oauth2.Config
+	cfg   *configs.Config
 }
 
-func NewAuthHandler(svc services.AuthService, oauth *oauth2.Config) AuthHandler {
+func NewAuthHandler(svc auth.AuthService, oauth *oauth2.Config, cfg *configs.Config) AuthHandler {
 	return &authHandler{
 		svc:   svc,
 		oauth: oauth,
+		cfg:   cfg,
 	}
-}
-
-// POST /api/v1/auth/register (LOCAL)
-func (h *authHandler) Register(c echo.Context) error {
-	var body struct {
-		FullName string `json:"full_name"`
-		Email    string `json:"email"`
-		Phone    string `json:"phone"`
-		Password string `json:"password"`
-	}
-	if err := c.Bind(&body); err != nil || body.Email == "" || body.Password == "" || body.FullName == "" {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid payload"})
-	}
-
-	// register พร้อมทั้งอัปเดทไปยังฐานข้อมูลหากลงทะเบียนสำเร็จ
-	_, err := h.svc.Register(c.Request().Context(), &services.RegisterRequest{
-		FullName: body.FullName,
-		Email:    body.Email,
-		Phone:    body.Phone,
-		Password: body.Password,
-	})
-	if err != nil {
-		if err == services.ErrEmailAlreadyExists {
-			return c.JSON(http.StatusBadRequest, map[string]string{"error": "email already exists"})
-		}
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
-	}
-	// สมัครเสร็จให้ไป login ต่อ
-	return c.JSON(http.StatusCreated, map[string]string{"message": "register success"})
 }
 
 func (h *authHandler) Login(c echo.Context) error {
@@ -62,23 +40,28 @@ func (h *authHandler) Login(c echo.Context) error {
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
+
 	if err := c.Bind(&body); err != nil || body.Email == "" || body.Password == "" {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid payload"})
 	}
-	u, token, err := h.svc.Login(c.Request().Context(),
+
+	res, err := h.svc.Login(
+		c.Request().Context(),
 		"local",
 		&strategy.AuthenticateRequest{Email: body.Email, Password: body.Password})
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+		log.Err(err)
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
 	}
-	return c.JSON(http.StatusOK, map[string]any{"user": u, "token": token})
+
+	return c.JSON(http.StatusOK, map[string]any{"access_token": res.AccessToken, "refresh_token": res.RefreshToken})
 }
 
 // GET /api/v1/auth/google/login
 func (h *authHandler) GoogleLogin() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		url := h.oauth.AuthCodeURL("random-state-string", oauth2.AccessTypeOffline)
-		return c.Redirect(http.StatusTemporaryRedirect, url)
+		return c.JSON(http.StatusOK, url)
 	}
 }
 
@@ -86,7 +69,7 @@ func (h *authHandler) GoogleLogin() echo.HandlerFunc {
 func (h *authHandler) GoogleCallback(c echo.Context) error {
 	code := c.QueryParam("code")
 
-	user, token, err := h.svc.Login(
+	res, err := h.svc.Login(
 		c.Request().Context(),
 		"google",
 		&strategy.AuthenticateRequest{
@@ -95,15 +78,43 @@ func (h *authHandler) GoogleCallback(c echo.Context) error {
 	)
 
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+		log.Err(err).Send()
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
 	}
 
-	return c.JSON(
-		http.StatusOK,
-		map[string]any{
-			"user":  user,
-			"token": token,
-		},
+	return c.Redirect(http.StatusTemporaryRedirect, h.redirectWithTokens(res))
+	// return c.JSON(http.StatusOK, map[string]string{ "url": res.AccessToken })
+}
+
+func (h *authHandler) RefreshToken(c echo.Context) error {
+	var req struct {
+		RefreshToken string `json:"refresh_token"`
+	}
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
+	}
+
+	res, err := h.svc.RefreshToken(c.Request().Context(), req.RefreshToken)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(200, map[string]string{
+		"access_token":  res.AccessToken,
+		"refresh_token": res.RefreshToken,
+	})
+}
+
+func (h *authHandler) redirectWithTokens(response *responses.AuthResponse) string {
+	frontendURL := fmt.Sprintf("%s/oauth/callback", h.cfg.AllowOrigins[0])
+	fmt.Print(frontendURL)
+
+	resURL := fmt.Sprintf(
+		"%s?accessToken=%s&refreshToken=%s",
+		frontendURL,
+		url.QueryEscape(response.AccessToken),
+		url.QueryEscape(response.RefreshToken),
 	)
 
+	return resURL
 }

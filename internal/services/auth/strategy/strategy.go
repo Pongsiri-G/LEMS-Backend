@@ -17,3 +17,10 @@ type AuthenticateRequest struct {
 type AuthStrategy interface {
 	Authenticate(ctx context.Context, req *AuthenticateRequest) (*models.User, error)
 }
+
+func NewStrategyMap(local *LocalStrategy, google *GoogleStrategy) map[string]AuthStrategy {
+	return map[string]AuthStrategy{
+		"local":  local,
+		"google": google,
+	}
+}

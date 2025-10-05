@@ -9,8 +9,9 @@ import (
 )
 
 type Config struct {
-	Port string `env:"PORT"`
-
+	Port         string   `env:"PORT"`
+	AllowOrigins []string `env:"ALLOW_ORIGINS" envSeparator:","`
+	JWT      JWT
 	Database DBConfig     `envPrefix:"DATABASE_"`
 	Google   GoogleConfig `envPrefix:"GOOGLE_"`
 	PG       PGConfig     `envPrefix:"PG_"`

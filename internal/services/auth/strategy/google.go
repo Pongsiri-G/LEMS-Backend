@@ -6,7 +6,6 @@ import (
 	"errors"
 	"io"
 
-	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/configs"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
 	userrepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
@@ -16,14 +15,12 @@ import (
 type GoogleStrategy struct {
 	client *oauth2.Config
 	users  userrepo.Repository
-	cfg    *configs.Config
 }
 
-func NewGoogleStrategy(client *oauth2.Config, users userrepo.Repository, cfg *configs.Config) *GoogleStrategy {
+func NewGoogleStrategy(client *oauth2.Config, users userrepo.Repository) *GoogleStrategy {
 	return &GoogleStrategy{
 		client: client,
 		users:  users,
-		cfg:    cfg,
 	}
 }
 

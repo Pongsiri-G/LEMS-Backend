@@ -5,6 +5,7 @@ import (
 
 	// Configs
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/configs"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/middlewares"
 
 	// Handlers
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers"
@@ -12,6 +13,7 @@ import (
 	borrowHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/borrow"
 	itemHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/item"
 	minioHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/minio"
+	userHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/user"
 
 	// Infrastructure
 	authInfra "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/auth"
@@ -32,6 +34,7 @@ import (
 	itemSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/item"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/jwt"
 	minioSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/minio"
+	userSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/user"
 )
 
 var ConfigSet = wire.NewSet(
@@ -54,30 +57,17 @@ var RepositorySet = wire.NewSet(
 
 // ---- Strategies ----
 
-type strategyDeps struct {
-	Local  *strategy.LocalStrategy
-	Google *strategy.GoogleStrategy
-}
-
-func newStrategyMap(d strategyDeps) map[string]strategy.AuthStrategy {
-	return map[string]strategy.AuthStrategy{
-		"local":  d.Local,
-		"google": d.Google,
-	}
-}
-
 var StrategySet = wire.NewSet(
+	strategy.NewStrategyMap,
 	strategy.NewLocalStrategy,
 	strategy.NewGoogleStrategy,
-	wire.Struct(new(strategyDeps), "*"),
-	newStrategyMap,
 )
 
 // ---- Services ----
 
 var ServiceSet = wire.NewSet(
-	jwt.NewJWTService,
 	authSvc.NewAuthService,
+	userSvc.NewUserService,
 	minioSvc.NewMinioService,
 	borrowSvc.NewBorrowService,
 	itemSvc.NewItemService,
@@ -88,7 +78,13 @@ var ServiceSet = wire.NewSet(
 var HandlerSet = wire.NewSet(
 	handlers.NewHandlers,
 	authHd.NewAuthHandler,
+	userHd.NewUserHandler,
 	minioHd.NewFileHandler,
 	borrowHd.NewBorrowHandler,
 	itemHd.NewItemHandler,
+)
+
+// ---- Middlewares ----
+var MiddlewareSet = wire.NewSet(
+	middlewares.NewAuthMiddleware,
 )

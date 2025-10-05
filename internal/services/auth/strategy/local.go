@@ -3,9 +3,7 @@ package strategy
 import (
 	"context"
 	"errors"
-	"time"
 
-	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
 	userrepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
 	"golang.org/x/crypto/bcrypt"
@@ -29,8 +27,5 @@ func (s *LocalStrategy) Authenticate(ctx context.Context, req *AuthenticateReque
 	if bcrypt.CompareHashAndPassword([]byte(u.UserPassword), []byte(req.Password)) != nil {
 		return nil, ErrInvalidCredentials
 	}
-	now := time.Now()
-	u.LastLoggedIn = &now
-	u.AuthProvider = enums.AuthProvider("LOCAL")
 	return u, nil
 }
