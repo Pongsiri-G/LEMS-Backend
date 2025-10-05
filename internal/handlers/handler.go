@@ -2,17 +2,19 @@ package handlers
 
 import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/auth"
+	borrowhd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/borrow"
+	miniohd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/minio"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/user"
 )
 type Handlers struct {
-	Auth   authhd.AuthHandler
+	Auth   auth.AuthHandler
 	File   miniohd.FileHandler
 	Borrow borrowhd.BorrowHandler
 	User user.UserHandler
 }
 
 func NewHandlers(
-	auth authhd.AuthHandler,
+	auth auth.AuthHandler,
 	file miniohd.FileHandler,
 	borrow borrowhd.BorrowHandler,
 	user user.UserHandler,
