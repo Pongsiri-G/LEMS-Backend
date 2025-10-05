@@ -17,6 +17,7 @@ func main() {
 	err := db.AutoMigrate(
 		&models.User{},
 		&models.Items{},
+		&models.BorrowLog{},
 	)
 	if err != nil {
 		log.Fatal().Msgf("Migration failed: %v", err)

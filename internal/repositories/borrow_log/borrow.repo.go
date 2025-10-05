@@ -11,6 +11,7 @@ import (
 type Repository interface {
 	FindBorrowLogByUserIDAndBorrowID(ctx context.Context, userID, borrowID uuid.UUID) (*models.BorrowLog, error)
 	EditBorrowLog(ctx context.Context, borrowLog *models.BorrowLog) error
+	CreateBorrowLog(ctx context.Context, borrowLog models.BorrowLog) error
 }
 
 type repository struct {
@@ -19,6 +20,10 @@ type repository struct {
 
 func NewBorrowLogRepository(db *gorm.DB) Repository {
 	return &repository{db: db}
+}
+
+func (r *repository) CreateBorrowLog(ctx context.Context, borrowLog models.BorrowLog) error {
+	return r.db.WithContext(ctx).Create(borrowLog).Error
 }
 
 // FindBorrowLogByUserIDAndBorrowID implements Repository.
