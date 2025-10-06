@@ -39,12 +39,14 @@ func (h *handler) Borrow(c echo.Context) error {
 			})
 		case borrowSvc.ErrItemQuantityInSufficient:
 			return c.JSON(http.StatusBadRequest, echo.Map{
-				"message" : borrowSvc.ErrItemQuantityInSufficient.Error(), 
+				"message": borrowSvc.ErrItemQuantityInSufficient.Error(),
 			})
 		case borrowSvc.ErrFailedToUpdateQuantity:
 			return c.JSON(http.StatusInternalServerError, echo.Map{
-				"message" : borrowSvc.ErrFailedToUpdateQuantity.Error(), 
+				"message": borrowSvc.ErrFailedToUpdateQuantity.Error(),
 			})
+		case borrowSvc.ErrItemNotFound:
+			return c.JSON(http.StatusNotFound, nil)
 		default:
 			log.Error().Err(err).Msg("internal server error")
 			return c.JSON(http.StatusInternalServerError, echo.Map{
@@ -73,6 +75,8 @@ func (h *handler) Return(c echo.Context) error {
 			return c.JSON(http.StatusBadRequest, echo.Map{
 				"message": "invalid uuid format",
 			})
+		case borrowSvc.ErrItemNotFound:
+			return c.JSON(http.StatusNotFound, nil)
 		default:
 			log.Error().Err(err).Msg("internal server error")
 			return c.JSON(http.StatusInternalServerError, echo.Map{
