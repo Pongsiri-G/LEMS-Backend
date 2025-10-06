@@ -15,7 +15,7 @@ import (
 
 type Service interface {
 	CreateItem(ctx context.Context, req *requests.CreateItemRequest) error
-	GetBorrowItem(ctx context.Context, itemID string) (*models.Item, error)
+	GetBorrowItem(ctx context.Context, itemID string) (*responses.ItemResponse, error)
 	GetAll(ctx context.Context) ([]responses.ItemResponse, error)
 	GetMyBorrow(ctx context.Context, userID string) ([]responses.ItemResponse, error)
 }
@@ -28,20 +28,30 @@ func NewItemService(repo itemRepo.Repository) Service {
 	return &itemService{repo: repo}
 }
 
-func (i *itemService) GetBorrowItem(ctx context.Context, itemID string) (*models.Item, error) {
+func (i *itemService) GetBorrowItem(ctx context.Context, itemID string) (*responses.ItemResponse, error) {
 	itemIDUUID, err := uuid.Parse(itemID)
 	if err != nil {
 		log.Error().Err(err).Msg("invalid uuid format")
-		return &models.Item{}, ErrInvalidUUID
+		return &responses.ItemResponse{}, ErrInvalidUUID
 	}
 
 	item, err := i.repo.GetItemByID(ctx, itemIDUUID)
 
 	if err != nil {
-		return &models.Item{}, err
+		return &responses.ItemResponse{}, err
 	}
 
-	return item, nil
+	response := responses.ItemResponse{
+		ID:          item.ItemID,
+		Name:        item.ItemName,
+		Description: item.ItemDescription,
+		PictureURL:  item.ItemPictureURL,
+		Status:      item.ItemStatus,
+		Quantity:    item.ItemQuantity,
+		CreatedAt:   item.ItemCreatedAt,
+		UpdatedAt:   item.ItemUpdatedAt,
+	}
+	return &response, nil
 }
 
 // CreateItem implements Service.
@@ -118,3 +128,4 @@ func (i *itemService) GetMyBorrow(ctx context.Context, userID string) ([]respons
 
 	return response, nil
 }
+
