@@ -14,6 +14,7 @@ import (
 	borrow2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/borrow"
 	item3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/item"
 	minio4 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/minio"
+	tag3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/tag"
 	user3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/user"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/database"
@@ -22,12 +23,14 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrow_log"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
 	minio2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/minio"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/tag"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
 	auth2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/borrow"
 	item2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/item"
 	minio3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/minio"
+	tag2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/tag"
 	user2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/user"
 )
 
@@ -58,7 +61,10 @@ func InitializeAPI() (*server.EchoServer, error) {
 	userHandler := user3.NewUserHandler(userService, oauth2Config)
 	itemService := item2.NewItemService(itemRepository)
 	itemHandler := item3.NewItemHandler(itemService)
-	handlersHandlers := handlers.NewHandlers(authHandler, fileHandler, borrowHandler, userHandler, itemHandler)
+	tagRepository := tag.NewTagRepository(db)
+	tagService := tag2.NewTagService(tagRepository)
+	tagHandler := tag3.NewTagHandler(tagService)
+	handlersHandlers := handlers.NewHandlers(authHandler, fileHandler, borrowHandler, userHandler, itemHandler, tagHandler)
 	authMiddleware := middlewares.NewAuthMiddleware(config)
 	echoServer := server.NewEchoServer(config, handlersHandlers, authMiddleware)
 	return echoServer, nil

@@ -13,6 +13,7 @@ import (
 	borrowHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/borrow"
 	itemHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/item"
 	minioHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/minio"
+	tagHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/tag"
 	userHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/user"
 
 	// Infrastructure
@@ -25,6 +26,7 @@ import (
 	borrowRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrow_log"
 	itemRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
 	minioRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/minio"
+	tagRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/tag"
 	userRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
 
 	// Services
@@ -33,6 +35,7 @@ import (
 	borrowSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/borrow"
 	itemSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/item"
 	minioSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/minio"
+	tagSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/tag"
 	userSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/user"
 )
 
@@ -52,6 +55,7 @@ var RepositorySet = wire.NewSet(
 	minioRepo.NewMinioRepository,
 	borrowRepo.NewBorrowLogRepository,
 	itemRepo.NewItemRepository,
+	tagRepo.NewTagRepository,
 )
 
 // ---- Strategies ----
@@ -70,6 +74,7 @@ var ServiceSet = wire.NewSet(
 	minioSvc.NewMinioService,
 	borrowSvc.NewBorrowService,
 	itemSvc.NewItemService,
+	tagSvc.NewTagService,
 )
 
 // ---- Handlers ----
@@ -81,6 +86,7 @@ var HandlerSet = wire.NewSet(
 	minioHd.NewFileHandler,
 	borrowHd.NewBorrowHandler,
 	itemHd.NewItemHandler,
+	tagHd.NewTagHandler,
 )
 
 // ---- Middlewares ----
