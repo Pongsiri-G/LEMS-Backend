@@ -89,5 +89,5 @@ func (r *repository) UpdateLastLogin(ctx context.Context, userID uuid.UUID) erro
 	return r.db.WithContext(ctx).
 		Model(&models.User{}).
 		Where("user_id = ?", userID).
-		Update("last_login", now).Error
+		Update("last_logged_in", now).Error
 }

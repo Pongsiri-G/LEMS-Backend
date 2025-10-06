@@ -8,7 +8,7 @@ import (
 )
 
 type Items struct {
-	ItemID          uuid.UUID        `db:"item_id" gorm:"primaryKey"`
+	ItemID          uuid.UUID        `db:"item_id" gorm:"primaryKey;type:uuid"`
 	ItemName        string           `db:"item_name"`
 	ItemDescription *string          `db:"item_description"`
 	ItemPictureURL  *string          `db:"item_picture_url"`

@@ -43,7 +43,7 @@ func (s *service) Borrow(ctx context.Context, req *requests.BorrowRequest) error
 		BorrowID:     uuid.New(),
 		UserID:       userID,
 		ItemID:       itemID,
-		BorrowStatus: enums.StatusReturned,
+		BorrowStatus: enums.StatusBorrowed,
 		BorrowDate:   utils.BangkokNow(),
 		ReturnDate:   nil,
 		CreatedAt:    utils.BangkokNow(),

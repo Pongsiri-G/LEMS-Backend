@@ -6,6 +6,7 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/requests"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/responses"
 	itemRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/utils"
 	"github.com/google/uuid"
@@ -15,6 +16,8 @@ import (
 type Service interface {
 	CreateItem(ctx context.Context, req *requests.CreateItemRequest) error
 	GetBorrowItem(ctx context.Context, itemID string) (*models.Items, error)
+	GetAll(ctx context.Context) ([]responses.ItemResponse, error)
+	GetMyBorrow(ctx context.Context, userID string) ([]responses.ItemResponse, error)
 }
 
 type itemService struct {
@@ -56,4 +59,62 @@ func (i *itemService) CreateItem(ctx context.Context, req *requests.CreateItemRe
 
 	return i.repo.CreateItem(ctx, item)
 
+}
+
+func (i *itemService) GetAll(ctx context.Context) ([]responses.ItemResponse, error) {
+	items, err := i.repo.GetAll(ctx)
+	var response []responses.ItemResponse
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, i := range items {
+		r := responses.ItemResponse{
+			ID: i.ItemID,
+			Name: i.ItemName,
+			Description: i.ItemDescription,
+			PictureURL: i.ItemPictureURL,
+			Status: i.ItemStatus,
+			Quantity: i.ItemQuantity,
+			CreatedAt: i.ItemCreatedAt,
+			UpdatedAt: i.ItemUpdatedAt,
+		}
+		response = append(response, r)
+	}
+
+	return response, nil
+}
+
+func (i *itemService) GetMyBorrow(ctx context.Context, userID string) ([]responses.ItemResponse, error) {
+	userUID, err := uuid.Parse(userID)
+
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to parse UUID.")
+		return nil, err
+	}
+
+	var items []models.Items
+	items, err = i.repo.GetMyBorrow(ctx, userUID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var response []responses.ItemResponse
+	for _, i := range items {
+		r := responses.ItemResponse{
+			ID: i.ItemID,
+			Name: i.ItemName,
+			Description: i.ItemDescription,
+			PictureURL: i.ItemPictureURL,
+			Status: i.ItemStatus,
+			Quantity: i.ItemQuantity,
+			CreatedAt: i.ItemCreatedAt,
+			UpdatedAt: i.ItemUpdatedAt,
+		}
+		response = append(response, r)
+	}
+
+	return response, nil
 }
