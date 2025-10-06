@@ -1,6 +1,6 @@
 package requests
 
-//	type Items struct {
+//	type Item struct {
 //		ItemID          uuid.UUID `db:"item_id" gorm:"primaryKey"`
 //		ItemName        string    `db:"item_name"`
 //		ItemDescription string    `db:"item_description"`

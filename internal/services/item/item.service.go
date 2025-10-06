@@ -15,7 +15,7 @@ import (
 
 type Service interface {
 	CreateItem(ctx context.Context, req *requests.CreateItemRequest) error
-	GetBorrowItem(ctx context.Context, itemID string) (*models.Items, error)
+	GetBorrowItem(ctx context.Context, itemID string) (*models.Item, error)
 	GetAll(ctx context.Context) ([]responses.ItemResponse, error)
 	GetMyBorrow(ctx context.Context, userID string) ([]responses.ItemResponse, error)
 }
@@ -28,17 +28,17 @@ func NewItemService(repo itemRepo.Repository) Service {
 	return &itemService{repo: repo}
 }
 
-func (i *itemService) GetBorrowItem(ctx context.Context, itemID string) (*models.Items, error) {
+func (i *itemService) GetBorrowItem(ctx context.Context, itemID string) (*models.Item, error) {
 	itemIDUUID, err := uuid.Parse(itemID)
 	if err != nil {
 		log.Error().Err(err).Msg("invalid uuid format")
-		return &models.Items{}, ErrInvalidUUID
+		return &models.Item{}, ErrInvalidUUID
 	}
 
 	item, err := i.repo.GetItemByID(ctx, itemIDUUID)
 
 	if err != nil {
-		return &models.Items{}, err
+		return &models.Item{}, err
 	}
 
 	return item, nil
@@ -46,7 +46,7 @@ func (i *itemService) GetBorrowItem(ctx context.Context, itemID string) (*models
 
 // CreateItem implements Service.
 func (i *itemService) CreateItem(ctx context.Context, req *requests.CreateItemRequest) error {
-	item := &models.Items{
+	item := &models.Item{
 		ItemID:          uuid.New(),
 		ItemName:        req.Name,
 		ItemDescription: req.Description,
@@ -71,14 +71,14 @@ func (i *itemService) GetAll(ctx context.Context) ([]responses.ItemResponse, err
 
 	for _, i := range items {
 		r := responses.ItemResponse{
-			ID: i.ItemID,
-			Name: i.ItemName,
+			ID:          i.ItemID,
+			Name:        i.ItemName,
 			Description: i.ItemDescription,
-			PictureURL: i.ItemPictureURL,
-			Status: i.ItemStatus,
-			Quantity: i.ItemQuantity,
-			CreatedAt: i.ItemCreatedAt,
-			UpdatedAt: i.ItemUpdatedAt,
+			PictureURL:  i.ItemPictureURL,
+			Status:      i.ItemStatus,
+			Quantity:    i.ItemQuantity,
+			CreatedAt:   i.ItemCreatedAt,
+			UpdatedAt:   i.ItemUpdatedAt,
 		}
 		response = append(response, r)
 	}
@@ -94,7 +94,7 @@ func (i *itemService) GetMyBorrow(ctx context.Context, userID string) ([]respons
 		return nil, err
 	}
 
-	var items []models.Items
+	var items []models.Item
 	items, err = i.repo.GetMyBorrow(ctx, userUID)
 
 	if err != nil {
@@ -104,14 +104,14 @@ func (i *itemService) GetMyBorrow(ctx context.Context, userID string) ([]respons
 	var response []responses.ItemResponse
 	for _, i := range items {
 		r := responses.ItemResponse{
-			ID: i.ItemID,
-			Name: i.ItemName,
+			ID:          i.ItemID,
+			Name:        i.ItemName,
 			Description: i.ItemDescription,
-			PictureURL: i.ItemPictureURL,
-			Status: i.ItemStatus,
-			Quantity: i.ItemQuantity,
-			CreatedAt: i.ItemCreatedAt,
-			UpdatedAt: i.ItemUpdatedAt,
+			PictureURL:  i.ItemPictureURL,
+			Status:      i.ItemStatus,
+			Quantity:    i.ItemQuantity,
+			CreatedAt:   i.ItemCreatedAt,
+			UpdatedAt:   i.ItemUpdatedAt,
 		}
 		response = append(response, r)
 	}

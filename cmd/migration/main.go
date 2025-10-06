@@ -16,7 +16,7 @@ func main() {
 
 	err := db.AutoMigrate(
 		&models.User{},
-		&models.Items{},
+		&models.Item{},
 		&models.BorrowLog{},
 	)
 	if err != nil {
