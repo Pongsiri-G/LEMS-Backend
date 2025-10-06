@@ -2,10 +2,10 @@ package item
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
 
@@ -15,10 +15,38 @@ type Repository interface {
 	UpdateItem(ctx context.Context, item *models.Item) error
 	GetAll(ctx context.Context) ([]models.Item, error)
 	GetMyBorrow(ctx context.Context, userID uuid.UUID) ([]models.Item, error)
+	GetChildItemByParentID(ctx context.Context, itemID uuid.UUID) ([]models.Item, error)
 }
 
 type repository struct {
 	db *gorm.DB
+}
+
+// Constuctor
+func NewItemRepository(db *gorm.DB) Repository {
+	return &repository{db: db}
+}
+
+func (r *repository) GetChildItemByParentID(ctx context.Context, itemID uuid.UUID) ([]models.Item, error) {
+	var itemSets []models.ItemSets
+	items := make([]models.Item, 0)
+	err := r.db.Where("parent_item_id = ?", itemID).Find(&itemSets).Error
+	if err != nil {
+		log.Error().Err(err).Msg("can't get item sets from database")
+		return []models.Item{}, err
+	}
+	if len(itemSets) <= 0 {
+		return items, nil
+	}
+	for _, itemSet := range itemSets {
+		var item models.Item
+		if err := r.db.First(&item, itemSet.ChildItemID).Error; err != nil {
+			log.Error().Err(err).Msg("can't get item from parent id that get from item sets")
+			continue
+		}
+		items = append(items, item)
+	}
+	return items, nil
 }
 
 func (r *repository) UpdateItem(ctx context.Context, item *models.Item) error {
@@ -31,7 +59,6 @@ func (r *repository) GetItemByID(ctx context.Context, itemID uuid.UUID) (*models
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			fmt.Println(("ERR Record not found"))
 			return nil, nil
 		}
 		return nil, err
@@ -39,10 +66,6 @@ func (r *repository) GetItemByID(ctx context.Context, itemID uuid.UUID) (*models
 
 	return &item, nil
 
-}
-
-func NewItemRepository(db *gorm.DB) Repository {
-	return &repository{db: db}
 }
 
 // CreateItem implements Repository.

@@ -20,6 +20,7 @@ func main() {
 		&models.BorrowLog{},
 		&models.ItemTag{},
 		&models.Tag{},
+		&models.ItemSets{},
 	)
 	if err != nil {
 		log.Fatal().Msgf("Migration failed: %v", err)
