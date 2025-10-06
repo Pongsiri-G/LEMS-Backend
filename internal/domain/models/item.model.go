@@ -19,4 +19,11 @@ type Item struct {
 	ItemUpdatedAt       time.Time        `db:"item_updated_at"`
 }
 
+
+
+type ItemParentChild struct {
+	ParentID uuid.UUID `db:"parent_id" gorm:"type:uuid"`
+	ChildID  uuid.UUID `db:"child_id" gorm:"type:uuid"`
+}
+
 func (Item) TableName() string { return "items" }

@@ -15,6 +15,7 @@ type ItemResponse struct {
 	Status          enums.ItemStatus `json:"status"`
 	Quantity        int              `json:"quantity"`
 	CurrentQuantity int              `json:"current_quantity"`
+	Prerequisite    *[]ItemResponse  `json:"prerequisite,omitempty"`
 	CreatedAt       time.Time        `json:"created_at"`
 	UpdatedAt       time.Time        `json:"updated_at"`
 }

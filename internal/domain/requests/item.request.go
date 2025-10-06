@@ -11,9 +11,17 @@ package requests
 //		ItemUpdatedAt   time.Time `db:"item_updated_at"`
 //	}
 type CreateItemRequest struct {
-	Name        string   `json:"name" validate:"required,max=100"`
-	Description *string  `json:"description" validate:"max=500"`
-	Price       *float64 `json:"price" validate:"gte=0"`
-	ImageURL    *string  `json:"image_url"`
-	Quantity    int      `json:"quantity" validate:"gte=0"`
+	Name         string    `json:"name" validate:"required,max=100"`
+	Description  *string   `json:"description" validate:"max=500"`
+	ImageURL     *string   `json:"image_url"`
+	Quantity     int       `json:"quantity" validate:"gte=0"`
+	Prerequisite *[]string `json:"prerequisite" validate:"omitempty,max=500"`
 }
+
+/*
+{
+	id
+
+	prerequisite: ["" , "" , ""]
+}
+*/

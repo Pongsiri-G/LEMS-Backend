@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
-	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/requests"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/responses"
@@ -27,7 +26,7 @@ type Service interface {
 
 type itemService struct {
 	repo itemRepo.Repository
-	f map[string]strategy.FilterStrategy
+	f    map[string]strategy.FilterStrategy
 }
 
 func NewItemService(repo itemRepo.Repository) Service {
@@ -84,7 +83,24 @@ func (i *itemService) GetBorrowItem(ctx context.Context, itemID string) (*respon
 
 // CreateItem implements Service.
 func (i *itemService) CreateItem(ctx context.Context, req *requests.CreateItemRequest) error {
-	item := &models.Item{
+	if req.Prerequisite != nil && len(*req.Prerequisite) > 0 {
+		var items []models.Item
+		for _, p := range *req.Prerequisite {
+			itemIDUUID, err := uuid.Parse(p)
+			if err != nil {
+				return ErrInvalidUUID
+			}
+			item, err := i.repo.GetItemByID(ctx, itemIDUUID)
+			if err != nil {
+				return err
+			}
+			items = append(items, *item)
+		}
+		for _, item := range items {
+
+		}
+	}
+	item := &models.Items{
 		ItemID:          uuid.New(),
 		ItemName:        req.Name,
 		ItemDescription: req.Description,
@@ -106,7 +122,19 @@ func (i *itemService) GetAll(ctx context.Context) ([]responses.ItemResponse, err
 		return nil, err
 	}
 
-	response := itemutil.ToResponses(items)	
+	for _, i := range items {
+		r := responses.ItemResponse{
+			ID:          i.ItemID,
+			Name:        i.ItemName,
+			Description: i.ItemDescription,
+			PictureURL:  i.ItemPictureURL,
+			Status:      i.ItemStatus,
+			Quantity:    i.ItemQuantity,
+			CreatedAt:   i.ItemCreatedAt,
+			UpdatedAt:   i.ItemUpdatedAt,
+		}
+		response = append(response, r)
+	}
 
 	return response, nil
 }
@@ -126,28 +154,20 @@ func (i *itemService) GetMyBorrow(ctx context.Context, userID string) ([]respons
 		return nil, err
 	}
 
-	response := itemutil.ToResponses(items)
-
-	return response, nil
-}
-
-func (i *itemService) GetFiltered(ctx context.Context, strat string, query []string) ([]responses.ItemResponse, error) {
-	i.f = strategy.NewFilterMap(query)
-	
-	filter := i.f[strat]
-
-	if filter == nil {
-		return nil, exceptions.ErrNoSuchStrategy
+	var response []responses.ItemResponse
+	for _, i := range items {
+		r := responses.ItemResponse{
+			ID:          i.ItemID,
+			Name:        i.ItemName,
+			Description: i.ItemDescription,
+			PictureURL:  i.ItemPictureURL,
+			Status:      i.ItemStatus,
+			Quantity:    i.ItemQuantity,
+			CreatedAt:   i.ItemCreatedAt,
+			UpdatedAt:   i.ItemUpdatedAt,
+		}
+		response = append(response, r)
 	}
-
-	filter.InitFilter(i.repo)
-
-	items, err := filter.Filter(ctx)
-
-	if err != nil {
-		return nil, err
-	}
-	response := itemutil.ToResponses(items)
 
 	return response, nil
 }
