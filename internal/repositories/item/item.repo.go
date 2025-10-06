@@ -7,7 +7,6 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-
 )
 
 type Repository interface {
@@ -33,7 +32,7 @@ func (r *repository) GetItemByID(ctx context.Context, itemID uuid.UUID) (*models
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			fmt.Println(("ERR Record not found"))
-			return nil, err
+			return nil, nil
 		}
 		return nil, err
 	}
@@ -69,6 +68,6 @@ func (r *repository) GetMyBorrow(ctx context.Context, userID uuid.UUID) ([]model
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return items, nil
 }

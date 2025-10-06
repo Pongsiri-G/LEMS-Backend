@@ -51,6 +51,14 @@ func (s *service) Borrow(ctx context.Context, req *requests.BorrowRequest) error
 	}
 
 	item, err := s.itemRepo.GetItemByID(ctx, itemID)
+	if err != nil {
+		return err
+	}
+
+	if item == nil {
+		log.Error().Err(err).Msg("item not found")
+		return ErrItemNotFound
+	}
 	if item.ItemQuantity-1 < 0 {
 		log.Error().Err(err).Msg("quantity of the item less than zero")
 		return ErrItemQuantityInSufficient
@@ -59,7 +67,7 @@ func (s *service) Borrow(ctx context.Context, req *requests.BorrowRequest) error
 	item.ItemQuantity -= 1
 	updateErr := s.itemRepo.UpdateItem(ctx, item)
 	if updateErr != nil {
-		log.Error().Err(err).Msg("failed to update quentitiy of item")
+		log.Error().Err(err).Msg("failed to update quantity of item")
 		return ErrFailedToUpdateQuantity
 	}
 
@@ -68,17 +76,27 @@ func (s *service) Borrow(ctx context.Context, req *requests.BorrowRequest) error
 
 // Return implements Service.
 func (s *service) Return(ctx context.Context, req *requests.ReturnRequest) error {
-	userID, err := uuid.FromBytes([]byte(req.UserID))
+	userID, err := uuid.Parse(req.UserID)
 	if err != nil {
 		log.Error().Err(err).Msg("invalid uuid format")
 		return ErrInvalidUUID
 	}
-	borrowID, err := uuid.FromBytes([]byte(req.StoreID))
+	borrowID, err := uuid.Parse(req.BorrowID)
 	if err != nil {
 		log.Error().Err(err).Msg("invalid uuid format")
 		return ErrInvalidUUID
 	}
+
 	borrow, err := s.borrowRepo.FindBorrowLogByUserIDAndBorrowID(ctx, userID, borrowID)
+	if borrow == nil {
+		log.Error().Err(err).Msg("borrow log not found")
+		return ErrItemNotFound
+	}
+	if err != nil {
+		return err
+	}
+
+	item, err := s.itemRepo.GetItemByID(ctx, borrow.ItemID)
 	if err != nil {
 		return err
 	}
@@ -88,5 +106,11 @@ func (s *service) Return(ctx context.Context, req *requests.ReturnRequest) error
 	borrow.ReturnDate = &now
 	borrow.UpdatedAt = now
 
-	return s.borrowRepo.EditBorrowLog(ctx, borrow)
+	err = s.borrowRepo.EditBorrowLog(ctx, borrow)
+	if err != nil {
+		return err
+	}
+
+	item.ItemQuantity += 1
+	return s.itemRepo.UpdateItem(ctx, item)
 }

@@ -28,27 +28,15 @@ func (r *repository) CreateBorrowLog(ctx context.Context, borrowLog models.Borro
 
 // FindBorrowLogByUserIDAndBorrowID implements Repository.
 func (r *repository) FindBorrowLogByUserIDAndBorrowID(ctx context.Context, userID uuid.UUID, borrowID uuid.UUID) (*models.BorrowLog, error) {
-	var borrowLogs []models.BorrowLog
-	rows, err := r.db.Find(&models.BorrowLog{}, "user_id = ? AND borrow_id = ? AND borrow_status = ?", userID, borrowID, "BORROWED").Rows()
+	var borrowLog models.BorrowLog
+	err := r.db.WithContext(ctx).Where("user_id = ? AND borrow_id = ? AND borrow_status = ?", userID, borrowID, "BORROWED").First(&borrowLog).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}
-
-	defer rows.Close()
-	err = r.db.ScanRows(rows, &borrowLogs)
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	if len(borrowLogs) > 1 {
-		return nil, ErrMoreThanOneBorrowLog
-	}
-
-	return &borrowLogs[0], nil
-
+	return &borrowLog, nil
 }
 
 // EditBorrowLog implements Repository.
