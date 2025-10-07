@@ -18,6 +18,7 @@ type Service interface {
 	GetBorrowItem(ctx context.Context, itemID string) (*responses.ItemResponse, error)
 	GetAll(ctx context.Context) ([]responses.ItemResponse, error)
 	GetMyBorrow(ctx context.Context, userID string) ([]responses.ItemResponse, error)
+	GetChildItemByParentID(ctx context.Context, itemID string) ([]responses.ItemResponse, error)
 }
 
 type itemService struct {
@@ -26,6 +27,37 @@ type itemService struct {
 
 func NewItemService(repo itemRepo.Repository) Service {
 	return &itemService{repo: repo}
+}
+
+func (i *itemService) GetChildItemByParentID(ctx context.Context, itemID string) ([]responses.ItemResponse, error) {
+	itemIDUUID, err := uuid.Parse(itemID)
+	if err != nil {
+		log.Error().Err(err).Msg("invalid uuid format")
+		return []responses.ItemResponse{}, ErrInvalidUUID
+	}
+	items, err := i.repo.GetChildItemByParentID(ctx, itemIDUUID)
+	response := make([]responses.ItemResponse, 0)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, i := range items {
+		r := responses.ItemResponse{
+			ID:              i.ItemID,
+			Name:            i.ItemName,
+			Description:     i.ItemDescription,
+			PictureURL:      i.ItemPictureURL,
+			Status:          i.ItemStatus,
+			Quantity:        i.ItemQuantity,
+			CurrentQuantity: i.ItemCurrentQuantity,
+			CreatedAt:       i.ItemCreatedAt,
+			UpdatedAt:       i.ItemUpdatedAt,
+		}
+		response = append(response, r)
+	}
+
+	return response, nil
 }
 
 func (i *itemService) GetBorrowItem(ctx context.Context, itemID string) (*responses.ItemResponse, error) {
@@ -42,14 +74,15 @@ func (i *itemService) GetBorrowItem(ctx context.Context, itemID string) (*respon
 	}
 
 	response := responses.ItemResponse{
-		ID:          item.ItemID,
-		Name:        item.ItemName,
-		Description: item.ItemDescription,
-		PictureURL:  item.ItemPictureURL,
-		Status:      item.ItemStatus,
-		Quantity:    item.ItemQuantity,
-		CreatedAt:   item.ItemCreatedAt,
-		UpdatedAt:   item.ItemUpdatedAt,
+		ID:              item.ItemID,
+		Name:            item.ItemName,
+		Description:     item.ItemDescription,
+		PictureURL:      item.ItemPictureURL,
+		Status:          item.ItemStatus,
+		Quantity:        item.ItemQuantity,
+		CurrentQuantity: item.ItemCurrentQuantity,
+		CreatedAt:       item.ItemCreatedAt,
+		UpdatedAt:       item.ItemUpdatedAt,
 	}
 	return &response, nil
 }
@@ -128,4 +161,3 @@ func (i *itemService) GetMyBorrow(ctx context.Context, userID string) ([]respons
 
 	return response, nil
 }
-

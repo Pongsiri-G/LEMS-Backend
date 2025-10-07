@@ -14,6 +14,7 @@ type ItemHandler interface {
 	GetBorrowItem(c echo.Context) error
 	GetAll(c echo.Context) error
 	GetMyBorrow(c echo.Context) error
+	GetChildItemByParentID(c echo.Context) error
 }
 
 type handler struct {
@@ -25,8 +26,21 @@ func NewItemHandler(service itemService.Service) ItemHandler {
 	return &handler{service: service}
 }
 
+func (h *handler) GetChildItemByParentID(c echo.Context) error {
+	itemID := c.Param("item-id")
+	response, err := h.service.GetChildItemByParentID(c.Request().Context(), itemID)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "bad request",
+		})
+	}
+
+	return c.JSON(http.StatusOK, response)
+}
+
 func (h *handler) GetBorrowItem(c echo.Context) error {
-	itemID := c.Param("itemID")
+	itemID := c.Param("item-id")
 	item, err := h.service.GetBorrowItem(c.Request().Context(), itemID)
 
 	if err != nil {
@@ -75,10 +89,9 @@ func (h *handler) CreateItem(c echo.Context) error {
 func (h *handler) GetAll(c echo.Context) error {
 	response, err := h.service.GetAll(c.Request().Context())
 
-	
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{
-			"message" : "Internal Server Error",
+			"message": "Internal Server Error",
 		})
 	}
 
@@ -87,10 +100,10 @@ func (h *handler) GetAll(c echo.Context) error {
 
 func (h *handler) GetMyBorrow(c echo.Context) error {
 	response, err := h.service.GetMyBorrow(c.Request().Context(), c.Param("user_id"))
-	
+
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{
-			"message" : "Internal Server Error",
+			"message": "Internal Server Error",
 		})
 	}
 

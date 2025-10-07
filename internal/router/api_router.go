@@ -59,9 +59,10 @@ func (r *Router) RegisterBorrowRouter() {
 
 func (r *Router) RegisterItemRouter() {
 	v1 := r.echo.Group("/api/v1")
-	v1.GET("/item/:itemID", r.handlers.Item.GetBorrowItem)
+	v1.GET("/item/:item-id", r.handlers.Item.GetBorrowItem)
 	v1.GET("/item/list", r.handlers.Item.GetAll)
 	v1.GET("/item/list/:user_id", r.handlers.Item.GetMyBorrow)
+	v1.GET("/item/child/:item-id", r.handlers.Item.GetChildItemByParentID)
 	v1.POST("/item", r.handlers.Item.CreateItem)
 }
 

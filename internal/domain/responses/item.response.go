@@ -8,12 +8,13 @@ import (
 )
 
 type ItemResponse struct {
-	ID          uuid.UUID         	`json:"id"`
-	Name        string       		`json:"name"`
-	Description *string      		`json:"desc"`
-	PictureURL  *string      		`json:"picture_url"`
-	Status      enums.ItemStatus 	`json:"status"`
-	Quantity    int          		`json:"quantity"`
-	CreatedAt   time.Time    		`json:"created_at"`
-	UpdatedAt   time.Time    		`json:"updated_at"`
+	ID              uuid.UUID        `json:"id"`
+	Name            string           `json:"name"`
+	Description     *string          `json:"desc"`
+	PictureURL      *string          `json:"picture_url"`
+	Status          enums.ItemStatus `json:"status"`
+	Quantity        int              `json:"quantity"`
+	CurrentQuantity int              `json:"current_quantity"`
+	CreatedAt       time.Time        `json:"created_at"`
+	UpdatedAt       time.Time        `json:"updated_at"`
 }
