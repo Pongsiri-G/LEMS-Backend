@@ -9,26 +9,22 @@ import (
 	"github.com/google/uuid"
 )
 
-
-
 type ItemInterface interface {
 	ToResponse() responses.ItemResponse
 	FromRequest(req *requests.CreateItemRequest) error
 }
 
 type Item struct {
-	ItemID          uuid.UUID        `db:"item_id" gorm:"primaryKey;type:uuid"`
-	ItemName        string           `db:"item_name"`
-	ItemDescription *string          `db:"item_description"`
-	ItemPictureURL  *string          `db:"item_picture_url"`
-	ItemStatus      enums.ItemStatus `db:"item_status"`
-	ItemQuantity    int              `db:"item_quantity"`
+	ItemID              uuid.UUID        `db:"item_id" gorm:"primaryKey;type:uuid"`
+	ItemName            string           `db:"item_name"`
+	ItemDescription     *string          `db:"item_description"`
+	ItemPictureURL      *string          `db:"item_picture_url"`
+	ItemStatus          enums.ItemStatus `db:"item_status"`
+	ItemQuantity        int              `db:"item_quantity"`
 	ItemCurrentQuantity int              `db:"item_current_quantity"`
-	ItemCreatedAt   time.Time        `db:"item_created_at"`
-	ItemUpdatedAt   time.Time        `db:"item_updated_at"`
+	ItemCreatedAt       time.Time        `db:"item_created_at"`
+	ItemUpdatedAt       time.Time        `db:"item_updated_at"`
 }
-
-
 
 type ItemParentChild struct {
 	ParentID uuid.UUID `db:"parent_id" gorm:"type:uuid"`
@@ -63,9 +59,5 @@ func (i *ItemWithChildren) FromRequest(req *requests.CreateItemRequest) error {
 func (i *ItemWithChildren) ToResponse() responses.ItemResponse {
 	panic("unimplemented")
 }
-
-
-
-
 
 func (Item) TableName() string { return "items" }
