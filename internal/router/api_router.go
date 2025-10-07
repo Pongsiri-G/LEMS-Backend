@@ -63,6 +63,7 @@ func (r *Router) RegisterItemRouter() {
 	v1.GET("/item/list", r.handlers.Item.GetAll)
 	v1.GET("/item/list/:user_id", r.handlers.Item.GetMyBorrow)
 	v1.GET("/item/child/:item-id", r.handlers.Item.GetChildItemByParentID)
+	v1.GET("/item/list/filter/:strategy", r.handlers.Item.GetFiltered)
 	v1.POST("/item", r.handlers.Item.CreateItem)
 }
 

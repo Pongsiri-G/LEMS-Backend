@@ -4,11 +4,14 @@ import (
 	"context"
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/requests"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/responses"
 	itemRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/item/strategy"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/utils"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/utils/itemutil"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 )
@@ -19,14 +22,16 @@ type Service interface {
 	GetAll(ctx context.Context) ([]responses.ItemResponse, error)
 	GetMyBorrow(ctx context.Context, userID string) ([]responses.ItemResponse, error)
 	GetChildItemByParentID(ctx context.Context, itemID string) ([]responses.ItemResponse, error)
+	GetFiltered(ctx context.Context, strategy string, query []string) ([]responses.ItemResponse, error)
 }
 
 type itemService struct {
 	repo itemRepo.Repository
+	f map[string]strategy.FilterStrategy
 }
 
 func NewItemService(repo itemRepo.Repository) Service {
-	return &itemService{repo: repo}
+	return &itemService{repo: repo, f: strategy.NewFilterMap(nil)}
 }
 
 func (i *itemService) GetChildItemByParentID(ctx context.Context, itemID string) ([]responses.ItemResponse, error) {
@@ -73,17 +78,7 @@ func (i *itemService) GetBorrowItem(ctx context.Context, itemID string) (*respon
 		return &responses.ItemResponse{}, err
 	}
 
-	response := responses.ItemResponse{
-		ID:              item.ItemID,
-		Name:            item.ItemName,
-		Description:     item.ItemDescription,
-		PictureURL:      item.ItemPictureURL,
-		Status:          item.ItemStatus,
-		Quantity:        item.ItemQuantity,
-		CurrentQuantity: item.ItemCurrentQuantity,
-		CreatedAt:       item.ItemCreatedAt,
-		UpdatedAt:       item.ItemUpdatedAt,
-	}
+	response := itemutil.ToResponse(*item)
 	return &response, nil
 }
 
@@ -106,25 +101,12 @@ func (i *itemService) CreateItem(ctx context.Context, req *requests.CreateItemRe
 
 func (i *itemService) GetAll(ctx context.Context) ([]responses.ItemResponse, error) {
 	items, err := i.repo.GetAll(ctx)
-	var response []responses.ItemResponse
 
 	if err != nil {
 		return nil, err
 	}
 
-	for _, i := range items {
-		r := responses.ItemResponse{
-			ID:          i.ItemID,
-			Name:        i.ItemName,
-			Description: i.ItemDescription,
-			PictureURL:  i.ItemPictureURL,
-			Status:      i.ItemStatus,
-			Quantity:    i.ItemQuantity,
-			CreatedAt:   i.ItemCreatedAt,
-			UpdatedAt:   i.ItemUpdatedAt,
-		}
-		response = append(response, r)
-	}
+	response := itemutil.ToResponses(items)	
 
 	return response, nil
 }
@@ -144,20 +126,28 @@ func (i *itemService) GetMyBorrow(ctx context.Context, userID string) ([]respons
 		return nil, err
 	}
 
-	var response []responses.ItemResponse
-	for _, i := range items {
-		r := responses.ItemResponse{
-			ID:          i.ItemID,
-			Name:        i.ItemName,
-			Description: i.ItemDescription,
-			PictureURL:  i.ItemPictureURL,
-			Status:      i.ItemStatus,
-			Quantity:    i.ItemQuantity,
-			CreatedAt:   i.ItemCreatedAt,
-			UpdatedAt:   i.ItemUpdatedAt,
-		}
-		response = append(response, r)
+	response := itemutil.ToResponses(items)
+
+	return response, nil
+}
+
+func (i *itemService) GetFiltered(ctx context.Context, strat string, query []string) ([]responses.ItemResponse, error) {
+	i.f = strategy.NewFilterMap(query)
+	
+	filter := i.f[strat]
+
+	if filter == nil {
+		return nil, exceptions.ErrNoSuchStrategy
 	}
+
+	filter.InitFilter(i.repo)
+
+	items, err := filter.Filter(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+	response := itemutil.ToResponses(items)
 
 	return response, nil
 }
