@@ -16,6 +16,8 @@ type Repository interface {
 	GetAll(ctx context.Context) ([]models.Item, error)
 	GetMyBorrow(ctx context.Context, userID uuid.UUID) ([]models.Item, error)
 	GetChildItemByParentID(ctx context.Context, itemID uuid.UUID) ([]models.Item, error)
+	GetAvailable(ctx context.Context) ([]models.Item, error)
+	GetByTags(ctx context.Context, tags []string) ([]models.Item, error)
 }
 
 type repository struct {
@@ -84,10 +86,38 @@ func (r *repository) GetAll(ctx context.Context) ([]models.Item, error) {
 
 func (r *repository) GetMyBorrow(ctx context.Context, userID uuid.UUID) ([]models.Item, error) {
 	var items []models.Item
-
 	sub := r.db.Model(&models.BorrowLog{}).Select("item_id").Where("user_id::uuid = ? AND borrow_status = ?", userID, "BORROWED")
 
 	err := r.db.Where("item_id IN (?)", sub).Find(&items).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return items, nil
+}
+
+func (r *repository) GetAvailable(ctx context.Context) ([]models.Item, error) {
+	var items []models.Item
+	err := r.db.Where("item_status=?", "AVAILABLE").Find(&items).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return items, nil
+}
+
+func (r *repository) GetByTags(ctx context.Context, tags []string) ([]models.Item, error) {
+	var items []models.Item
+
+
+	err := r.db.Table("items AS i").
+		Select("i.*").
+		Joins("JOIN item_tags it ON i.item_id = it.item_id").
+		Joins("JOIN tags t ON it.tag_id = t.tag_id").
+		Where("t.tag_name IN (?)", tags).
+		Scan(&items).Error
+
 	if err != nil {
 		return nil, err
 	}
