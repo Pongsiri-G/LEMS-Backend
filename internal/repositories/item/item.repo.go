@@ -18,6 +18,8 @@ type Repository interface {
 	GetChildItemByParentID(ctx context.Context, itemID uuid.UUID) ([]models.Item, error)
 	GetAvailable(ctx context.Context) ([]models.Item, error)
 	GetByTags(ctx context.Context, tags []string) ([]models.Item, error)
+
+	DeleteItem(ctx context.Context, itemID uuid.UUID) error
 }
 
 type repository struct {
@@ -61,8 +63,10 @@ func (r *repository) GetItemByID(ctx context.Context, itemID uuid.UUID) (*models
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
+			log.Warn().Err(err).Msg("item not found")
 			return nil, nil
 		}
+		log.Error().Err(err).Msg("failed to get item by id")
 		return nil, err
 	}
 
@@ -110,7 +114,6 @@ func (r *repository) GetAvailable(ctx context.Context) ([]models.Item, error) {
 func (r *repository) GetByTags(ctx context.Context, tags []string) ([]models.Item, error) {
 	var items []models.Item
 
-
 	err := r.db.Table("items AS i").
 		Select("i.*").
 		Joins("JOIN item_tags it ON i.item_id = it.item_id").
@@ -123,4 +126,18 @@ func (r *repository) GetByTags(ctx context.Context, tags []string) ([]models.Ite
 	}
 
 	return items, nil
+}
+
+// DeleteItem implements Repository.
+func (r *repository) DeleteItem(ctx context.Context, itemID uuid.UUID) error {
+	result := r.db.Where("item_id = ?", itemID).Delete(&models.Item{})
+	if result.RowsAffected == 0 {
+		return nil
+	}
+	if result.Error != nil {
+		log.Error().Err(result.Error).Msg("failed to delete item")
+		return result.Error
+	}
+
+	return nil
 }
