@@ -12,6 +12,7 @@ type Repository interface {
 	FindBorrowLogByUserIDAndBorrowID(ctx context.Context, userID, borrowID uuid.UUID) (*models.BorrowLog, error)
 	EditBorrowLog(ctx context.Context, borrowLog *models.BorrowLog) error
 	CreateBorrowLog(ctx context.Context, borrowLog models.BorrowLog) error
+	GetChildren(ctx context.Context, parentID uuid.UUID) ([]models.BorrowLog, error)
 }
 
 type repository struct {
@@ -23,7 +24,7 @@ func NewBorrowLogRepository(db *gorm.DB) Repository {
 }
 
 func (r *repository) CreateBorrowLog(ctx context.Context, borrowLog models.BorrowLog) error {
-	return r.db.WithContext(ctx).Create(borrowLog).Error
+	return r.db.WithContext(ctx).Create(&borrowLog).Error
 }
 
 // FindBorrowLogByUserIDAndBorrowID implements Repository.
@@ -42,4 +43,14 @@ func (r *repository) FindBorrowLogByUserIDAndBorrowID(ctx context.Context, userI
 // EditBorrowLog implements Repository.
 func (r *repository) EditBorrowLog(ctx context.Context, borrowLog *models.BorrowLog) error {
 	return r.db.WithContext(ctx).Save(borrowLog).Error
+}
+
+// GetChildren implements Repository.
+func (r *repository) GetChildren(ctx context.Context, parentID uuid.UUID) ([]models.BorrowLog, error) {
+	var borrowLogs []models.BorrowLog
+	err := r.db.WithContext(ctx).Where("borrow_parent_id = ? AND borrow_status = ?", parentID, "BORROWED").Find(&borrowLogs).Error
+	if err != nil {
+		return nil, err
+	}
+	return borrowLogs, nil
 }

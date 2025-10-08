@@ -25,6 +25,7 @@ import (
 	// Repositories
 	borrowRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrow_log"
 	itemRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
+	itemsetRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item_set"
 	minioRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/minio"
 	tagRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/tag"
 	userRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
@@ -56,6 +57,7 @@ var RepositorySet = wire.NewSet(
 	borrowRepo.NewBorrowLogRepository,
 	itemRepo.NewItemRepository,
 	tagRepo.NewTagRepository,
+	itemsetRepo.NewItemSetRepository,
 )
 
 // ---- Strategies ----

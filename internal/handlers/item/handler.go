@@ -47,7 +47,7 @@ func (h *handler) GetBorrowItem(c echo.Context) error {
 
 	if err != nil {
 		switch err {
-		case itemService.ErrInvalidUUID:
+		case exceptions.ErrInvalidUUID:
 			return c.JSON(http.StatusBadRequest, echo.Map{
 				"message": "invalid uuid format",
 			})
@@ -72,7 +72,7 @@ func (h *handler) CreateItem(c echo.Context) error {
 	}
 	if err := h.service.CreateItem(c.Request().Context(), &req); err != nil {
 		switch err {
-		case itemService.ErrInvalidUUID:
+		case exceptions.ErrInvalidUUID:
 			return c.JSON(http.StatusBadRequest, echo.Map{
 				"message": "invalid uuid format",
 			})
@@ -112,17 +112,16 @@ func (h *handler) GetMyBorrow(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-
 func (h *handler) GetFiltered(c echo.Context) error {
 	response, err := h.service.GetFiltered(c.Request().Context(), c.Param("strategy"), c.QueryParams()["tags"])
 
 	if err != nil {
 		if err == exceptions.ErrNoSuchStrategy {
-			return c.JSON(http.StatusBadRequest, echo.Map {
+			return c.JSON(http.StatusBadRequest, echo.Map{
 				"message": err.Error(),
 			})
 		}
-		return c.JSON(http.StatusInternalServerError, echo.Map {
+		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"message": "Internal Server Error",
 		})
 	}

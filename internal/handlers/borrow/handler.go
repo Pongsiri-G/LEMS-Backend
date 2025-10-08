@@ -3,6 +3,7 @@ package borrow
 import (
 	"net/http"
 
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/requests"
 	borrowSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/borrow"
 	"github.com/labstack/echo/v4"
@@ -33,19 +34,19 @@ func (h *handler) Borrow(c echo.Context) error {
 	err := h.servicce.Borrow(c.Request().Context(), &req)
 	if err != nil {
 		switch err {
-		case borrowSvc.ErrInvalidUUID:
+		case exceptions.ErrInvalidUUID:
 			return c.JSON(http.StatusBadRequest, echo.Map{
 				"message": "invalid uuid format",
 			})
-		case borrowSvc.ErrItemQuantityInSufficient:
+		case exceptions.ErrItemQuantityInSufficient:
 			return c.JSON(http.StatusBadRequest, echo.Map{
-				"message": borrowSvc.ErrItemQuantityInSufficient.Error(),
+				"message": exceptions.ErrItemQuantityInSufficient.Error(),
 			})
-		case borrowSvc.ErrFailedToUpdateQuantity:
+		case exceptions.ErrFailedToUpdateQuantity:
 			return c.JSON(http.StatusInternalServerError, echo.Map{
-				"message": borrowSvc.ErrFailedToUpdateQuantity.Error(),
+				"message": exceptions.ErrFailedToUpdateQuantity.Error(),
 			})
-		case borrowSvc.ErrItemNotFound:
+		case exceptions.ErrItemNotFound:
 			return c.JSON(http.StatusNotFound, nil)
 		default:
 			log.Error().Err(err).Msg("internal server error")
@@ -71,11 +72,13 @@ func (h *handler) Return(c echo.Context) error {
 	err := h.servicce.Return(c.Request().Context(), &req)
 	if err != nil {
 		switch err {
-		case borrowSvc.ErrInvalidUUID:
+		case exceptions.ErrInvalidUUID:
 			return c.JSON(http.StatusBadRequest, echo.Map{
 				"message": "invalid uuid format",
 			})
-		case borrowSvc.ErrItemNotFound:
+		case exceptions.ErrBorrowLogNotFound:
+			return c.JSON(http.StatusNotFound, nil)
+		case exceptions.ErrItemNotFound:
 			return c.JSON(http.StatusNotFound, nil)
 		default:
 			log.Error().Err(err).Msg("internal server error")

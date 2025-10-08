@@ -3,12 +3,12 @@ package borrow
 import (
 	"context"
 
-	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
-	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/requests"
 	borrowRepository "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrow_log"
 	itemRepository "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
-	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/utils"
+	itemsetRepository "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item_set"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/item/factory"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 )
@@ -19,98 +19,89 @@ type Service interface {
 }
 
 type service struct {
-	borrowRepo borrowRepository.Repository
-	itemRepo   itemRepository.Repository
+	borrowRepo  borrowRepository.Repository
+	itemRepo    itemRepository.Repository
+	itemSetRepo itemsetRepository.Repository
 }
 
-func NewBorrowService(borrowRepo borrowRepository.Repository, itemRepo itemRepository.Repository) Service {
-	return &service{borrowRepo: borrowRepo, itemRepo: itemRepo}
+func NewBorrowService(borrowRepo borrowRepository.Repository, itemRepo itemRepository.Repository, itemSetRepo itemsetRepository.Repository) Service {
+	return &service{borrowRepo: borrowRepo, itemRepo: itemRepo, itemSetRepo: itemSetRepo}
 }
 
 func (s *service) Borrow(ctx context.Context, req *requests.BorrowRequest) error {
-
+	var borrowFactory factory.Borrowable
 	userID, err := uuid.Parse(req.UserID)
 	if err != nil {
 		log.Error().Err(err).Msg("invalid uuid format")
-		return ErrInvalidUUID
+		return exceptions.ErrInvalidUUID
 	}
 	itemID, err := uuid.Parse(req.ItemID)
 	if err != nil {
 		log.Error().Err(err).Msg("invalid uuid format")
-		return ErrInvalidUUID
-	}
-	borrowLog := models.BorrowLog{
-		BorrowID:     uuid.New(),
-		UserID:       userID,
-		ItemID:       itemID,
-		BorrowStatus: enums.StatusBorrowed,
-		BorrowDate:   utils.BangkokNow(),
-		ReturnDate:   nil,
-		CreatedAt:    utils.BangkokNow(),
-		UpdatedAt:    utils.BangkokNow(),
+		return exceptions.ErrInvalidUUID
 	}
 
 	item, err := s.itemRepo.GetItemByID(ctx, itemID)
 	if err != nil {
+		log.Error().Err(err).Msg("failed to get item by id")
 		return err
 	}
 
 	if item == nil {
 		log.Error().Err(err).Msg("item not found")
-		return ErrItemNotFound
-	}
-	if item.ItemQuantity-1 < 0 {
-		log.Error().Err(err).Msg("quantity of the item less than zero")
-		return ErrItemQuantityInSufficient
+		return exceptions.ErrItemNotFound
 	}
 
-	item.ItemQuantity -= 1
-	updateErr := s.itemRepo.UpdateItem(ctx, item)
-	if updateErr != nil {
-		log.Error().Err(err).Msg("failed to update quantity of item")
-		return ErrFailedToUpdateQuantity
+	children, err := s.itemRepo.GetChildItemByParentID(ctx, item.ItemID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get child items")
+		return err
+	}
+	if len(children) > 0 {
+		borrowFactory = factory.NewChildItemBorrowable(s.itemRepo, s.borrowRepo, s.itemSetRepo)
+	} else {
+		borrowFactory = factory.NewNormalItemBorrowable(s.itemRepo, s.borrowRepo)
 	}
 
-	return s.borrowRepo.CreateBorrowLog(ctx, borrowLog)
+	return borrowFactory.BorrowItem(ctx, userID, item, &children)
+
 }
 
 // Return implements Service.
 func (s *service) Return(ctx context.Context, req *requests.ReturnRequest) error {
+	var itemBorrowableFactory factory.Borrowable
 	userID, err := uuid.Parse(req.UserID)
 	if err != nil {
 		log.Error().Err(err).Msg("invalid uuid format")
-		return ErrInvalidUUID
+		return exceptions.ErrInvalidUUID
 	}
 	borrowID, err := uuid.Parse(req.BorrowID)
 	if err != nil {
 		log.Error().Err(err).Msg("invalid uuid format")
-		return ErrInvalidUUID
+		return exceptions.ErrInvalidUUID
 	}
 
 	borrow, err := s.borrowRepo.FindBorrowLogByUserIDAndBorrowID(ctx, userID, borrowID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to find borrow log")
+		return err
+	}
+
 	if borrow == nil {
 		log.Error().Err(err).Msg("borrow log not found")
-		return ErrItemNotFound
+		return exceptions.ErrBorrowLogNotFound
 	}
+
+	children, err := s.borrowRepo.GetChildren(ctx, borrow.BorrowID)
 	if err != nil {
+		log.Error().Err(err).Msg("failed to get child borrow logs")
 		return err
 	}
 
-	item, err := s.itemRepo.GetItemByID(ctx, borrow.ItemID)
-	if err != nil {
-		return err
+	if len(children) > 0 {
+		itemBorrowableFactory = factory.NewChildItemBorrowable(s.itemRepo, s.borrowRepo, s.itemSetRepo)
+	} else {
+		itemBorrowableFactory = factory.NewNormalItemBorrowable(s.itemRepo, s.borrowRepo)
 	}
-
-	borrow.BorrowStatus = enums.StatusReturned
-	now := utils.BangkokNow()
-	borrow.ReturnDate = &now
-	borrow.UpdatedAt = now
-
-	err = s.borrowRepo.EditBorrowLog(ctx, borrow)
-	if err != nil {
-		return err
-	}
-
-	item.ItemQuantity += 1
-	return s.itemRepo.UpdateItem(ctx, item)
+	return itemBorrowableFactory.ReturnItem(ctx, borrow, &children)
 }
