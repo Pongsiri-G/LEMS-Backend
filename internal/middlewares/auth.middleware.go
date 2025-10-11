@@ -20,7 +20,6 @@ type AuthMiddleware interface {
 	Middleware(next echo.HandlerFunc) echo.HandlerFunc
 }
 
-// @WireSet("Middleware")
 func NewAuthMiddleware(configs *configs.Config) AuthMiddleware {
 	return &authMiddleware{
 		configs: configs,
