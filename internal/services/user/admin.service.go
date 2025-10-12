@@ -23,11 +23,10 @@ type AdminService interface {
 
 type adminService struct {
 	users user.Repository
-	logs  log.Repository
 }
 
 func newAdminService(users user.Repository, logs log.Repository) AdminService {
-	return &adminService{users: users, logs: logs}
+	return &adminService{users: users}
 }
 
 func (a adminService) List(ctx context.Context) ([]models.User, error) {
@@ -39,10 +38,7 @@ func (a adminService) Accept(ctx context.Context, userID string) error {
 	if err != nil {
 		return err
 	}
-	if err = a.users.UpdateStatus(ctx, userIDUUID, enums.Active); err != nil {
-		return err
-	}
-	return nil // will save in log later
+	return a.users.UpdateStatus(ctx, userIDUUID, enums.Active)
 }
 
 func (a adminService) Reject(ctx context.Context, userID string) error {
@@ -55,11 +51,7 @@ func (a adminService) Reject(ctx context.Context, userID string) error {
 	if err != nil {
 		return user.ErrRejectOnlyPending // Rejected only pending user
 	}
-	if err := a.users.UpdateStatus(ctx, userIDUUID, enums.Rejected); err != nil {
-		return err
-	}
-	return nil // will save in log later
-
+	return a.users.UpdateStatus(ctx, userIDUUID, enums.Rejected)
 }
 
 func (a adminService) Deactivate(ctx context.Context, userID string) error {
@@ -67,10 +59,7 @@ func (a adminService) Deactivate(ctx context.Context, userID string) error {
 	if err != nil {
 		return err
 	}
-	if err := a.users.UpdateStatus(ctx, userIDUUID, enums.Deactivated); err != nil {
-		return err
-	}
-	return nil
+	return a.users.UpdateStatus(ctx, userIDUUID, enums.Deactivated)
 }
 
 func (a adminService) Delete(ctx context.Context, userID string) error {
@@ -78,10 +67,7 @@ func (a adminService) Delete(ctx context.Context, userID string) error {
 	if err != nil {
 		return err
 	}
-	if err := a.users.SoftDelete(ctx, userIDUUID); err != nil {
-		return err
-	}
-	return nil // will save in log later
+	return a.users.SoftDelete(ctx, userIDUUID)
 }
 
 func (a adminService) GrantAdmin(ctx context.Context, userID string) error {
@@ -89,10 +75,7 @@ func (a adminService) GrantAdmin(ctx context.Context, userID string) error {
 	if err != nil {
 		return err
 	}
-	if err := a.users.UpdateRole(ctx, userIDUUID, enums.Admin); err != nil {
-		return err
-	}
-	return nil // will save in log later
+	return a.users.UpdateRole(ctx, userIDUUID, enums.Admin)
 }
 
 func (a adminService) RevokeAdmin(ctx context.Context, userID string) error {
@@ -100,8 +83,5 @@ func (a adminService) RevokeAdmin(ctx context.Context, userID string) error {
 	if err != nil {
 		return err
 	}
-	if err := a.users.UpdateRole(ctx, userIDUUID, enums.User); err != nil {
-		return err
-	}
-	return nil
+	return a.users.UpdateRole(ctx, userIDUUID, enums.User)
 }
