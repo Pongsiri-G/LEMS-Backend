@@ -25,7 +25,7 @@ type adminService struct {
 	users user.Repository
 }
 
-func newAdminService(users user.Repository, logs log.Repository) AdminService {
+func NewAdminService(users user.Repository, logs log.Repository) AdminService {
 	return &adminService{users: users}
 }
 

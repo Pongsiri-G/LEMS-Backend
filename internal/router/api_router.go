@@ -43,6 +43,21 @@ func (r *Router) RegisterAPIRoutes() {
 	protectd.GET("/p", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{"msg": "success"})
 	})
+
+}
+
+func (r *Router) RegisterAdminRoutes() {
+	v1 := r.echo.Group("/api/v1")
+	protected := v1.Group("", r.authMiddleware.Middleware)
+
+	admin := protected.Group("/admin") // Maybe apply adminMiddleware later
+	admin.GET("/users", r.handlers.Admin.List)
+	admin.POST("/users/:id/accept", r.handlers.Admin.Accept)
+	admin.POST("/users/:id/reject", r.handlers.Admin.Reject)
+	admin.POST("/users/:id/deactivate", r.handlers.Admin.Deactivate)
+	admin.DELETE("/users/:id", r.handlers.Admin.Delete)
+	admin.POST("/users/:id/grant-admin", r.handlers.Admin.GrantAdmin)
+	admin.POST("/users/:id/revoke-admin", r.handlers.Admin.RevokeAdmin)
 }
 
 func (r *Router) RegisterMinioRoutes() {
