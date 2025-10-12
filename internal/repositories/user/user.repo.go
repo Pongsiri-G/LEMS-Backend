@@ -13,6 +13,7 @@ import (
 
 type Repository interface {
 	FindByEmail(ctx context.Context, email string) (*models.User, error)
+	FindByID(ctx context.Context, userID string) (*models.User, error)
 	Create(ctx context.Context, u *models.User) error
 
 	// ใช้สำหรับ provider-based login โดยไม่แยกตาราง
@@ -27,7 +28,9 @@ type repository struct {
 }
 
 func NewUserRepository(db *gorm.DB) Repository {
-	return &repository{db: db}
+	return &repository{
+		db: db,
+	}
 }
 
 func (r *repository) FindByEmail(ctx context.Context, email string) (*models.User, error) {
@@ -90,4 +93,18 @@ func (r *repository) UpdateLastLogin(ctx context.Context, userID uuid.UUID) erro
 		Model(&models.User{}).
 		Where("user_id = ?", userID).
 		Update("last_logged_in", now).Error
+}
+
+// FindByID implements Repository.
+func (r *repository) FindByID(ctx context.Context, userID string) (*models.User, error) {
+	var u models.User
+	if err := r.db.WithContext(ctx).
+		Where("user_id = ?", userID).
+		First(&u).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+	return &u, nil
 }

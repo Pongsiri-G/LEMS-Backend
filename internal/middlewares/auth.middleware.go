@@ -49,11 +49,13 @@ func (a *authMiddleware) Middleware(next echo.HandlerFunc) echo.HandlerFunc {
 		// Validate claims
 		claims, ok := token.Claims.(*auth.JWTClaims)
 		if !ok || !token.Valid {
-			return c.JSON(http.StatusForbidden, map[string]string{"massage": err.Error()})
+			return c.JSON(http.StatusForbidden, map[string]string{"massage": "invalid claim"})
 		}
 
 		// Set claims and user ID to context
 		c.Set(string(enums.UserIDContextKey), claims.UserID)
+		c.Set(string(enums.UserEmailContextKey), claims.Email)
+		c.Set(string(enums.UserRoleContextKey), claims.Role)
 
 		return next(c)
 	}
