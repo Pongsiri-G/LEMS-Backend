@@ -12,4 +12,6 @@ const (
 	LogAdminReject     LogType = "ADMIN_REJECT"
 	LogAdminDeactivate LogType = "ADMIN_DEACTIVATE"
 	LogAdminDelete     LogType = "ADMIN_DELETE"
+	LogAdminGrant      LogType = "ADMIN_GRANT"
+	LogAdminRevoke     LogType = "ADMIN_REVOKE"
 )

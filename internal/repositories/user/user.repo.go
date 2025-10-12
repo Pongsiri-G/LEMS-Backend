@@ -21,11 +21,16 @@ type Repository interface {
 	UpdateStatus(ctx context.Context, userID uuid.UUID, status enums.UserStatus) error
 	UpdateRole(ctx context.Context, userID uuid.UUID, role enums.UserRole) error
 	UpdateLastLogin(ctx context.Context, userID uuid.UUID) error
+	SoftDelete(ctx context.Context, userID uuid.UUID) error
 	List(ctx context.Context) ([]models.User, error)
 }
 
 type repository struct {
 	db *gorm.DB
+}
+
+func (r *repository) SoftDelete(ctx context.Context, userID uuid.UUID) error {
+	return r.db.WithContext(ctx).Delete(&models.User{}, "user_id = ?", userID).Error
 }
 
 func (r *repository) List(ctx context.Context) ([]models.User, error) {
