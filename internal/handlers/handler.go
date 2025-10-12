@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/admin"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/auth"
 	borrowhd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/borrow"
 	item "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/item"
@@ -10,6 +11,7 @@ import (
 )
 
 type Handlers struct {
+	Admin  admin.AdminHandler
 	Auth   auth.AuthHandler
 	File   miniohd.FileHandler
 	Borrow borrowhd.BorrowHandler
@@ -19,6 +21,7 @@ type Handlers struct {
 }
 
 func NewHandlers(
+	admin admin.AdminHandler,
 	auth auth.AuthHandler,
 	file miniohd.FileHandler,
 	borrow borrowhd.BorrowHandler,
@@ -27,6 +30,7 @@ func NewHandlers(
 	tag tag.TagHandler,
 ) *Handlers {
 	return &Handlers{
+		Admin:  admin,
 		Auth:   auth,
 		File:   file,
 		Borrow: borrow,

@@ -7,7 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type adminHandler interface {
+type AdminHandler interface {
 	List(c echo.Context) error
 	Accept(c echo.Context) error
 	Reject(c echo.Context) error
@@ -19,6 +19,11 @@ type adminHandler interface {
 
 type handler struct {
 	adminSvc admin.AdminService
+}
+
+func NewAdminHandler(adminSvc admin.AdminService) AdminHandler {
+	return &handler{adminSvc: adminSvc}
+
 }
 
 func (h handler) List(c echo.Context) error {
@@ -81,9 +86,4 @@ func (h handler) RevokeAdmin(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"message": "internal server error"})
 	}
 	return c.JSON(http.StatusOK, echo.Map{"message": "success"})
-}
-
-func AdminHandler(adminSvc admin.AdminService) adminHandler {
-	return &handler{adminSvc: adminSvc}
-
 }
