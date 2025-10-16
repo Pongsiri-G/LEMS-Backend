@@ -22,40 +22,11 @@ type Repository interface {
 	UpdateRole(ctx context.Context, userID uuid.UUID, role enums.UserRole) error
 	UpdateLastLogin(ctx context.Context, userID uuid.UUID) error
 	SoftDelete(ctx context.Context, userID uuid.UUID) error
-	GetAll(ctx context.Context) ([]models.User, error)
+	GetAllUsers(ctx context.Context) ([]models.User, error)
 }
 
 type repository struct {
 	db *gorm.DB
-}
-
-func (r *repository) SoftDelete(ctx context.Context, userID uuid.UUID) error {
-	return r.db.WithContext(ctx).Delete(&models.User{}, "user_id = ?", userID).Error
-}
-
-func (r *repository) GetAll(ctx context.Context) ([]models.User, error) {
-	var users []models.User
-	q := r.db.WithContext(ctx).Find(&users)
-	if q.Error != nil {
-		return nil, q.Error
-	}
-	return users, nil
-}
-
-func (r *repository) UpdateStatus(ctx context.Context, userID uuid.UUID, status enums.UserStatus) error {
-	return r.db.WithContext(ctx).Model(&models.User{}).Where("user_id = ?", userID).Update("user_status", status).Error
-}
-
-func (r *repository) UpdateRole(ctx context.Context, userID uuid.UUID, role enums.UserRole) error {
-	return r.db.WithContext(ctx).Model(&models.User{}).Where("user_id = ?", userID).Update("user_role", role).Error
-}
-
-func (r *repository) FindById(ctx context.Context, id uuid.UUID) (*models.User, error) {
-	var u models.User
-	if err := r.db.WithContext(ctx).First(&u, "user_id = ?", id).Error; err != nil {
-		return nil, err
-	}
-	return &u, nil
 }
 
 func NewUserRepository(db *gorm.DB) Repository {
@@ -70,6 +41,14 @@ func (r *repository) FindByEmail(ctx context.Context, email string) (*models.Use
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrNotFound
 		}
+		return nil, err
+	}
+	return &u, nil
+}
+
+func (r *repository) FindById(ctx context.Context, id uuid.UUID) (*models.User, error) {
+	var u models.User
+	if err := r.db.WithContext(ctx).First(&u, "user_id = ?", id).Error; err != nil {
 		return nil, err
 	}
 	return &u, nil
@@ -122,4 +101,25 @@ func (r *repository) UpdateLastLogin(ctx context.Context, userID uuid.UUID) erro
 		Model(&models.User{}).
 		Where("user_id = ?", userID).
 		Update("last_logged_in", now).Error
+}
+
+func (r *repository) SoftDelete(ctx context.Context, userID uuid.UUID) error {
+	return r.db.WithContext(ctx).Delete(&models.User{}, "user_id = ?", userID).Error
+}
+
+func (r *repository) UpdateStatus(ctx context.Context, userID uuid.UUID, status enums.UserStatus) error {
+	return r.db.WithContext(ctx).Model(&models.User{}).Where("user_id = ?", userID).Update("user_status", status).Error
+}
+
+func (r *repository) UpdateRole(ctx context.Context, userID uuid.UUID, role enums.UserRole) error {
+	return r.db.WithContext(ctx).Model(&models.User{}).Where("user_id = ?", userID).Update("user_role", role).Error
+}
+
+func (r *repository) GetAllUsers(ctx context.Context) ([]models.User, error) {
+	var users []models.User
+	q := r.db.WithContext(ctx).Find(&users)
+	if q.Error != nil {
+		return nil, q.Error
+	}
+	return users, nil
 }
