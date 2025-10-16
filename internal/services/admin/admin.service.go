@@ -5,7 +5,6 @@ import (
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
-	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/log"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
 	"github.com/google/uuid"
 )
@@ -25,7 +24,7 @@ type adminService struct {
 	users user.Repository
 }
 
-func NewAdminService(users user.Repository, logs log.Repository) AdminService {
+func NewAdminService(users user.Repository) AdminService {
 	return &adminService{users: users}
 }
 

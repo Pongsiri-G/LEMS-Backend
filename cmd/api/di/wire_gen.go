@@ -10,6 +10,7 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/cmd/api/server"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/configs"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers"
+	admin2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/admin"
 	auth3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/auth"
 	borrow2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/borrow"
 	item3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/item"
@@ -26,6 +27,7 @@ import (
 	minio2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/minio"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/tag"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/admin"
 	auth2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/borrow"
@@ -41,6 +43,8 @@ func InitializeAPI() (*server.EchoServer, error) {
 	config := configs.NewConfig()
 	db := database.NewPostgrest(config)
 	repository := user.NewUserRepository(db)
+	adminService := admin.NewAdminService(repository)
+	adminHandler := admin2.NewAdminHandler(adminService)
 	localStrategy := strategy.NewLocalStrategy(repository)
 	oauth2Config := auth.NewGoogleOAuthClient(config)
 	googleStrategy := strategy.NewGoogleStrategy(oauth2Config, repository)
@@ -66,7 +70,7 @@ func InitializeAPI() (*server.EchoServer, error) {
 	tagRepository := tag.NewTagRepository(db)
 	tagService := tag2.NewTagService(tagRepository)
 	tagHandler := tag3.NewTagHandler(tagService)
-	handlersHandlers := handlers.NewHandlers(authHandler, fileHandler, borrowHandler, userHandler, itemHandler, tagHandler)
+	handlersHandlers := handlers.NewHandlers(adminHandler, authHandler, fileHandler, borrowHandler, userHandler, itemHandler, tagHandler)
 	authMiddleware := middlewares.NewAuthMiddleware(config)
 	echoServer := server.NewEchoServer(config, handlersHandlers, authMiddleware)
 	return echoServer, nil
