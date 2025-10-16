@@ -8,7 +8,7 @@ import (
 )
 
 type AdminHandler interface {
-	List(c echo.Context) error
+	GetAll(c echo.Context) error
 	Accept(c echo.Context) error
 	Reject(c echo.Context) error
 	Deactivate(c echo.Context) error
@@ -26,8 +26,8 @@ func NewAdminHandler(adminSvc admin.AdminService) AdminHandler {
 
 }
 
-func (h handler) List(c echo.Context) error {
-	users, err := h.adminSvc.List(c.Request().Context())
+func (h handler) GetAll(c echo.Context) error {
+	users, err := h.adminSvc.GetAll(c.Request().Context())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
 	}

@@ -55,7 +55,7 @@ func (r *Router) RegisterAdminRoutes() {
 	protected := v1.Group("") // for testing
 
 	admin := protected.Group("/admin") // Maybe apply adminMiddleware later
-	admin.GET("/users", r.handlers.Admin.List)
+	admin.GET("/users", r.handlers.Admin.GetAll)
 
 	admin.POST("/user/:user_id/accept", r.handlers.Admin.Accept)
 	admin.POST("/user/:user_id/reject", r.handlers.Admin.Reject)

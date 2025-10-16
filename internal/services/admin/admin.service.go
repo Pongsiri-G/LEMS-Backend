@@ -10,7 +10,7 @@ import (
 )
 
 type AdminService interface {
-	List(ctx context.Context) ([]models.User, error)
+	GetAll(ctx context.Context) ([]models.User, error)
 
 	Accept(ctx context.Context, userID string) error
 	Reject(ctx context.Context, userID string) error
@@ -28,8 +28,15 @@ func NewAdminService(users user.Repository) AdminService {
 	return &adminService{users: users}
 }
 
-func (a adminService) List(ctx context.Context) ([]models.User, error) {
-	return a.users.List(ctx)
+func (a adminService) checkStatus(u *models.User) error {
+	if u.UserStatus != enums.Pending {
+		return user.ErrUserIsNotPending
+	}
+	return nil
+}
+
+func (a adminService) GetAll(ctx context.Context) ([]models.User, error) {
+	return a.users.GetAll(ctx)
 }
 
 func (a adminService) Accept(ctx context.Context, userID string) error {
@@ -37,6 +44,15 @@ func (a adminService) Accept(ctx context.Context, userID string) error {
 	if err != nil {
 		return err
 	}
+	u, err := a.users.FindById(ctx, userIDUUID)
+	if err != nil {
+		return err
+	}
+	err = a.checkStatus(u)
+	if err != nil {
+		return err
+	}
+
 	return a.users.UpdateStatus(ctx, userIDUUID, enums.Active)
 }
 
@@ -45,11 +61,14 @@ func (a adminService) Reject(ctx context.Context, userID string) error {
 	if err != nil {
 		return err
 	}
-	// check if user is pending
-	_, err = a.users.FindById(ctx, userIDUUID)
+	u, err := a.users.FindById(ctx, userIDUUID)
 	if err != nil {
-		return user.ErrRejectOnlyPending // Rejected only pending user
+		return err
 	}
+	if u.UserStatus == enums.Pending {
+		return user.ErrDeactivateNotPending
+	}
+
 	return a.users.UpdateStatus(ctx, userIDUUID, enums.Rejected)
 }
 
@@ -58,6 +77,16 @@ func (a adminService) Deactivate(ctx context.Context, userID string) error {
 	if err != nil {
 		return err
 	}
+	u, err := a.users.FindById(ctx, userIDUUID)
+	if err != nil {
+		return err
+	}
+
+	err = a.checkStatus(u)
+	if err != nil {
+		return err
+	}
+
 	return a.users.UpdateStatus(ctx, userIDUUID, enums.Deactivated)
 }
 
@@ -81,6 +110,13 @@ func (a adminService) RevokeAdmin(ctx context.Context, userID string) error {
 	userIDUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return err
+	}
+	u, err := a.users.FindById(ctx, userIDUUID)
+	if err != nil {
+		return err
+	}
+	if u.UserRole == enums.Admin {
+		return user.ErrRevokeUser
 	}
 	return a.users.UpdateRole(ctx, userIDUUID, enums.User)
 }
