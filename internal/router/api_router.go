@@ -39,25 +39,30 @@ func (r *Router) RegisterAPIRoutes() {
 	auth.GET("/google/callback", r.handlers.Auth.GoogleCallback)
 	auth.POST("/refresh", r.handlers.Auth.RefreshToken)
 
-	protectd := v1.Group("", r.authMiddleware.Middleware)
-	protectd.GET("/p", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, map[string]string{"msg": "success"})
-	})
+	//protectd := v1.Group("", r.authMiddleware.Middleware)
+	/*
+		protectd.GET("/p", func(c echo.Context) error {
+			return c.JSON(http.StatusOK, map[string]string{"msg": "success"})
+		})
+
+	*/
 
 }
 
 func (r *Router) RegisterAdminRoutes() {
 	v1 := r.echo.Group("/api/v1")
-	protected := v1.Group("", r.authMiddleware.Middleware)
+	// protected := v1.Group("", r.authMiddleware.Middleware)
+	protected := v1.Group("") // for testing
 
 	admin := protected.Group("/admin") // Maybe apply adminMiddleware later
 	admin.GET("/users", r.handlers.Admin.List)
-	admin.POST("/users/:id/accept", r.handlers.Admin.Accept)
-	admin.POST("/users/:id/reject", r.handlers.Admin.Reject)
-	admin.POST("/users/:id/deactivate", r.handlers.Admin.Deactivate)
-	admin.DELETE("/users/:id", r.handlers.Admin.Delete)
-	admin.POST("/users/:id/grant-admin", r.handlers.Admin.GrantAdmin)
-	admin.POST("/users/:id/revoke-admin", r.handlers.Admin.RevokeAdmin)
+
+	admin.POST("/user/:user_id/accept", r.handlers.Admin.Accept)
+	admin.POST("/user/:user_id/reject", r.handlers.Admin.Reject)
+	admin.POST("/user/:user_id/deactivate", r.handlers.Admin.Deactivate)
+	admin.DELETE("/user/:user_id", r.handlers.Admin.Delete)
+	admin.POST("/user/:user_id/grant-admin", r.handlers.Admin.GrantAdmin)
+	admin.POST("/user/:user_id/revoke-admin", r.handlers.Admin.RevokeAdmin)
 }
 
 func (r *Router) RegisterMinioRoutes() {

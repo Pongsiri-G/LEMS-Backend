@@ -35,7 +35,7 @@ func (h handler) List(c echo.Context) error {
 }
 
 func (h handler) Accept(c echo.Context) error {
-	userId := c.Param("user-id")
+	userId := c.Param("user_id")
 	err := h.adminSvc.Accept(c.Request().Context(), userId)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"message": "internal server error"})
@@ -44,7 +44,7 @@ func (h handler) Accept(c echo.Context) error {
 }
 
 func (h handler) Reject(c echo.Context) error {
-	userId := c.Param("user-id")
+	userId := c.Param("user_id")
 	err := h.adminSvc.Reject(c.Request().Context(), userId)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"message": "internal server error"})
@@ -53,7 +53,7 @@ func (h handler) Reject(c echo.Context) error {
 }
 
 func (h handler) Deactivate(c echo.Context) error {
-	userId := c.Param("user-id")
+	userId := c.Param("user_id")
 	err := h.adminSvc.Deactivate(c.Request().Context(), userId)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"message": "internal server error"})
@@ -62,7 +62,7 @@ func (h handler) Deactivate(c echo.Context) error {
 }
 
 func (h handler) Delete(c echo.Context) error {
-	userId := c.Param("user-id")
+	userId := c.Param("user_id")
 	err := h.adminSvc.Delete(c.Request().Context(), userId)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"message": "internal server error"})
@@ -71,7 +71,7 @@ func (h handler) Delete(c echo.Context) error {
 }
 
 func (h handler) GrantAdmin(c echo.Context) error {
-	userId := c.Param("user-id")
+	userId := c.Param("user_id")
 	err := h.adminSvc.GrantAdmin(c.Request().Context(), userId)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"message": "internal server error"})
@@ -80,7 +80,7 @@ func (h handler) GrantAdmin(c echo.Context) error {
 }
 
 func (h handler) RevokeAdmin(c echo.Context) error {
-	userId := c.Param("user-id")
+	userId := c.Param("user_id")
 	err := h.adminSvc.RevokeAdmin(c.Request().Context(), userId)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"message": "internal server error"})
