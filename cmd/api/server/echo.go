@@ -46,6 +46,7 @@ func (s *EchoServer) Start() error {
 	router := router.NewRouter(e, s.handlers, s.authMiddleware)
 
 	router.RegisterAPIRoutes()
+	router.RegisterAdminRoutes()
 	router.RegisterMinioRoutes()
 	router.RegisterBorrowRouter()
 	router.RegisterItemRouter()
