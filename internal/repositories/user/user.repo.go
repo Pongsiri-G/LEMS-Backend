@@ -125,6 +125,8 @@ func (r *repository) GetAllUsers(ctx context.Context) ([]models.User, error) {
 		return nil, q.Error
 	}
 	return users, nil
+}
+
 // FindByID implements Repository.
 func (r *repository) FindByID(ctx context.Context, userID string) (*models.User, error) {
 	var u models.User
