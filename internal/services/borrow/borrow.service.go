@@ -92,6 +92,11 @@ func (s *service) Return(ctx context.Context, req *requests.ReturnRequest) error
 		return exceptions.ErrBorrowLogNotFound
 	}
 
+	if borrow.BorrowParentID != nil {
+		log.Error().Err(err).Msg("cannot return child item directly")
+		return exceptions.ErrCannotReturnChildItemDirectly
+	}
+
 	children, err := s.borrowRepo.GetChildren(ctx, borrow.BorrowID)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get child borrow logs")

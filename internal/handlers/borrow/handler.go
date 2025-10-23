@@ -80,6 +80,10 @@ func (h *handler) Return(c echo.Context) error {
 			return c.JSON(http.StatusNotFound, nil)
 		case exceptions.ErrItemNotFound:
 			return c.JSON(http.StatusNotFound, nil)
+		case exceptions.ErrCannotReturnChildItemDirectly:
+			return c.JSON(http.StatusBadRequest, echo.Map{
+				"message": exceptions.ErrCannotReturnChildItemDirectly.Error(),
+			})
 		default:
 			log.Error().Err(err).Msg("internal server error")
 			return c.JSON(http.StatusInternalServerError, echo.Map{
