@@ -6,23 +6,26 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/requests"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/user"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/user/proxy"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/utils/contextutil"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/oauth2"
 )
 
 type UserHandler interface {
 	Register(c echo.Context) error
+	Me(c echo.Context) error
 }
 
 type userHandler struct {
-	userSerive user.UserService
-	oauth      *oauth2.Config
+	oauth     *oauth2.Config
+	userProxy proxy.UserServiceProxy
 }
 
-func NewUserHandler(userSerive user.UserService, oauth *oauth2.Config) UserHandler {
+func NewUserHandler(userService user.UserService, oauth *oauth2.Config) UserHandler {
 	return &userHandler{
-		userSerive: userSerive,
-		oauth:      oauth,
+		oauth:     oauth,
+		userProxy: *proxy.NewUserServiceProxy(&userService),
 	}
 }
 
@@ -39,7 +42,7 @@ func (h *userHandler) Register(c echo.Context) error {
 	}
 
 	// register พร้อมทั้งอัปเดทไปยังฐานข้อมูลหากลงทะเบียนสำเร็จ
-	_, err := h.userSerive.Register(c.Request().Context(), &requests.RegisterRequest{
+	_, err := h.userProxy.Register(c.Request().Context(), &requests.RegisterRequest{
 		FullName: body.FullName,
 		Email:    body.Email,
 		Phone:    body.Phone,
@@ -53,4 +56,23 @@ func (h *userHandler) Register(c echo.Context) error {
 	}
 	// สมัครเสร็จให้ไป login ต่อ
 	return c.JSON(http.StatusCreated, map[string]string{"message": "register success"})
+}
+
+func (h *userHandler) Me(c echo.Context) error {
+	authUser, err := contextutil.GetUserFromContext(c)
+	
+	if err != nil {
+		return c.JSON(http.StatusForbidden, map[string]string{"error": err.Error()})
+	}
+
+	res, err := h.userProxy.MyInfo(
+		c.Request().Context(),
+		authUser.ID,
+	)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, res)
 }

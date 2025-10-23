@@ -11,11 +11,11 @@ import (
 type Config struct {
 	Port         string   `env:"PORT"`
 	AllowOrigins []string `env:"ALLOW_ORIGINS" envSeparator:","`
-	JWT      JWT
-	Database DBConfig     `envPrefix:"DATABASE_"`
-	Google   GoogleConfig `envPrefix:"GOOGLE_"`
-	PG       PGConfig     `envPrefix:"PG_"`
-	MINIO    MINIOConfig  `envPrefix:"MINIO_"`
+	JWT          JWT
+	Database     DBConfig     `envPrefix:"DATABASE_"`
+	Google       GoogleConfig `envPrefix:"GOOGLE_"`
+	PG           PGConfig     `envPrefix:"PG_"`
+	MINIO        MINIOConfig  `envPrefix:"MINIO_"`
 }
 
 type DBConfig struct {
