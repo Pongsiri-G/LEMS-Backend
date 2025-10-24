@@ -1,6 +1,14 @@
 package requests
 
-type CreateRequestRequest struct {
+import "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
+
+type CreateRequest struct {
+	UserID             string                `json:"user_id" validate:"required"`
+	RequestType        enums.RequestType     `json:"request_type" validate:"required"`
+	RequestDescription string                `json:"request_description" validate:"required"`
+	ImageURL           string                `json:"image_url" validate:"required"`
+	Item               *ItemRequestedRequest `json:"item_requested" validate:"omitempty,dive"`
+	ItemID             string                `json:"item_id" validate:"omitempty"`
 }
 
 type ItemRequestedRequest struct {
@@ -12,12 +20,14 @@ type ItemRequestedRequest struct {
 	Price       float64 `json:"price" validate:"required,gt=0"`
 }
 
-// type ItemRequested struct {
-// 	ID          uuid.UUID `db:"item_requested_id" gorm:"primaryKey;type:uuid"`
-// 	Name        string    `db:"item_requested_name" gorm:"not null"`
-// 	Description string    `db:"item_requested_description" gorm:"not null"`
-// 	Type        string    `db:"item_requested_type" gorm:"not null"`
-// 	UserID      uuid.UUID `db:"user_id" gorm:"type:uuid;not null"`
-// 	Quantity    int       `db:"quantity" gorm:"not null"`
-// 	Price       float64   `db:"price" gorm:"not null"`
-// }
+type EditRequest struct {
+	RequestID          string  `json:"request_id" validate:"required"`
+	RequestDescription *string `json:"request_description" validate:"required"`
+	ImageURL           *string `json:"image_url" validate:"required"`
+	// for item
+	ItemName        *string  `json:"item_name" validate:"omitempty"`
+	ItemDescription *string  `json:"item_description" validate:"omitempty"`
+	ItemType        *string  `json:"item_type" validate:"omitempty"`
+	ItemQuantity    *int     `json:"item_quantity" validate:"omitempty,min=1"`
+	ItemPrice       *float64 `json:"item_price" validate:"omitempty,gt=0"`
+}

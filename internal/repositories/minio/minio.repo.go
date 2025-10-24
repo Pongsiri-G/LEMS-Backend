@@ -12,6 +12,7 @@ import (
 type Repository interface {
 	Upload(ctx context.Context, objectName string, file io.Reader, fileSize int64, contentType string) (string, error)
 	GetImage(ctx context.Context, bucketName string, objectName string) ([]byte, string, error)
+	DeleteImage(ctx context.Context, bucketName string, objectName string) error
 }
 
 type minioAdaptor struct {
@@ -58,4 +59,9 @@ func (m *minioAdaptor) GetImage(ctx context.Context, bucketName string, objectNa
 	}
 
 	return data, objInfo.ContentType, nil
+}
+
+// DeleteImage implements Repository.
+func (m *minioAdaptor) DeleteImage(ctx context.Context, bucketName string, objectName string) error {
+	return m.client.RemoveObject(ctx, bucketName, objectName, minio.RemoveObjectOptions{})
 }
