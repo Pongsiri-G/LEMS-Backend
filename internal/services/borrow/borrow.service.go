@@ -8,6 +8,7 @@ import (
 	borrowRepository "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrow_log"
 	itemRepository "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
 	itemsetRepository "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item_set"
+	logsystem "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/log"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/item/factory"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
@@ -22,10 +23,20 @@ type service struct {
 	borrowRepo  borrowRepository.Repository
 	itemRepo    itemRepository.Repository
 	itemSetRepo itemsetRepository.Repository
+	logRepo     logsystem.Repository
 }
 
-func NewBorrowService(borrowRepo borrowRepository.Repository, itemRepo itemRepository.Repository, itemSetRepo itemsetRepository.Repository) Service {
-	return &service{borrowRepo: borrowRepo, itemRepo: itemRepo, itemSetRepo: itemSetRepo}
+func NewBorrowService(
+	borrowRepo borrowRepository.Repository,
+	itemRepo itemRepository.Repository,
+	itemSetRepo itemsetRepository.Repository,
+	logRepo logsystem.Repository) Service {
+	return &service{
+		borrowRepo:  borrowRepo,
+		itemRepo:    itemRepo,
+		itemSetRepo: itemSetRepo,
+		logRepo:     logRepo,
+	}
 }
 
 func (s *service) Borrow(ctx context.Context, req *requests.BorrowRequest) error {
@@ -58,9 +69,9 @@ func (s *service) Borrow(ctx context.Context, req *requests.BorrowRequest) error
 		return err
 	}
 	if len(children) > 0 {
-		borrowFactory = factory.NewChildItemBorrowable(s.itemRepo, s.borrowRepo, s.itemSetRepo)
+		borrowFactory = factory.NewChildItemBorrowable(s.itemRepo, s.borrowRepo, s.itemSetRepo, s.logRepo)
 	} else {
-		borrowFactory = factory.NewNormalItemBorrowable(s.itemRepo, s.borrowRepo)
+		borrowFactory = factory.NewNormalItemBorrowable(s.itemRepo, s.borrowRepo, s.logRepo)
 	}
 
 	return borrowFactory.BorrowItem(ctx, userID, item, &children)
@@ -104,9 +115,9 @@ func (s *service) Return(ctx context.Context, req *requests.ReturnRequest) error
 	}
 
 	if len(children) > 0 {
-		itemBorrowableFactory = factory.NewChildItemBorrowable(s.itemRepo, s.borrowRepo, s.itemSetRepo)
+		itemBorrowableFactory = factory.NewChildItemBorrowable(s.itemRepo, s.borrowRepo, s.itemSetRepo, s.logRepo)
 	} else {
-		itemBorrowableFactory = factory.NewNormalItemBorrowable(s.itemRepo, s.borrowRepo)
+		itemBorrowableFactory = factory.NewNormalItemBorrowable(s.itemRepo, s.borrowRepo, s.logRepo)
 	}
 	return itemBorrowableFactory.ReturnItem(ctx, borrow, &children)
 }

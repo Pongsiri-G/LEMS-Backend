@@ -9,6 +9,7 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
 	BorrowRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrow_log"
 	ItemRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
+	logsystem "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/log"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/utils"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
@@ -20,9 +21,14 @@ var normalBorrowable Borrowable = nil
 type ItemBorrowable struct {
 	itemRepo   ItemRepo.Repository
 	borrowRepo BorrowRepo.Repository
+	logRepo    logsystem.Repository
 }
 
-func NewNormalItemBorrowable(itemRepo ItemRepo.Repository, borrowRepo BorrowRepo.Repository) Borrowable {
+func NewNormalItemBorrowable(
+	itemRepo ItemRepo.Repository,
+	borrowRepo BorrowRepo.Repository,
+	logRepo logsystem.Repository,
+) Borrowable {
 	if normalBorrowable == nil {
 		normalBorrowableLock.Lock()
 		defer normalBorrowableLock.Unlock()
@@ -30,6 +36,7 @@ func NewNormalItemBorrowable(itemRepo ItemRepo.Repository, borrowRepo BorrowRepo
 			normalBorrowable = &ItemBorrowable{
 				itemRepo:   itemRepo,
 				borrowRepo: borrowRepo,
+				logRepo:    logRepo,
 			}
 		}
 	}
@@ -61,7 +68,18 @@ func (i *ItemBorrowable) BorrowItem(ctx context.Context, userID uuid.UUID, item 
 		return exceptions.ErrFailedToUpdateQuantity
 	}
 
-	return i.borrowRepo.CreateBorrowLog(ctx, borrowLog)
+	err = i.borrowRepo.CreateBorrowLog(ctx, borrowLog)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to create borrow log")
+		return err
+	}
+
+	err = i.logRepo.CreateBorrowLog(ctx, userID, borrowLog.ItemID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to create log system borrow log")
+		return err
+	}
+	return nil
 }
 
 // ReturnItem implements Borrowable.
@@ -91,6 +109,12 @@ func (i *ItemBorrowable) ReturnItem(ctx context.Context, borrowLog *models.Borro
 	err = i.itemRepo.UpdateItem(ctx, item)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to update quantity of item")
+		return err
+	}
+
+	err = i.logRepo.CreateReturnLog(ctx, borrowLog.UserID, borrowLog.ItemID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to create log system return log")
 		return err
 	}
 
