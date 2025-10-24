@@ -46,7 +46,6 @@ func (r *RepositoryImpl) CreateBorrowLog(ctx context.Context, userID uuid.UUID, 
 		LogMessage: &logMessage,
 	}
 	return r.db.WithContext(ctx).Create(logEntry).Error
-
 }
 
 // CreateReturnLog implements Repository.
