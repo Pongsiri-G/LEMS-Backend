@@ -31,7 +31,12 @@ func NewBorrowService(
 	itemRepo itemRepository.Repository,
 	itemSetRepo itemsetRepository.Repository,
 	logRepo logsystem.Repository) Service {
-	return &service{borrowRepo: borrowRepo, itemRepo: itemRepo, itemSetRepo: itemSetRepo, logRepo: logRepo}
+	return &service{
+		borrowRepo:  borrowRepo,
+		itemRepo:    itemRepo,
+		itemSetRepo: itemSetRepo,
+		logRepo:     logRepo,
+	}
 }
 
 func (s *service) Borrow(ctx context.Context, req *requests.BorrowRequest) error {
