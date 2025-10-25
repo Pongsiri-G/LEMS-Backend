@@ -2,4 +2,7 @@ package enums
 
 type LogType string
 
-const ()
+const (
+	LogTypeBorrow LogType = "BORROW"
+	LogTypeReturn LogType = "RETURN"
+)

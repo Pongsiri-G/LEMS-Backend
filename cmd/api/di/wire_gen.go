@@ -24,6 +24,7 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrow_log"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item_set"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/log"
 	minio2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/minio"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/tag"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
@@ -62,7 +63,8 @@ func InitializeAPI() (*server.EchoServer, error) {
 	borrowlogRepository := borrowlog.NewBorrowLogRepository(db)
 	itemRepository := item.NewItemRepository(db)
 	itemsetRepository := itemset.NewItemSetRepository(db)
-	borrowService := borrow.NewBorrowService(borrowlogRepository, itemRepository, itemsetRepository)
+	logRepository := log.NewLogRepository(db)
+	borrowService := borrow.NewBorrowService(borrowlogRepository, itemRepository, itemsetRepository, logRepository)
 	borrowHandler := borrow2.NewBorrowHandler(borrowService)
 	userHandler := user3.NewUserHandler(userService, oauth2Config)
 	itemService := item2.NewItemService(itemRepository, itemsetRepository)
