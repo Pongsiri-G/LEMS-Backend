@@ -99,9 +99,9 @@ func (h *authHandler) RefreshToken(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
 
-	return c.JSON(200, map[string]string{
+	return c.JSON(200, map[string]interface{}{
 		"access_token":  res.AccessToken,
-		"refresh_token": res.RefreshToken,
+		"user": res.User,
 	})
 }
 

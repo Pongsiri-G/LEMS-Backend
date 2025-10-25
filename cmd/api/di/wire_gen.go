@@ -45,7 +45,8 @@ func InitializeAPI() (*server.EchoServer, error) {
 	oauth2Config := auth.NewGoogleOAuthClient(config)
 	googleStrategy := strategy.NewGoogleStrategy(oauth2Config, repository)
 	v := strategy.NewStrategyMap(localStrategy, googleStrategy)
-	authService := auth2.NewAuthService(v, repository, config)
+	userService := user2.NewUserService(repository, config)
+	authService := auth2.NewAuthService(v, repository, userService, config)
 	authHandler := auth3.NewAuthHandler(authService, oauth2Config, config)
 	client, err := minio.NewMinioConnection(config)
 	if err != nil {
@@ -59,7 +60,6 @@ func InitializeAPI() (*server.EchoServer, error) {
 	itemsetRepository := itemset.NewItemSetRepository(db)
 	borrowService := borrow.NewBorrowService(borrowlogRepository, itemRepository, itemsetRepository)
 	borrowHandler := borrow2.NewBorrowHandler(borrowService)
-	userService := user2.NewUserService(repository, config)
 	userHandler := user3.NewUserHandler(userService, oauth2Config)
 	itemService := item2.NewItemService(itemRepository, itemsetRepository)
 	itemHandler := item3.NewItemHandler(itemService)
