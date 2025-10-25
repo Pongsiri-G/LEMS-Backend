@@ -85,6 +85,10 @@ func (w *withdrawRequestFactory) EditRequest(ctx context.Context, req requests.E
 		return err
 	}
 
+	if item == nil {
+		return exceptions.ErrItemNotFound
+	}
+
 	if req.RequestDescription != nil {
 		w.request.RequestDescription = *req.RequestDescription
 	}

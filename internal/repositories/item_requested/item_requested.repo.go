@@ -32,6 +32,10 @@ func (r *repository) CreateItemRequested(ctx context.Context, item *models.ItemR
 func (r *repository) FindByID(ctx context.Context, itemID uuid.UUID) (*models.ItemRequested, error) {
 	var item models.ItemRequested
 	if err := r.db.WithContext(ctx).First(&item, "item_requested_id = ?", itemID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			log.Warn().Msg("item requested not found for ID: " + itemID.String())
+			return nil, nil
+		}
 		log.Error().Err(err).Msg("failed to find item requested by ID")
 		return nil, err
 	}

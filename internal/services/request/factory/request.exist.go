@@ -37,7 +37,7 @@ func NewExistRequestFactory(
 
 // CreateRequest implements Requestable.
 func (e *existRequest) CreateRequest(ctx context.Context, req requests.CreateRequest) error {
-	itemID, err := uuid.Parse(req.ItemID)
+	itemID, err := uuid.Parse(*req.ItemID)
 	if err != nil {
 		return exceptions.ErrInvalidUUID
 	}

@@ -11,10 +11,11 @@ const (
 type RequestStatus string
 
 const (
-	RequestStatusPending RequestStatus = "PENDING"
-	RequestStatusAccept  RequestStatus = "ACCEPTED"
-	RequestStatusReject  RequestStatus = "REJECTED"
-	RequestStatusClosed  RequestStatus = "CLOSED"
+	RequestStatusPending  RequestStatus = "PENDING"
+	RequestStatusCancel   RequestStatus = "CANCELLED"
+	RequestStatusAccept   RequestStatus = "ACCEPTED"
+	RequestStatusReject   RequestStatus = "REJECTED"
+	RequestStatusComplete RequestStatus = "COMPLETED"
 )
 
 func IsValidRequestType(requestType RequestType) bool {
@@ -25,3 +26,10 @@ func IsValidRequestType(requestType RequestType) bool {
 		return false
 	}
 }
+
+type ExportType string
+
+const (
+	ExportTypeXLS ExportType = "XLS"
+	ExportTypePDF ExportType = "PDF"
+)

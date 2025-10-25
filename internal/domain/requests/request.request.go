@@ -8,7 +8,7 @@ type CreateRequest struct {
 	RequestDescription string                `json:"request_description" validate:"required"`
 	ImageURL           string                `json:"image_url" validate:"required"`
 	Item               *ItemRequestedRequest `json:"item_requested" validate:"omitempty,dive"`
-	ItemID             string                `json:"item_id" validate:"omitempty"`
+	ItemID             *string               `json:"item_id" validate:"omitempty"`
 }
 
 type ItemRequestedRequest struct {

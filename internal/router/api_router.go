@@ -99,3 +99,10 @@ func (r *Router) RegisterTagRouter() {
 	v1 := r.echo.Group("/api/v1")
 	v1.GET("/tag/:itemID", r.handlers.Tag.GetNameTagByItemID)
 }
+func (r *Router) RegisterRequestRouter() {
+	v1 := r.echo.Group("/api/v1")
+	v1.GET("/requests/", r.handlers.Request.GetRequests)
+	v1.GET("/requests/:user_id", r.handlers.Request.GetMyRequests)
+	v1.POST("/request", r.handlers.Request.CreateRequest)
+	v1.PUT("/request", r.handlers.Request.EditRequest)
+}
