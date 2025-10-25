@@ -37,6 +37,8 @@ func (h *handler) CreateRequest(c echo.Context) error {
 	err = h.service.CreateRequest(c.Request().Context(), req)
 	if err != nil {
 		switch err {
+		case exceptions.ErrRequestInvalidRequestType:
+			return c.JSON(400, nil)
 		case exceptions.ErrInvalidUUID:
 			return c.JSON(400, echo.Map{
 				"message": exceptions.ErrInvalidUUID.Error(),
@@ -75,6 +77,7 @@ func (h *handler) EditRequest(c echo.Context) error {
 	err = h.service.EditRequest(c.Request().Context(), req)
 	if err != nil {
 		switch err {
+		case exceptions.ErrRequestInvalidRequestType:
 		case exceptions.ErrRequestNotFound:
 		case exceptions.ErrItemNotFound:
 		case exceptions.ErrUserNotFound:

@@ -54,6 +54,11 @@ func NewRequestService(
 // CreateRequest implements Service.
 func (s *service) CreateRequest(ctx context.Context, req requests.CreateRequest) error {
 	var requestFactory factory.Requestable
+	ok := enums.IsValidRequestType(req.RequestType)
+	if !ok {
+		log.Error().Msg("invalid request type")
+		return exceptions.ErrRequestInvalidRequestType
+	}
 	if req.RequestType == enums.RequestTypeRequest {
 		if req.Item == nil {
 			log.Error().Msg("item requested is nil for request type 'request'")
@@ -86,6 +91,12 @@ func (s *service) EditRequest(ctx context.Context, req requests.EditRequest) err
 
 	if request == nil {
 		return exceptions.ErrRequestNotFound
+	}
+
+	ok := enums.IsValidRequestType(request.RequestType)
+	if !ok {
+		log.Error().Msg("invalid request type")
+		return exceptions.ErrRequestInvalidRequestType
 	}
 
 	if request.RequestType == enums.RequestTypeRequest {
