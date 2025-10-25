@@ -21,6 +21,7 @@ func main() {
 		&models.ItemTag{},
 		&models.Tag{},
 		&models.ItemSets{},
+		&models.Log{},
 	)
 	if err != nil {
 		log.Fatal().Msgf("Migration failed: %v", err)

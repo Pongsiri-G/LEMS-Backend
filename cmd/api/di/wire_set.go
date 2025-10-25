@@ -9,6 +9,7 @@ import (
 
 	// Handlers
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers"
+	adminHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/admin"
 	authHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/auth"
 	borrowHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/borrow"
 	itemHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/item"
@@ -31,6 +32,7 @@ import (
 	userRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
 
 	// Services
+	adminSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/admin"
 	authSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
 	borrowSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/borrow"
@@ -71,6 +73,7 @@ var StrategySet = wire.NewSet(
 // ---- Services ----
 
 var ServiceSet = wire.NewSet(
+	adminSvc.NewAdminService,
 	authSvc.NewAuthService,
 	userSvc.NewUserService,
 	minioSvc.NewMinioService,
@@ -83,6 +86,7 @@ var ServiceSet = wire.NewSet(
 
 var HandlerSet = wire.NewSet(
 	handlers.NewHandlers,
+	adminHd.NewAdminHandler,
 	authHd.NewAuthHandler,
 	userHd.NewUserHandler,
 	minioHd.NewFileHandler,
