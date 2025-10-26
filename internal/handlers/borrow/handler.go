@@ -86,7 +86,7 @@ func (h *handler) Return(c echo.Context) error {
 		})
 	}
 
-	err = h.servicce.Return(c.Request().Context(), authUser.ID, req.BorrowID)
+	err = h.servicce.Return(c.Request().Context(), authUser.ID, &req)
 	if err != nil {
 		switch err {
 		case exceptions.ErrInvalidUUID:

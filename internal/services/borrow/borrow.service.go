@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/requests"
 	borrowRepository "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrow_log"
 	itemRepository "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
 	itemsetRepository "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item_set"
@@ -14,7 +15,7 @@ import (
 )
 
 type Service interface {
-	Return(ctx context.Context, userID string, borrowID string) error
+	Return(ctx context.Context, userID string, req *requests.ReturnRequest) error
 	Borrow(ctx context.Context, userID string, itemID string) error
 }
 
@@ -40,7 +41,6 @@ func NewBorrowService(
 
 func (s *service) Borrow(ctx context.Context, userID string, itemID string) error {
 	var borrowFactory factory.Borrowable
-
 
 	userIDUUID, err := uuid.Parse(userID)
 	if err != nil {
@@ -80,14 +80,14 @@ func (s *service) Borrow(ctx context.Context, userID string, itemID string) erro
 }
 
 // Return implements Service.
-func (s *service) Return(ctx context.Context, userID string, borrowID string) error {
+func (s *service) Return(ctx context.Context, userID string, req *requests.ReturnRequest) error {
 	var itemBorrowableFactory factory.Borrowable
 	userIDUUID, err := uuid.Parse(userID)
 	if err != nil {
 		log.Error().Err(err).Msg("invalid uuid format")
 		return exceptions.ErrInvalidUUID
 	}
-	borrowIDUUID, err := uuid.Parse(borrowID)
+	borrowIDUUID, err := uuid.Parse(req.BorrowID)
 	if err != nil {
 		log.Error().Err(err).Msg("invalid uuid format")
 		return exceptions.ErrInvalidUUID
