@@ -11,6 +11,7 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/auth"
 	userrepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/user"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/utils/timeutil"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -23,16 +24,18 @@ type AuthService interface {
 }
 
 type authService struct {
-	cfg        *configs.Config
-	strategies map[string]strategy.AuthStrategy
-	users      userrepo.Repository
+	cfg         *configs.Config
+	strategies  map[string]strategy.AuthStrategy
+	users       userrepo.Repository
+	userService user.UserService
 }
 
-func NewAuthService(strategies map[string]strategy.AuthStrategy, users userrepo.Repository, cfg *configs.Config) AuthService {
+func NewAuthService(strategies map[string]strategy.AuthStrategy, users userrepo.Repository, userService user.UserService, cfg *configs.Config) AuthService {
 	return &authService{
-		strategies: strategies,
-		users:      users,
-		cfg:        cfg,
+		strategies:  strategies,
+		users:       users,
+		cfg:         cfg,
+		userService: userService,
 	}
 }
 
@@ -78,14 +81,19 @@ func (s *authService) RefreshToken(ctx context.Context, tokenStr string) (*respo
 		return nil, jwt.ErrTokenInvalidClaims
 	}
 
-	access, refresh, err := s.generateJWTToken(claims.UserID, claims.Email, claims.Role)
+	access, _, err := s.generateJWTToken(claims.UserID, claims.Email, claims.Role)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := s.userService.MyInfo(ctx, claims.UserID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &responses.AuthResponse{
-		AccessToken:  access,
-		RefreshToken: refresh,
+		AccessToken: access,
+		User:        *user,
 	}, nil
 }
 

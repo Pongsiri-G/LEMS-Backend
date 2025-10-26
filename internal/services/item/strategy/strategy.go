@@ -14,7 +14,7 @@ type FilterStrategy interface {
 
 func NewFilterMap(data []string) map[string]FilterStrategy {
 	return map[string]FilterStrategy{
-		"available" : &AvailabilityFilter{data: data},
-		"tags": &TagStrategy{data: data},
+		"available": &AvailabilityFilter{data: data},
+		"tags":      &TagStrategy{data: data},
 	}
 }

@@ -60,7 +60,7 @@ func (h *userHandler) Register(c echo.Context) error {
 
 func (h *userHandler) Me(c echo.Context) error {
 	authUser, err := contextutil.GetUserFromContext(c)
-	
+
 	if err != nil {
 		return c.JSON(http.StatusForbidden, map[string]string{"error": err.Error()})
 	}

@@ -108,4 +108,5 @@ var HandlerSet = wire.NewSet(
 // ---- Middlewares ----
 var MiddlewareSet = wire.NewSet(
 	middlewares.NewAuthMiddleware,
+	middlewares.NewRbacMiddleware,
 )
