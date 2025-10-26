@@ -97,8 +97,9 @@ func (r *Router) RegisterTagRouter() {
 }
 func (r *Router) RegisterRequestRouter() {
 	v1 := r.echo.Group("/api/v1")
-	v1.GET("/requests/", r.handlers.Request.GetRequests)
-	v1.GET("/requests/:user_id", r.handlers.Request.GetMyRequests)
-	v1.POST("/request", r.handlers.Request.CreateRequest)
-	v1.PUT("/request", r.handlers.Request.EditRequest)
+	protected := v1.Group("", r.authMiddleware.Middleware)
+	protected.GET("/requests/", r.handlers.Request.GetRequests)
+	protected.GET("/requests/:user_id", r.handlers.Request.GetMyRequests)
+	protected.POST("/request", r.handlers.Request.CreateRequest)
+	protected.PUT("/request", r.handlers.Request.EditRequest)
 }
