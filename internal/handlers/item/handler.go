@@ -76,6 +76,8 @@ func (h *handler) CreateItem(c echo.Context) error {
 			return c.JSON(http.StatusBadRequest, echo.Map{
 				"message": "invalid uuid format",
 			})
+		case exceptions.ErrItemNotFound:
+			return c.JSON(http.StatusNotFound, nil)
 		default:
 			log.Error().Err(err).Msg("internal server error")
 			return c.JSON(http.StatusInternalServerError, echo.Map{

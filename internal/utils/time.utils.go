@@ -10,3 +10,7 @@ func BangkokNow() time.Time {
 	location, _ := getBangkokTimezone()
 	return time.Now().In(location)
 }
+
+func ToStringDateTime(t time.Time) string {
+	return t.Format("2006-01-02")
+}

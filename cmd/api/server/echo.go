@@ -54,6 +54,7 @@ func (s *EchoServer) Start() error {
 	router.RegisterBorrowRouter()
 	router.RegisterItemRouter()
 	router.RegisterTagRouter()
+	router.RegisterRequestRouter()
 
 	return e.Start(fmt.Sprintf(":%s", s.config.Port))
 }
