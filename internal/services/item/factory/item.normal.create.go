@@ -2,7 +2,6 @@ package factory
 
 import (
 	"context"
-	"sync"
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
@@ -12,26 +11,16 @@ import (
 	"github.com/google/uuid"
 )
 
-var normalFactoryLock = sync.Mutex{}
-var normalFactory ItemFactory = nil
-
 type ItemFactoryConcrete struct {
 	request  *requests.CreateItemRequest
 	itemRepo ItemRepo.Repository
 }
 
 func NewItemFactoryConcrete(itemRepo ItemRepo.Repository, request *requests.CreateItemRequest) ItemFactory {
-	if normalFactory == nil {
-		normalFactoryLock.Lock()
-		defer normalFactoryLock.Unlock()
-		if normalFactory == nil {
-			normalFactory = &ItemFactoryConcrete{
-				itemRepo: itemRepo,
-				request:  request,
-			}
-		}
+	return &ItemFactoryConcrete{
+		request:  request,
+		itemRepo: itemRepo,
 	}
-	return normalFactory
 }
 
 // CreateItem implements ItemFactory.

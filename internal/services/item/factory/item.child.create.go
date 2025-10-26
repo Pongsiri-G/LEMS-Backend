@@ -2,7 +2,6 @@ package factory
 
 import (
 	"context"
-	"sync"
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
@@ -15,9 +14,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var childFactoryLock = sync.Mutex{}
-var childFactory ItemFactory = nil
-
 type ItemFactoryWithChildrenConcrete struct {
 	request     *requests.CreateItemRequest
 	itemRepo    ItemRepo.Repository
@@ -25,18 +21,11 @@ type ItemFactoryWithChildrenConcrete struct {
 }
 
 func NewItemFactoryWithChildrenConcrete(itemRepo ItemRepo.Repository, itemSetRepo ItemSetRepo.Repository, request *requests.CreateItemRequest) ItemFactory {
-	if childFactory != nil {
-		childFactoryLock.Lock()
-		defer childFactoryLock.Unlock()
-		if childFactory == nil {
-			childFactory = &ItemFactoryWithChildrenConcrete{
-				request:     request,
-				itemRepo:    itemRepo,
-				itemSetRepo: itemSetRepo,
-			}
-		}
+	return &ItemFactoryWithChildrenConcrete{
+		request:     request,
+		itemRepo:    itemRepo,
+		itemSetRepo: itemSetRepo,
 	}
-	return childFactory
 }
 
 // CreateItem implements ItemFactory.
