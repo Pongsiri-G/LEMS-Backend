@@ -7,6 +7,7 @@ import (
 	"io"
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
 	userrepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
 	"golang.org/x/oauth2"
@@ -61,6 +62,11 @@ func (s *GoogleStrategy) Authenticate(ctx context.Context, req *AuthenticateRequ
 
 	// Lookup user in repository
 	user, err := s.users.FindByEmail(ctx, gUser.Email)
+
+	if user.UserStatus != enums.Active {
+		return nil, exceptions.ErrInactiveUser
+	}
+
 	if err != nil {
 		// If not found, create new user
 		newUser := &models.User{
