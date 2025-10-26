@@ -13,9 +13,9 @@ type AvailabilityFilter struct {
 }
 
 func (f *AvailabilityFilter) InitFilter(r item.Repository) {
-	f.repo = r;
+	f.repo = r
 }
 
-func (f AvailabilityFilter) Filter(ctx context.Context) ([]models.Item, error){
+func (f AvailabilityFilter) Filter(ctx context.Context) ([]models.Item, error) {
 	return f.repo.GetAvailable(ctx)
 }

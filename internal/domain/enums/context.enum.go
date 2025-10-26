@@ -3,7 +3,7 @@ package enums
 type ContextKey string
 
 const (
-	UserIDContextKey ContextKey = "userID"
+	UserIDContextKey    ContextKey = "userID"
 	UserEmailContextKey ContextKey = "email"
-	UserRoleContextKey ContextKey = "role"
+	UserRoleContextKey  ContextKey = "role"
 )
