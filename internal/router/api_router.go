@@ -87,6 +87,7 @@ func (r *Router) RegisterBorrowRouter() {
 	protected := v1.Group("", r.authMiddleware.Middleware)
 	protected.POST("/borrow/return", r.handlers.Borrow.Return)
 	protected.POST("/borrow", r.handlers.Borrow.Borrow)
+	protected.GET("/borrow/user", r.handlers.Borrow.GetMyBorrowLog)
 }
 
 func (r *Router) RegisterItemRouter() {

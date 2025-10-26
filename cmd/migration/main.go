@@ -24,7 +24,6 @@ func main() {
 		&models.Log{},
 		&models.Request{},
 		&models.ItemRequested{},
-		&models.BorrowQueue{},
 	)
 	if err != nil {
 		log.Fatal().Msgf("Migration failed: %v", err)

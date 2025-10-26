@@ -14,7 +14,12 @@ type BorrowLog struct {
 	ItemID         uuid.UUID          `db:"item_id" gorm:"type:uuid;not null"`
 	BorrowStatus   enums.BorrowStatus `db:"borrow_status" gorm:"type:VARCHAR(20);not null"`
 	BorrowDate     time.Time          `db:"borrow_date" gorm:"not null"`
+	ReturnImgURL   *string            `db:"return_image_url" gorm:"type:TEXT;default:null"`
 	ReturnDate     *time.Time         `db:"return_date" gorm:"default:null"`
 	CreatedAt      time.Time          `db:"created_at" gorm:"not null"`
 	UpdatedAt      time.Time          `db:"updated_at" gorm:"not null"`
+}
+
+func (BorrowLog) TableName() string {
+	return "borrow_logs"
 }

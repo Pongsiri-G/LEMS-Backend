@@ -3,6 +3,7 @@ package tag
 import (
 	"context"
 
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/requests"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/responses"
@@ -77,12 +78,21 @@ func (i *tagService) GetAllTags(ctx context.Context) ([]responses.TagResponse, e
 
 // CreateTag implements Service.
 func (i *tagService) CreateTag(ctx context.Context, req *requests.CreateTagRequest) error {
-	tag := models.Tag{
+	tag, err := i.repo.GetTagByName(ctx, req.Name)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get tag by name")
+		return err
+	}
+
+	if tag != nil {
+		return exceptions.ErrTagAlreadyExists
+	}
+	newTag := models.Tag{
 		TagID:    uuid.New(),
 		TagName:  req.Name,
 		TagColor: req.Color,
 	}
-	err := i.repo.CreateTag(ctx, &tag)
+	err = i.repo.CreateTag(ctx, &newTag)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create tag")
 		return err
