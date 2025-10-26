@@ -17,19 +17,19 @@ type AuthUser struct {
 func GetUserFromContext(c echo.Context) (*AuthUser, error) {
 	id, ok := c.Get(string(enums.UserIDContextKey)).(string)
 	if !ok || id == "" {
-		log.Info().Msgf("msg: %s", id)
+		log.Info().Msgf("msg: %s",id)
 		return nil, errors.New("user id not found in context")
 	}
 
 	email, ok := c.Get(string(enums.UserEmailContextKey)).(string)
 	if !ok || email == "" {
-		log.Info().Msgf("msg: %s", id)
+		log.Info().Msgf("msg: %s",id)
 		return nil, errors.New("email not found in context")
 	}
 
 	role, ok := c.Get(string(enums.UserRoleContextKey)).(string)
 	if !ok || role == "" {
-		log.Info().Msgf("msg: %s", id)
+		log.Info().Msgf("msg: %s",id)
 		return nil, errors.New("role not found in context")
 	}
 
