@@ -11,6 +11,7 @@ import (
 
 type Service interface {
 	GetTagsNameByItemID(ctx context.Context, itemID string) ([]responses.TagResponse, error)
+	GetAllTags(ctx context.Context) ([]responses.TagResponse, error)
 }
 
 type tagService struct {
@@ -28,6 +29,29 @@ func (i *tagService) GetTagsNameByItemID(ctx context.Context, itemID string) ([]
 		return []responses.TagResponse{}, ErrInvalidUUID
 	}
 	tags, err := i.repo.GetTagsByItemID(ctx, itemIDUUID)
+	if err != nil {
+		return []responses.TagResponse{}, err
+	}
+	response := make([]responses.TagResponse, 0)
+
+	if len(tags) <= 0 {
+		return response, err
+	}
+
+	for _, t := range tags {
+		r := responses.TagResponse{
+			TagID:    t.TagID,
+			TagName:  t.TagName,
+			TagColor: t.TagColor,
+		}
+		response = append(response, r)
+	}
+	return response, nil
+}
+
+// GetAllTags implements Service.
+func (i *tagService) GetAllTags(ctx context.Context) ([]responses.TagResponse, error) {
+	tags, err := i.repo.GetAllTags(ctx)
 	if err != nil {
 		return []responses.TagResponse{}, err
 	}
