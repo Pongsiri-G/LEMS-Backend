@@ -6,6 +6,7 @@ import (
 	"net/url"
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/configs"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/responses"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
@@ -51,7 +52,13 @@ func (h *authHandler) Login(c echo.Context) error {
 		&strategy.AuthenticateRequest{Email: body.Email, Password: body.Password})
 	if err != nil {
 		log.Err(err)
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
+
+		switch err {
+		case exceptions.ErrInactiveUser:
+			return c.JSON(http.StatusForbidden, map[string]string{"error": err.Error()})
+		default:
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})		
+		}
 	}
 
 	return c.JSON(http.StatusOK, map[string]any{"access_token": res.AccessToken, "refresh_token": res.RefreshToken})
@@ -79,11 +86,15 @@ func (h *authHandler) GoogleCallback(c echo.Context) error {
 
 	if err != nil {
 		log.Err(err).Send()
+
+		if err == exceptions.ErrInactiveUser {
+			return c.Redirect(http.StatusTemporaryRedirect, h.redirectWithMsg(err.Error()))
+		}
+		
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
 	}
 
 	return c.Redirect(http.StatusTemporaryRedirect, h.redirectWithTokens(res))
-	// return c.JSON(http.StatusOK, map[string]string{ "url": res.AccessToken })
 }
 
 func (h *authHandler) RefreshToken(c echo.Context) error {
@@ -114,6 +125,19 @@ func (h *authHandler) redirectWithTokens(response *responses.AuthResponse) strin
 		frontendURL,
 		url.QueryEscape(response.AccessToken),
 		url.QueryEscape(response.RefreshToken),
+	)
+
+	return resURL
+}
+
+func (h *authHandler) redirectWithMsg(massage string) string {
+	frontendURL := fmt.Sprintf("%s/oauth/callback", h.cfg.AllowOrigins[0])
+	fmt.Print(frontendURL)
+
+	resURL := fmt.Sprintf(
+		"%s?msg=%s",
+		frontendURL,
+		url.QueryEscape(massage),
 	)
 
 	return resURL
