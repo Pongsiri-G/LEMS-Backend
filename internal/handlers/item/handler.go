@@ -52,9 +52,9 @@ func (h *handler) GetBorrowItem(c echo.Context) error {
 				"message": "invalid uuid format",
 			})
 		default:
-			log.Error().Err(err).Msg("internal server error")
+			log.Error().Err(err).Msg(exceptions.ErrInternalServer.Error())
 			return c.JSON(http.StatusInternalServerError, echo.Map{
-				"message": "internal server error",
+				"message": exceptions.ErrInternalServer.Error(),
 			})
 		}
 	}
@@ -79,9 +79,9 @@ func (h *handler) CreateItem(c echo.Context) error {
 		case exceptions.ErrItemNotFound:
 			return c.JSON(http.StatusNotFound, nil)
 		default:
-			log.Error().Err(err).Msg("internal server error")
+			log.Error().Err(err).Msg(exceptions.ErrInternalServer.Error())
 			return c.JSON(http.StatusInternalServerError, echo.Map{
-				"message": "internal server error",
+				"message": exceptions.ErrInternalServer.Error(),
 			})
 		}
 	}
@@ -95,7 +95,7 @@ func (h *handler) GetAll(c echo.Context) error {
 
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{
-			"message": "Internal Server Error",
+			"message": exceptions.ErrInternalServer.Error(),
 		})
 	}
 
@@ -107,7 +107,7 @@ func (h *handler) GetMyBorrow(c echo.Context) error {
 
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{
-			"message": "Internal Server Error",
+			"message": exceptions.ErrInternalServer.Error(),
 		})
 	}
 
@@ -124,7 +124,7 @@ func (h *handler) GetFiltered(c echo.Context) error {
 			})
 		}
 		return c.JSON(http.StatusInternalServerError, echo.Map{
-			"message": "Internal Server Error",
+			"message": exceptions.ErrInternalServer.Error(),
 		})
 	}
 
