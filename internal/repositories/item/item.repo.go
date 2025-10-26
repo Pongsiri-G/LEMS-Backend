@@ -90,13 +90,14 @@ func (r *repository) GetAll(ctx context.Context) ([]models.Item, error) {
 
 func (r *repository) GetMyBorrow(ctx context.Context, userID uuid.UUID) ([]models.Item, error) {
 	var items []models.Item
-	sub := r.db.Model(&models.BorrowLog{}).Select("item_id").Where("user_id::uuid = ? AND borrow_status = ?", userID, "BORROWED")
-
-	err := r.db.Where("item_id IN (?)", sub).Find(&items).Error
+	err := r.db.
+		Table("items").
+		Joins("JOIN borrow_logs ON items.item_id::uuid = borrow_logs.item_id").
+		Where("borrow_logs.user_id = ? AND borrow_logs.borrow_status = ?", userID, "BORROWED").
+		Find(&items).Error
 	if err != nil {
 		return nil, err
 	}
-
 	return items, nil
 }
 

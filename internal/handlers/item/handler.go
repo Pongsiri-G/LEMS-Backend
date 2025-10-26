@@ -1,7 +1,6 @@
 package item
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
@@ -106,7 +105,6 @@ func (h *handler) GetAll(c echo.Context) error {
 
 func (h *handler) GetMyBorrow(c echo.Context) error {
 	authUser, err := contextutil.GetUserFromContext(c)
-	fmt.Println(authUser)
 	if err != nil {
 		log.Error().Err(err).Msg("internal server error")
 		return c.JSON(http.StatusInternalServerError, echo.Map{
