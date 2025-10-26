@@ -65,7 +65,6 @@ func (h *handler) CreateTag(c echo.Context) error {
 				"message": exceptions.ErrInternalServer.Error(),
 			})
 		}
-		return c.JSON(http.StatusCreated, nil)
 	}
 	return c.JSON(http.StatusCreated, nil)
 }
