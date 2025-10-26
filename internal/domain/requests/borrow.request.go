@@ -6,4 +6,5 @@ type BorrowRequest struct {
 
 type ReturnRequest struct {
 	BorrowID string `json:"borrow_id" validate:"required"`
+	ImageURL string `json:"image_url" validate:"required"`
 }
