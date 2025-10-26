@@ -21,13 +21,14 @@ type UserFilter struct {
 
 type Repository interface {
 	// --- Query ---
-	FindById(ctx context.Context, id uuid.UUID) (*models.User, error)
 	FindByEmail(ctx context.Context, email string) (*models.User, error)
+	FindByID(ctx context.Context, userID string) (*models.User, error)
 	List(ctx context.Context, filter UserFilter) ([]models.User, error)
 
 	// --- Command ---
 	Create(ctx context.Context, u *models.User) error
 	// ใช้สำหรับ provider-based login โดยไม่แยกตาราง
+	// ข้อกำหนด: ลิงก์ด้วยอีเมลเสมอ ถ้าอีเมลมีอยู่แล้ว ให้ใช้งาน user เดิมและอัปเดต AuthProvider ตามความเหมาะสม
 	FindOrCreateByProvider(ctx context.Context, provider enums.AuthProvider, email string, seed *models.User) (*models.User, error)
 	UpdateStatus(ctx context.Context, userID uuid.UUID, status enums.UserStatus) error
 	UpdateRole(ctx context.Context, userID uuid.UUID, role enums.UserRole) error
@@ -43,7 +44,9 @@ type repository struct {
 }
 
 func NewUserRepository(db *gorm.DB) Repository {
-	return &repository{db: db}
+	return &repository{
+		db: db,
+	}
 }
 
 func (r *repository) FindByEmail(ctx context.Context, email string) (*models.User, error) {
@@ -59,9 +62,12 @@ func (r *repository) FindByEmail(ctx context.Context, email string) (*models.Use
 	return &u, nil
 }
 
-func (r *repository) FindById(ctx context.Context, id uuid.UUID) (*models.User, error) {
+// FindByID implements Repository.
+func (r *repository) FindByID(ctx context.Context, userID string) (*models.User, error) {
 	var u models.User
-	if err := r.db.WithContext(ctx).First(&u, "user_id = ?", id).Error; err != nil {
+	if err := r.db.WithContext(ctx).
+		Where("user_id = ?", userID).
+		First(&u).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrNotFound
 		}
@@ -181,4 +187,5 @@ func (r *repository) GetAllUsers(ctx context.Context) ([]models.User, error) {
 		return nil, q.Error
 	}
 	return users, nil
+
 }
