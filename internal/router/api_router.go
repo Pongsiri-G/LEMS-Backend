@@ -62,6 +62,7 @@ func (r *Router) RegisterAdminRoutes() {
 	admin.DELETE("/user/:user_id", r.handlers.Admin.Delete)
 	admin.POST("/user/:user_id/grant-admin", r.handlers.Admin.GrantAdmin)
 	admin.POST("/user/:user_id/revoke-admin", r.handlers.Admin.RevokeAdmin)
+	v1.POST("/user/register", r.handlers.User.Register)
 	protectd := v1.Group("", r.authMiddleware.Middleware)
 	protectd.GET("/p", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{"msg": "success"})
@@ -69,7 +70,6 @@ func (r *Router) RegisterAdminRoutes() {
 
 	// user group
 	user := protectd.Group("/user")
-	user.POST("/register", r.handlers.User.Register)
 	user.GET("/me", r.handlers.User.Me)
 }
 

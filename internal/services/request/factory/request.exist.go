@@ -3,6 +3,7 @@ package factory
 import (
 	"context"
 
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/requests"
@@ -37,11 +38,15 @@ func NewExistRequestFactory(
 
 // CreateRequest implements Requestable.
 func (e *existRequest) CreateRequest(ctx context.Context, req requests.CreateRequest) error {
-	itemID, err := uuid.Parse(*req.ItemID)
+	if req.Item != nil {
+		log.Error().Msg("request type does not expect item")
+		return exceptions.ErrRequestNotExpectItem
+	}
+	userID, err := uuid.Parse(req.UserID)
 	if err != nil {
 		return exceptions.ErrInvalidUUID
 	}
-	userID, err := uuid.Parse(req.UserID)
+	itemID, err := uuid.Parse(*req.ItemID)
 	if err != nil {
 		return exceptions.ErrInvalidUUID
 	}
@@ -60,7 +65,8 @@ func (e *existRequest) CreateRequest(ctx context.Context, req requests.CreateReq
 		UserID:             userID,
 		RequestType:        req.RequestType,
 		ItemID:             itemID,
-		RequestImageURL:    new(string),
+		RequestImageURL:    req.ImageURL,
+		RequestStatus:      enums.RequestStatusPending,
 		RequestDescription: req.RequestDescription,
 		CreatedAt:          utils.BangkokNow(),
 		UpdatedAt:          utils.BangkokNow(),

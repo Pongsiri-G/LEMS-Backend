@@ -7,12 +7,14 @@ import (
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/configs"
 	"github.com/minio/minio-go/v7"
+	"github.com/rs/zerolog/log"
 )
 
 type Repository interface {
 	Upload(ctx context.Context, objectName string, file io.Reader, fileSize int64, contentType string) (string, error)
 	GetImage(ctx context.Context, bucketName string, objectName string) ([]byte, string, error)
 	DeleteImage(ctx context.Context, bucketName string, objectName string) error
+	IsExist(ctx context.Context, bucketName string, objectName string) (bool, error)
 }
 
 type minioAdaptor struct {
@@ -63,5 +65,25 @@ func (m *minioAdaptor) GetImage(ctx context.Context, bucketName string, objectNa
 
 // DeleteImage implements Repository.
 func (m *minioAdaptor) DeleteImage(ctx context.Context, bucketName string, objectName string) error {
-	return m.client.RemoveObject(ctx, bucketName, objectName, minio.RemoveObjectOptions{})
+	ok, err := m.IsExist(ctx, bucketName, objectName)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check if object exists")
+		return err
+	}
+	if ok {
+		err := m.client.RemoveObject(ctx, bucketName, objectName, minio.RemoveObjectOptions{})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// IsExist implements Repository.
+func (m *minioAdaptor) IsExist(ctx context.Context, bucketName string, objectName string) (bool, error) {
+	_, err := m.client.StatObject(ctx, bucketName, objectName, minio.StatObjectOptions{})
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }

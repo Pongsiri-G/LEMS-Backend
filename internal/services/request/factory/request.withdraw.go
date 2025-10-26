@@ -38,6 +38,10 @@ func NewWithdrawRequestFactory(
 
 // CreateRequest implements Requestable.
 func (w *withdrawRequestFactory) CreateRequest(ctx context.Context, req requests.CreateRequest) error {
+	if req.ItemID != nil {
+		log.Error().Msg("request type does not expect item ID")
+		return exceptions.ErrRequestNotExpectItemID
+	}
 	userID, err := uuid.Parse(req.UserID)
 	if err != nil {
 		return exceptions.ErrInvalidUUID
@@ -64,7 +68,7 @@ func (w *withdrawRequestFactory) CreateRequest(ctx context.Context, req requests
 		RequestDescription: req.RequestDescription,
 		ItemID:             itemRequested.ID,
 		RequestStatus:      enums.RequestStatusPending,
-		RequestImageURL:    nil,
+		RequestImageURL:    req.ImageURL,
 		CreatedAt:          utils.BangkokNow(),
 		UpdatedAt:          utils.BangkokNow(),
 	}

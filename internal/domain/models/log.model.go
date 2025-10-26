@@ -14,3 +14,5 @@ type Log struct {
 	LogMessage *string       `db:"log_message"`
 	CreatedAt  time.Time     `db:"created_at"`
 }
+
+func (Log) TableName() string { return "logs" }

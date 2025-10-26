@@ -37,6 +37,8 @@ func (h *handler) CreateRequest(c echo.Context) error {
 	err = h.service.CreateRequest(c.Request().Context(), req)
 	if err != nil {
 		switch err {
+		case exceptions.ErrRequestNotExpectItemID:
+		case exceptions.ErrRequestNotExpectItem:
 		case exceptions.ErrRequestInvalidRequestType:
 			return c.JSON(400, nil)
 		case exceptions.ErrInvalidUUID:

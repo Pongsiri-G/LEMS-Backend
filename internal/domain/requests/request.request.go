@@ -6,7 +6,7 @@ type CreateRequest struct {
 	UserID             string                `json:"user_id" validate:"required"`
 	RequestType        enums.RequestType     `json:"request_type" validate:"required"`
 	RequestDescription string                `json:"request_description" validate:"required"`
-	ImageURL           string                `json:"image_url" validate:"required"`
+	ImageURL           *string               `json:"image_url" validate:"required"`
 	Item               *ItemRequestedRequest `json:"item_requested" validate:"omitempty,dive"`
 	ItemID             *string               `json:"item_id" validate:"omitempty"`
 }
@@ -15,7 +15,6 @@ type ItemRequestedRequest struct {
 	Name        string  `json:"name" validate:"required"`
 	Description string  `json:"description" validate:"required"`
 	Type        string  `json:"type" validate:"required"`
-	UserID      string  `json:"user_id" validate:"required"`
 	Quantity    int     `json:"quantity" validate:"required,min=1"`
 	Price       float64 `json:"price" validate:"required,gt=0"`
 }

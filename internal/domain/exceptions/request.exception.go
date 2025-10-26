@@ -7,4 +7,6 @@ var (
 	ErrRequestItemInvalid        = errors.New("request item invalid")
 	ErrRequestItemIDInvalid      = errors.New("request item ID invalid")
 	ErrRequestInvalidRequestType = errors.New("invalid request type")
+	ErrRequestNotExpectItemID    = errors.New("request type does not expect item ID")
+	ErrRequestNotExpectItem      = errors.New("request type does not expect item")
 )

@@ -13,8 +13,10 @@ type Request struct {
 	RequestType        enums.RequestType   `db:"request_type" gorm:"type:varchar(50);not null;"`
 	RequestStatus      enums.RequestStatus `db:"request_status" gorm:"not null;"`
 	ItemID             uuid.UUID           `db:"item_id" gorm:"type:uuid;"`
-	RequestImageURL    *string             `db:"request_image_url" gorm:"type:varchar(50);not null;"`
+	RequestImageURL    *string             `db:"request_image_url"`
 	RequestDescription string              `db:"request_description" gorm:"type:text;not null;"`
 	CreatedAt          time.Time           `db:"created_at" gorm:"type:timestamp;not null;"`
 	UpdatedAt          time.Time           `db:"updated_at" gorm:"type:timestamp;not null;"`
 }
+
+func (Request) TableName() string { return "requests" }

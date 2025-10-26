@@ -11,3 +11,5 @@ type ItemRequested struct {
 	Quantity    int       `db:"quantity" gorm:"not null"`
 	Price       float64   `db:"price" gorm:"not null"`
 }
+
+func (ItemRequested) TableName() string { return "items_requested" }
