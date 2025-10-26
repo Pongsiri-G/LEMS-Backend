@@ -14,14 +14,15 @@ import (
 type BorrowHandler interface {
 	Return(c echo.Context) error
 	Borrow(c echo.Context) error
+	GetMyBorrowLog(c echo.Context) error
 }
 
 type handler struct {
-	servicce borrowSvc.Service
+	service borrowSvc.Service
 }
 
 func NewBorrowHandler(service borrowSvc.Service) BorrowHandler {
-	return &handler{servicce: service}
+	return &handler{service: service}
 }
 
 func (h *handler) Borrow(c echo.Context) error {
@@ -40,7 +41,7 @@ func (h *handler) Borrow(c echo.Context) error {
 		})
 	}
 
-	err = h.servicce.Borrow(c.Request().Context(), authUser.ID, req.ItemID)
+	err = h.service.Borrow(c.Request().Context(), authUser.ID, req.ItemID)
 	if err != nil {
 		switch err {
 		case exceptions.ErrInvalidUUID:
@@ -86,7 +87,7 @@ func (h *handler) Return(c echo.Context) error {
 		})
 	}
 
-	err = h.servicce.Return(c.Request().Context(), authUser.ID, &req)
+	err = h.service.Return(c.Request().Context(), authUser.ID, &req)
 	if err != nil {
 		switch err {
 		case exceptions.ErrInvalidUUID:
@@ -111,4 +112,31 @@ func (h *handler) Return(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{
 		"message": "return item successfully",
 	})
+}
+
+// GetMyBorrowLog implements BorrowHandler.
+func (h *handler) GetMyBorrowLog(c echo.Context) error {
+	authUser, err := contextutil.GetUserFromContext(c)
+	if err != nil {
+		log.Error().Err(err).Msg("internal server error")
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "internal server error",
+		})
+	}
+
+	borrowLogs, err := h.service.GetUsersBorrowedItems(c.Request().Context(), authUser.ID)
+	if err != nil {
+		switch err {
+		case exceptions.ErrInvalidUUID:
+			return c.JSON(http.StatusBadRequest, echo.Map{
+				"message": "invalid uuid format",
+			})
+		default:
+			log.Error().Err(err).Msg(exceptions.ErrInternalServer.Error())
+			return c.JSON(http.StatusInternalServerError, echo.Map{
+				"message": exceptions.ErrInternalServer.Error(),
+			})
+		}
+	}
+	return c.JSON(http.StatusOK, borrowLogs)
 }
