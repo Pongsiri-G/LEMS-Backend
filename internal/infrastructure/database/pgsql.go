@@ -9,7 +9,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// @WireSet("Infrastructure")
 func NewPostgrest(cfg *configs.Config) *gorm.DB {
 	connection := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Bangkok",

@@ -14,19 +14,19 @@ type TagStrategy struct {
 }
 
 func (f *TagStrategy) InitFilter(r item.Repository) {
-	f.repo = r;
+	f.repo = r
 }
 
-func (f TagStrategy) Filter(ctx context.Context) ([]models.Item, error){
+func (f TagStrategy) Filter(ctx context.Context) ([]models.Item, error) {
 	var tags []string
 	unique := map[string]struct{}{}
 	for _, tag := range f.data {
 		for _, t := range strings.Split(tag, ",") {
-            t = strings.TrimSpace(t)
-            if t != "" {
-                unique[t] = struct{}{}
-            }
-        }
+			t = strings.TrimSpace(t)
+			if t != "" {
+				unique[t] = struct{}{}
+			}
+		}
 	}
 
 	for tag := range unique {

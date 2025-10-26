@@ -15,17 +15,20 @@ type EchoServer struct {
 	config         *configs.Config
 	handlers       *handlers.Handlers
 	authMiddleware middlewares.AuthMiddleware
+	rbacMiddleware middlewares.RbacMiddleware
 }
 
 func NewEchoServer(
 	config *configs.Config,
 	handlers *handlers.Handlers,
 	authMiddleware middlewares.AuthMiddleware,
+	rbacMiddleware middlewares.RbacMiddleware,
 ) *EchoServer {
 	return &EchoServer{
 		config:         config,
 		handlers:       handlers,
 		authMiddleware: authMiddleware,
+		rbacMiddleware:	rbacMiddleware,
 	}
 }
 
@@ -43,13 +46,15 @@ func (s *EchoServer) Start() error {
 		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
 	}))
 
-	router := router.NewRouter(e, s.handlers, s.authMiddleware)
+	router := router.NewRouter(e, s.handlers, s.authMiddleware, s.rbacMiddleware)
 
 	router.RegisterAPIRoutes()
+	router.RegisterAdminRoutes()
 	router.RegisterMinioRoutes()
 	router.RegisterBorrowRouter()
 	router.RegisterItemRouter()
 	router.RegisterTagRouter()
+	router.RegisterRequestRouter()
 
 	return e.Start(fmt.Sprintf(":%s", s.config.Port))
 }

@@ -3,6 +3,7 @@ package router
 import (
 	"net/http"
 
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/middlewares"
 	"github.com/labstack/echo/v4"
@@ -12,13 +13,15 @@ type Router struct {
 	echo           *echo.Echo
 	handlers       *handlers.Handlers
 	authMiddleware middlewares.AuthMiddleware
+	rbacMiddleware middlewares.RbacMiddleware
 }
 
-func NewRouter(echo *echo.Echo, handlers *handlers.Handlers, authMiddleware middlewares.AuthMiddleware) *Router {
+func NewRouter(echo *echo.Echo, handlers *handlers.Handlers, authMiddleware middlewares.AuthMiddleware, rbacMiddleware middlewares.RbacMiddleware) *Router {
 	return &Router{
 		echo:           echo,
 		handlers:       handlers,
 		authMiddleware: authMiddleware,
+		rbacMiddleware:	rbacMiddleware,
 	}
 }
 
@@ -33,41 +36,69 @@ func (r *Router) RegisterAPIRoutes() {
 
 	// auth group
 	auth := v1.Group("/auth")
-	auth.POST("/register", r.handlers.User.Register)
 	auth.POST("/login", r.handlers.Auth.Login)
 	auth.GET("/google/login", r.handlers.Auth.GoogleLogin())
 	auth.GET("/google/callback", r.handlers.Auth.GoogleCallback)
 	auth.POST("/refresh", r.handlers.Auth.RefreshToken)
 
-	protectd := v1.Group("", r.authMiddleware.Middleware)
-	protectd.GET("/p", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, map[string]string{"msg": "success"})
-	})
+	// user group
+	user := v1.Group("/user")
+	user.POST("/register", r.handlers.User.Register)
+	user.GET("/me", r.handlers.User.Me, r.authMiddleware.Middleware)
+}
+
+func (r *Router) RegisterAdminRoutes() {
+	v1 := r.echo.Group("/api/v1")
+	protected := v1.Group("", r.authMiddleware.Middleware) // for testing
+
+	// wrap rbac middleware to match echo.MiddlewareFunc signature
+	admin := protected.Group("/admin", func(next echo.HandlerFunc) echo.HandlerFunc {
+		return r.rbacMiddleware.Middleware(next, string(enums.Admin))
+	}) 
+
+	admin.GET("/users", r.handlers.Admin.GetAllUsers)
+	admin.POST("/user/:user_id/accept", r.handlers.Admin.Accept)
+	admin.POST("/user/:user_id/reject", r.handlers.Admin.Reject)
+	admin.POST("/user/:user_id/deactivate", r.handlers.Admin.Deactivate)
+	admin.DELETE("/user/:user_id", r.handlers.Admin.Delete)
+	admin.POST("/user/:user_id/grant-admin", r.handlers.Admin.GrantAdmin)
+	admin.POST("/user/:user_id/revoke-admin", r.handlers.Admin.RevokeAdmin)
 }
 
 func (r *Router) RegisterMinioRoutes() {
 	v1 := r.echo.Group("/api/v1")
-	v1.POST("/upload", r.handlers.File.Upload)
-	v1.POST("/image", r.handlers.File.GetImage)
+	protected := v1.Group("", r.authMiddleware.Middleware)
+	protected.POST("/upload", r.handlers.File.Upload)
+	protected.POST("/image", r.handlers.File.GetImage)
 }
 
 func (r *Router) RegisterBorrowRouter() {
 	v1 := r.echo.Group("/api/v1")
-	v1.POST("/borrow/return", r.handlers.Borrow.Return)
-	v1.POST("/borrow", r.handlers.Borrow.Borrow)
+	protected := v1.Group("", r.authMiddleware.Middleware)
+	protected.POST("/borrow/return", r.handlers.Borrow.Return)
+	protected.POST("/borrow", r.handlers.Borrow.Borrow)
 }
 
 func (r *Router) RegisterItemRouter() {
 	v1 := r.echo.Group("/api/v1")
-	v1.GET("/item/:item-id", r.handlers.Item.GetBorrowItem)
-	v1.GET("/item/list", r.handlers.Item.GetAll)
-	v1.GET("/item/list/:user_id", r.handlers.Item.GetMyBorrow)
-	v1.GET("/item/child/:item-id", r.handlers.Item.GetChildItemByParentID)
-	v1.GET("/item/list/filter/:strategy", r.handlers.Item.GetFiltered)
-	v1.POST("/item", r.handlers.Item.CreateItem)
+	protected := v1.Group("", r.authMiddleware.Middleware)	
+	protected.GET("/item/:item-id", r.handlers.Item.GetBorrowItem)
+	protected.GET("/item/list", r.handlers.Item.GetAll)
+	protected.GET("/item/list/:user_id", r.handlers.Item.GetMyBorrow)
+	protected.GET("/item/child/:item-id", r.handlers.Item.GetChildItemByParentID)
+	protected.GET("/item/list/filter/:strategy", r.handlers.Item.GetFiltered)
+	protected.POST("/item", r.handlers.Item.CreateItem)
 }
 
 func (r *Router) RegisterTagRouter() {
 	v1 := r.echo.Group("/api/v1")
-	v1.GET("/tag/:itemID", r.handlers.Tag.GetNameTagByItemID)
+	protected := v1.Group("", r.authMiddleware.Middleware)	
+	protected.GET("/tag/:itemID", r.handlers.Tag.GetNameTagByItemID)
+}
+func (r *Router) RegisterRequestRouter() {
+	v1 := r.echo.Group("/api/v1")
+	v1.GET("/requests/", r.handlers.Request.GetRequests)
+	v1.GET("/requests/:user_id", r.handlers.Request.GetMyRequests)
+	v1.POST("/request", r.handlers.Request.CreateRequest)
+	v1.PUT("/request", r.handlers.Request.EditRequest)
 }

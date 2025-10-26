@@ -15,14 +15,14 @@ func ToResponses(items []models.Item) []responses.ItemResponse {
 }
 
 func ToResponse(item models.Item) responses.ItemResponse {
-	return responses.ItemResponse {
-			ID:          item.ItemID,
-			Name:        item.ItemName,
-			Description: item.ItemDescription,
-			PictureURL:  item.ItemPictureURL,
-			Status:      item.ItemStatus,
-			Quantity:    item.ItemQuantity,
-			CreatedAt:   item.ItemCreatedAt,
-			UpdatedAt:   item.ItemUpdatedAt,
-		}
+	return responses.ItemResponse{
+		ID:          item.ItemID,
+		Name:        item.ItemName,
+		Description: item.ItemDescription,
+		PictureURL:  item.ItemPictureURL,
+		Status:      item.ItemStatus,
+		Quantity:    item.ItemQuantity,
+		CreatedAt:   item.ItemCreatedAt,
+		UpdatedAt:   item.ItemUpdatedAt,
+	}
 }

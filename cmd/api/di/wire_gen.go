@@ -10,10 +10,12 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/cmd/api/server"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/configs"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers"
+	admin2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/admin"
 	auth3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/auth"
 	borrow2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/borrow"
 	item3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/item"
 	minio4 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/minio"
+	request3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/request"
 	tag3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/tag"
 	user3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/user"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/auth"
@@ -22,15 +24,20 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/middlewares"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrow_log"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item_requested"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item_set"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/log"
 	minio2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/minio"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/request"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/tag"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/admin"
 	auth2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/borrow"
 	item2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/item"
 	minio3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/minio"
+	request2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/request"
 	tag2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/tag"
 	user2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/user"
 )
@@ -41,11 +48,14 @@ func InitializeAPI() (*server.EchoServer, error) {
 	config := configs.NewConfig()
 	db := database.NewPostgrest(config)
 	repository := user.NewUserRepository(db)
+	adminService := admin.NewAdminService(repository)
+	adminHandler := admin2.NewAdminHandler(adminService)
 	localStrategy := strategy.NewLocalStrategy(repository)
 	oauth2Config := auth.NewGoogleOAuthClient(config)
 	googleStrategy := strategy.NewGoogleStrategy(oauth2Config, repository)
 	v := strategy.NewStrategyMap(localStrategy, googleStrategy)
-	authService := auth2.NewAuthService(v, repository, config)
+	userService := user2.NewUserService(repository, config)
+	authService := auth2.NewAuthService(v, repository, userService, config)
 	authHandler := auth3.NewAuthHandler(authService, oauth2Config, config)
 	client, err := minio.NewMinioConnection(config)
 	if err != nil {
@@ -57,17 +67,22 @@ func InitializeAPI() (*server.EchoServer, error) {
 	borrowlogRepository := borrowlog.NewBorrowLogRepository(db)
 	itemRepository := item.NewItemRepository(db)
 	itemsetRepository := itemset.NewItemSetRepository(db)
-	borrowService := borrow.NewBorrowService(borrowlogRepository, itemRepository, itemsetRepository)
+	logRepository := log.NewLogRepository(db)
+	borrowService := borrow.NewBorrowService(borrowlogRepository, itemRepository, itemsetRepository, logRepository)
 	borrowHandler := borrow2.NewBorrowHandler(borrowService)
-	userService := user2.NewUserService(repository, config)
 	userHandler := user3.NewUserHandler(userService, oauth2Config)
 	itemService := item2.NewItemService(itemRepository, itemsetRepository)
 	itemHandler := item3.NewItemHandler(itemService)
 	tagRepository := tag.NewTagRepository(db)
 	tagService := tag2.NewTagService(tagRepository)
 	tagHandler := tag3.NewTagHandler(tagService)
-	handlersHandlers := handlers.NewHandlers(authHandler, fileHandler, borrowHandler, userHandler, itemHandler, tagHandler)
+	requestRepository := request.NewRepository(db)
+	itemrequestedRepository := itemrequested.NewItemRequestedRepository(db)
+	requestService := request2.NewRequestService(requestRepository, itemrequestedRepository, itemRepository, minioRepository, repository)
+	requestHandler := request3.NewRequestHandler(requestService)
+	handlersHandlers := handlers.NewHandlers(adminHandler, authHandler, fileHandler, borrowHandler, userHandler, itemHandler, tagHandler, requestHandler)
 	authMiddleware := middlewares.NewAuthMiddleware(config)
-	echoServer := server.NewEchoServer(config, handlersHandlers, authMiddleware)
+	rbacMiddleware := middlewares.NewRbacMiddleware(config)
+	echoServer := server.NewEchoServer(config, handlersHandlers, authMiddleware, rbacMiddleware)
 	return echoServer, nil
 }
