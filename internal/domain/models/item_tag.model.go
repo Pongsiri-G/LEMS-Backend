@@ -5,6 +5,6 @@ import (
 )
 
 type ItemTag struct {
-	ItemID       uuid.UUID          `db:"item_id" gorm:"type:uuid;not null"`
-	TagID       uuid.UUID          `db:"tag_id" gorm:"type:uuid;not null"`
+	ItemID uuid.UUID `db:"item_id" gorm:"type:uuid;not null"`
+	TagID  uuid.UUID `db:"tag_id" gorm:"type:uuid;not null"`
 }

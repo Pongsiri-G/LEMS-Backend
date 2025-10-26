@@ -52,7 +52,7 @@ func (h *userHandler) Register(c echo.Context) error {
 		if err == exceptions.ErrEmailAlreadyExists {
 			return c.JSON(http.StatusBadRequest, map[string]string{"error": "email already exists"})
 		}
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": exceptions.ErrInternalServer.Error()})
 	}
 	// สมัครเสร็จให้ไป login ต่อ
 	return c.JSON(http.StatusCreated, map[string]string{"message": "register success"})
@@ -60,7 +60,7 @@ func (h *userHandler) Register(c echo.Context) error {
 
 func (h *userHandler) Me(c echo.Context) error {
 	authUser, err := contextutil.GetUserFromContext(c)
-	
+
 	if err != nil {
 		return c.JSON(http.StatusForbidden, map[string]string{"error": err.Error()})
 	}

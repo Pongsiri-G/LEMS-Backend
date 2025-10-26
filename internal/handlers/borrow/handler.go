@@ -49,9 +49,9 @@ func (h *handler) Borrow(c echo.Context) error {
 		case exceptions.ErrItemNotFound:
 			return c.JSON(http.StatusNotFound, nil)
 		default:
-			log.Error().Err(err).Msg("internal server error")
+			log.Error().Err(err).Msg(exceptions.ErrInternalServer.Error())
 			return c.JSON(http.StatusInternalServerError, echo.Map{
-				"message": "internal server error",
+				"message": exceptions.ErrInternalServer.Error(),
 			})
 		}
 	}
@@ -80,10 +80,14 @@ func (h *handler) Return(c echo.Context) error {
 			return c.JSON(http.StatusNotFound, nil)
 		case exceptions.ErrItemNotFound:
 			return c.JSON(http.StatusNotFound, nil)
+		case exceptions.ErrCannotReturnChildItemDirectly:
+			return c.JSON(http.StatusBadRequest, echo.Map{
+				"message": exceptions.ErrCannotReturnChildItemDirectly.Error(),
+			})
 		default:
-			log.Error().Err(err).Msg("internal server error")
+			log.Error().Err(err).Msg(exceptions.ErrInternalServer.Error())
 			return c.JSON(http.StatusInternalServerError, echo.Map{
-				"message": "internal server error",
+				"message": exceptions.ErrInternalServer.Error(),
 			})
 		}
 	}
