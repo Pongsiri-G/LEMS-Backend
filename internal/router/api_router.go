@@ -21,7 +21,7 @@ func NewRouter(echo *echo.Echo, handlers *handlers.Handlers, authMiddleware midd
 		echo:           echo,
 		handlers:       handlers,
 		authMiddleware: authMiddleware,
-		rbacMiddleware:	rbacMiddleware,
+		rbacMiddleware: rbacMiddleware,
 	}
 }
 
@@ -54,7 +54,7 @@ func (r *Router) RegisterAdminRoutes() {
 	// wrap rbac middleware to match echo.MiddlewareFunc signature
 	admin := protected.Group("/admin", func(next echo.HandlerFunc) echo.HandlerFunc {
 		return r.rbacMiddleware.Middleware(next, string(enums.Admin))
-	}) 
+	})
 
 	admin.GET("/users", r.handlers.Admin.GetAllUsers)
 	admin.POST("/user/:user_id/accept", r.handlers.Admin.Accept)
@@ -81,7 +81,7 @@ func (r *Router) RegisterBorrowRouter() {
 
 func (r *Router) RegisterItemRouter() {
 	v1 := r.echo.Group("/api/v1")
-	protected := v1.Group("", r.authMiddleware.Middleware)	
+	protected := v1.Group("", r.authMiddleware.Middleware)
 	protected.GET("/item/:item-id", r.handlers.Item.GetBorrowItem)
 	protected.GET("/item/list", r.handlers.Item.GetAll)
 	protected.GET("/item/list/:user_id", r.handlers.Item.GetMyBorrow)
@@ -92,7 +92,9 @@ func (r *Router) RegisterItemRouter() {
 
 func (r *Router) RegisterTagRouter() {
 	v1 := r.echo.Group("/api/v1")
-	protected := v1.Group("", r.authMiddleware.Middleware)	
+	protected := v1.Group("", r.authMiddleware.Middleware)
+	protected.POST("/tag", r.handlers.Tag.CreateTag)
+	protected.GET("/tags", r.handlers.Tag.GetTags)
 	protected.GET("/tag/:itemID", r.handlers.Tag.GetNameTagByItemID)
 }
 func (r *Router) RegisterRequestRouter() {
