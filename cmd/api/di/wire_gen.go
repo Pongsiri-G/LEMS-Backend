@@ -74,6 +74,7 @@ func InitializeAPI() (*server.EchoServer, error) {
 	tagHandler := tag3.NewTagHandler(tagService)
 	handlersHandlers := handlers.NewHandlers(adminHandler, authHandler, fileHandler, borrowHandler, userHandler, itemHandler, tagHandler)
 	authMiddleware := middlewares.NewAuthMiddleware(config)
-	echoServer := server.NewEchoServer(config, handlersHandlers, authMiddleware)
+	rbacMiddleware := middlewares.NewRbacMiddleware(config)
+	echoServer := server.NewEchoServer(config, handlersHandlers, authMiddleware, rbacMiddleware)
 	return echoServer, nil
 }
