@@ -21,7 +21,7 @@ func NewRouter(echo *echo.Echo, handlers *handlers.Handlers, authMiddleware midd
 		echo:           echo,
 		handlers:       handlers,
 		authMiddleware: authMiddleware,
-		rbacMiddleware:	rbacMiddleware,
+		rbacMiddleware: rbacMiddleware,
 	}
 }
 
@@ -86,13 +86,15 @@ func (r *Router) RegisterItemRouter() {
 	protected.GET("/item/list", r.handlers.Item.GetAll)
 	protected.GET("/item/list/:user_id", r.handlers.Item.GetMyBorrow)
 	protected.GET("/item/child/:item-id", r.handlers.Item.GetChildItemByParentID)
-	protected.GET("/item/list/filter/:strategy", r.handlers.Item.GetFiltered)
+	protected.GET("/item/list/search", r.handlers.Item.SearchItems)
 	protected.POST("/item", r.handlers.Item.CreateItem)
 }
 
 func (r *Router) RegisterTagRouter() {
 	v1 := r.echo.Group("/api/v1")
 	protected := v1.Group("", r.authMiddleware.Middleware)
+	protected.POST("/tag", r.handlers.Tag.CreateTag)
+	protected.GET("/tags", r.handlers.Tag.GetTags)
 	protected.GET("/tag/:itemID", r.handlers.Tag.GetNameTagByItemID)
 }
 func (r *Router) RegisterRequestRouter() {
