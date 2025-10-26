@@ -182,6 +182,7 @@ func (i *itemService) SearchItems(ctx context.Context, strategiesMap ItemRepo.Se
 		tagsCleaned = append(tagsCleaned, tag)
 	}
 
+
 	strategies := []ItemRepo.SearchStrategy{
 		repository.NameSearch{Query: strategiesMap.Name},
 		repository.TagSearch{Tags: tagsCleaned},
@@ -189,6 +190,7 @@ func (i *itemService) SearchItems(ctx context.Context, strategiesMap ItemRepo.Se
 
 	}
 
+	log.Debug().Msgf("query := name: %s, tags: %s, status: %s", strategiesMap.Name, strings.Join(tagsCleaned, ","), strategiesMap.Status)
 	items, err := i.itemRepo.SearchItems(ctx, strategies)
 
 	if err != nil {
