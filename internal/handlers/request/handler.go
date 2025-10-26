@@ -59,7 +59,7 @@ func (h *handler) CreateRequest(c echo.Context) error {
 			return c.JSON(404, nil)
 		default:
 			return c.JSON(500, echo.Map{
-				"message": "internal server error",
+				"message": exceptions.ErrInternalServer.Error(),
 			})
 		}
 	}
@@ -92,7 +92,7 @@ func (h *handler) EditRequest(c echo.Context) error {
 			return c.JSON(404, nil)
 		default:
 			return c.JSON(500, echo.Map{
-				"message": "internal server error",
+				"message": exceptions.ErrInternalServer.Error(),
 			})
 		}
 	}
@@ -121,7 +121,7 @@ func (h *handler) GetMyRequests(c echo.Context) error {
 			})
 		default:
 			return c.JSON(500, echo.Map{
-				"message": "internal server error",
+				"message": exceptions.ErrInternalServer.Error(),
 			})
 		}
 	}
@@ -143,7 +143,7 @@ func (h *handler) GetRequests(c echo.Context) error {
 			})
 		default:
 			return c.JSON(500, echo.Map{
-				"message": "internal server error",
+				"message": exceptions.ErrInternalServer.Error(),
 			})
 		}
 	}
