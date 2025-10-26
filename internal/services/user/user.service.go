@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/configs"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
@@ -30,6 +31,8 @@ func NewUserService(userRepo user.Repository, cfg *configs.Config) UserService {
 }
 
 func (s *userService) Register(ctx context.Context, r *requests.RegisterRequest) (*models.User, error) {
+	email := strings.ToLower(strings.TrimSpace(r.Email))
+	phone := strings.TrimSpace(r.Phone)
 	if _, err := s.userRepo.FindByEmail(ctx, r.Email); err == nil {
 		return nil, exceptions.ErrEmailAlreadyExists
 	} else if !errors.Is(err, user.ErrNotFound) {
@@ -43,8 +46,8 @@ func (s *userService) Register(ctx context.Context, r *requests.RegisterRequest)
 
 	u := &models.User{
 		UserFullName: r.FullName,
-		UserEmail:    r.Email,
-		UserPhone:    r.Phone,
+		UserEmail:    email,
+		UserPhone:    phone,
 		UserPassword: string(hashed),
 		UserRole:     enums.UserRole(enums.User),
 		UserStatus:   enums.UserStatus(enums.Pending),
