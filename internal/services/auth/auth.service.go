@@ -47,7 +47,7 @@ func (s *authService) Login(ctx context.Context, key string, req *strategy.Authe
 	u, err := strategy.Authenticate(ctx, req)
 	if err != nil {
 		fmt.Println(err)
-		return nil, errors.New(err.Error())
+		return nil, err
 	}
 
 	accessToken, refreshToken, err := s.generateJWTToken(u.UserID.String(), u.UserEmail, string(u.UserRole))

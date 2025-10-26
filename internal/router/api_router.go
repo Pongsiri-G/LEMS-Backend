@@ -81,24 +81,27 @@ func (r *Router) RegisterBorrowRouter() {
 
 func (r *Router) RegisterItemRouter() {
 	v1 := r.echo.Group("/api/v1")
-	protected := v1.Group("", r.authMiddleware.Middleware)	
+	protected := v1.Group("", r.authMiddleware.Middleware)
 	protected.GET("/item/:item-id", r.handlers.Item.GetBorrowItem)
 	protected.GET("/item/list", r.handlers.Item.GetAll)
 	protected.GET("/item/list/my-borrow", r.handlers.Item.GetMyBorrow)
 	protected.GET("/item/child/:item-id", r.handlers.Item.GetChildItemByParentID)
-	protected.GET("/item/list/filter/:strategy", r.handlers.Item.GetFiltered)
+	protected.GET("/item/list/search", r.handlers.Item.SearchItems)
 	protected.POST("/item", r.handlers.Item.CreateItem)
 }
 
 func (r *Router) RegisterTagRouter() {
 	v1 := r.echo.Group("/api/v1")
 	protected := v1.Group("", r.authMiddleware.Middleware)
+	protected.POST("/tag", r.handlers.Tag.CreateTag)
+	protected.GET("/tags", r.handlers.Tag.GetTags)
 	protected.GET("/tag/:itemID", r.handlers.Tag.GetNameTagByItemID)
 }
 func (r *Router) RegisterRequestRouter() {
 	v1 := r.echo.Group("/api/v1")
-	v1.GET("/requests/", r.handlers.Request.GetRequests)
-	v1.GET("/requests/:user_id", r.handlers.Request.GetMyRequests)
-	v1.POST("/request", r.handlers.Request.CreateRequest)
-	v1.PUT("/request", r.handlers.Request.EditRequest)
+	protected := v1.Group("", r.authMiddleware.Middleware)
+	protected.GET("/requests/", r.handlers.Request.GetRequests)
+	protected.GET("/requests/:user_id", r.handlers.Request.GetMyRequests)
+	protected.POST("/request", r.handlers.Request.CreateRequest)
+	protected.PUT("/request", r.handlers.Request.EditRequest)
 }

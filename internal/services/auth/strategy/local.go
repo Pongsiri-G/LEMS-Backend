@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
 	userrepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
 	"golang.org/x/crypto/bcrypt"
@@ -21,6 +23,11 @@ var ErrInvalidCredentials = errors.New("invalid email or password")
 
 func (s *LocalStrategy) Authenticate(ctx context.Context, req *AuthenticateRequest) (*models.User, error) {
 	u, err := s.users.FindByEmail(ctx, req.Email)
+
+	if u.UserStatus != enums.Active {
+		return nil, exceptions.ErrInactiveUser
+	}
+
 	if err != nil {
 		return nil, ErrInvalidCredentials
 	}
