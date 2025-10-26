@@ -187,7 +187,7 @@ func (i *itemService) SearchItems(ctx context.Context, strategiesMap ItemRepo.Se
 		repository.NameSearch{Query: strategiesMap.Name},
 		repository.TagSearch{Tags: tagsCleaned},
 		repository.StatusSearch{Status: strategiesMap.Status},
-
+		repository.UserSearch{Query: strategiesMap.User},
 	}
 
 	log.Debug().Msgf("query := name: %s, tags: %s, status: %s", strategiesMap.Name, strings.Join(tagsCleaned, ","), strategiesMap.Status)

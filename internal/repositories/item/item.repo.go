@@ -32,9 +32,10 @@ type SearchStrategy interface {
 }
 
 type SearchStrategyMap struct {
-	Tags   []string
-	Name   string
-	Status string
+	Tags   	[]string
+	Name   	string
+	Status 	string
+	User	string
 }
 
 // Constuctor

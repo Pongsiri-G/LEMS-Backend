@@ -7,6 +7,7 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/requests"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
 	itemService "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/item"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/utils/contextutil"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
@@ -119,11 +120,26 @@ func (h *handler) SearchItems(c echo.Context) error {
 	name := c.QueryParam("name")
 	tags := c.QueryParams()["tags"]
 	status := c.QueryParam("status")
+	user := c.QueryParam("user")
+	var userId = ""
+
+	if (user != "") {
+		userDetail, err := contextutil.GetUserFromContext(c)
+	
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, echo.Map{
+				"message": "Internal Server Error",
+			})
+		}
+		userId = userDetail.ID
+	}
+
 
 	strategies := item.SearchStrategyMap{
 		Name:   name,
 		Tags:   tags,
 		Status: status,
+		User: userId,
 	}
 
 	response, err := h.service.SearchItems(c.Request().Context(), strategies)
