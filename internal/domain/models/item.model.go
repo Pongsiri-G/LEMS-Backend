@@ -17,6 +17,8 @@ type Item struct {
 	ItemCurrentQuantity int              `db:"item_current_quantity"`
 	ItemCreatedAt       time.Time        `db:"item_created_at"`
 	ItemUpdatedAt       time.Time        `db:"item_updated_at"`
+
+	BorrowQueues []BorrowQueue `gorm:"foreignKey:ItemID"`
 }
 
 type ItemWithChildren struct {
