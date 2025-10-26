@@ -67,27 +67,31 @@ func (r *Router) RegisterAdminRoutes() {
 
 func (r *Router) RegisterMinioRoutes() {
 	v1 := r.echo.Group("/api/v1")
-	v1.POST("/upload", r.handlers.File.Upload)
-	v1.POST("/image", r.handlers.File.GetImage)
+	protected := v1.Group("", r.authMiddleware.Middleware)
+	protected.POST("/upload", r.handlers.File.Upload)
+	protected.POST("/image", r.handlers.File.GetImage)
 }
 
 func (r *Router) RegisterBorrowRouter() {
 	v1 := r.echo.Group("/api/v1")
-	v1.POST("/borrow/return", r.handlers.Borrow.Return)
-	v1.POST("/borrow", r.handlers.Borrow.Borrow)
+	protected := v1.Group("", r.authMiddleware.Middleware)
+	protected.POST("/borrow/return", r.handlers.Borrow.Return)
+	protected.POST("/borrow", r.handlers.Borrow.Borrow)
 }
 
 func (r *Router) RegisterItemRouter() {
 	v1 := r.echo.Group("/api/v1")
-	v1.GET("/item/:item-id", r.handlers.Item.GetBorrowItem)
-	v1.GET("/item/list", r.handlers.Item.GetAll)
-	v1.GET("/item/list/:user_id", r.handlers.Item.GetMyBorrow)
-	v1.GET("/item/child/:item-id", r.handlers.Item.GetChildItemByParentID)
-	v1.GET("/item/list/filter/:strategy", r.handlers.Item.GetFiltered)
-	v1.POST("/item", r.handlers.Item.CreateItem)
+	protected := v1.Group("", r.authMiddleware.Middleware)	
+	protected.GET("/item/:item-id", r.handlers.Item.GetBorrowItem)
+	protected.GET("/item/list", r.handlers.Item.GetAll)
+	protected.GET("/item/list/:user_id", r.handlers.Item.GetMyBorrow)
+	protected.GET("/item/child/:item-id", r.handlers.Item.GetChildItemByParentID)
+	protected.GET("/item/list/filter/:strategy", r.handlers.Item.GetFiltered)
+	protected.POST("/item", r.handlers.Item.CreateItem)
 }
 
 func (r *Router) RegisterTagRouter() {
 	v1 := r.echo.Group("/api/v1")
-	v1.GET("/tag/:itemID", r.handlers.Tag.GetNameTagByItemID)
+	protected := v1.Group("", r.authMiddleware.Middleware)	
+	protected.GET("/tag/:itemID", r.handlers.Tag.GetNameTagByItemID)
 }
