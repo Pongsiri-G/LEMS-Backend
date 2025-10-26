@@ -18,3 +18,14 @@ func NewFilterMap(data []string) map[string]FilterStrategy {
 		"tags":      &TagStrategy{data: data},
 	}
 }
+
+type SearchStrategy interface {
+	Init(repo item.Repository)
+	Search(ctx context.Context) ([]models.Item, error)
+}
+
+func NewSearchStrategyMap(data any) map[string]SearchStrategy {
+	return map[string]SearchStrategy{
+		"name" : &NameSearchStrategy{data: data.(string)},
+	}
+}

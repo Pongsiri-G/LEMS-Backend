@@ -17,6 +17,7 @@ type ItemHandler interface {
 	GetMyBorrow(c echo.Context) error
 	GetChildItemByParentID(c echo.Context) error
 	GetFiltered(c echo.Context) error
+	Search(c echo.Context) error
 }
 
 type handler struct {
@@ -128,5 +129,21 @@ func (h *handler) GetFiltered(c echo.Context) error {
 		})
 	}
 
+	return c.JSON(http.StatusOK, response)
+}
+
+func (h *handler) Search(c echo.Context) error {
+	response, err := h.service.Search(c.Request().Context(), c.Param("strategy"), c.QueryParam("name"))
+
+	if err != nil {
+		if err == exceptions.ErrNoSuchStrategy {
+			return c.JSON(http.StatusBadRequest, echo.Map{
+				"message": err.Error(),
+			})
+		}
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "Internal Server Error",
+		})
+	}
 	return c.JSON(http.StatusOK, response)
 }

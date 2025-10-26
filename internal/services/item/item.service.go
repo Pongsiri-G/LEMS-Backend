@@ -22,19 +22,17 @@ type Service interface {
 	GetAll(ctx context.Context) ([]responses.ItemResponse, error)
 	GetMyBorrow(ctx context.Context, userID string) ([]responses.ItemResponse, error)
 	GetChildItemByParentID(ctx context.Context, itemID string) ([]responses.ItemResponse, error)
-	GetFiltered(ctx context.Context, strategy string, query []string) ([]responses.ItemResponse, error)
+	GetFiltered(ctx context.Context, strat string, query []string) ([]responses.ItemResponse, error)
+	Search(ctx context.Context, strat string, query string) ([]responses.ItemResponse, error)
 }
 
 type itemService struct {
 	itemRepo    ItemRepo.Repository
 	itemSetRepo ItemSetRepo.Repository
 	f           map[string]strategy.FilterStrategy
+	s		   	map[string]strategy.SearchStrategy
 }
 
-// GetFiltered implements Service.
-func (i *itemService) GetFiltered(ctx context.Context, strategy string, query []string) ([]responses.ItemResponse, error) {
-	panic("unimplemented")
-}
 
 func NewItemService(itemRepo ItemRepo.Repository, itemSetRepo ItemSetRepo.Repository) Service {
 	return &itemService{itemRepo: itemRepo, itemSetRepo: itemSetRepo, f: strategy.NewFilterMap(nil)}
@@ -166,6 +164,43 @@ func (i *itemService) GetMyBorrow(ctx context.Context, userID string) ([]respons
 		}
 		response = append(response, r)
 	}
+
+	return response, nil
+}
+
+func (i *itemService) GetFiltered(ctx context.Context, strat string, query []string) ([]responses.ItemResponse, error) {
+	i.f = strategy.NewFilterMap(query)
+	
+	filter := i.f[strat]
+
+	if filter == nil {
+		return nil, exceptions.ErrNoSuchStrategy
+	}
+
+	filter.InitFilter(i.itemRepo)
+
+	items, err := filter.Filter(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+	response := itemutil.ToResponses(items)
+
+	return response, nil
+}
+
+func (i *itemService) Search(ctx context.Context, strat string, query string) ([]responses.ItemResponse, error) {
+	i.s = strategy.NewSearchStrategyMap(query)
+	search := i.s[strat]
+	if search == nil {
+		return nil, exceptions.ErrNoSuchStrategy
+	}	
+	search.Init(i.itemRepo)
+	items, err := search.Search(ctx)
+	if err != nil {
+		return nil, err
+	}
+	response := itemutil.ToResponses(items)
 
 	return response, nil
 }

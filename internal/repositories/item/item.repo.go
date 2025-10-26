@@ -18,7 +18,7 @@ type Repository interface {
 	GetChildItemByParentID(ctx context.Context, itemID uuid.UUID) ([]models.Item, error)
 	GetAvailable(ctx context.Context) ([]models.Item, error)
 	GetByTags(ctx context.Context, tags []string) ([]models.Item, error)
-
+	GetByName(ctx context.Context, name string) ([]models.Item, error)
 	DeleteItem(ctx context.Context, itemID uuid.UUID) error
 }
 
@@ -125,6 +125,16 @@ func (r *repository) GetByTags(ctx context.Context, tags []string) ([]models.Ite
 		return nil, err
 	}
 
+	return items, nil
+}
+
+func (r *repository) GetByName(ctx context.Context, name string) ([]models.Item, error) {
+	var items []models.Item
+	err := r.db.Where("item_name ILIKE ?", "%"+name+"%").Find(&items).Error
+
+	if err != nil {
+		return nil, err
+	}
 	return items, nil
 }
 
