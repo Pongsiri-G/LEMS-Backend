@@ -1,11 +1,13 @@
 package item
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/requests"
 	itemService "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/item"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/utils/contextutil"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
@@ -103,7 +105,15 @@ func (h *handler) GetAll(c echo.Context) error {
 }
 
 func (h *handler) GetMyBorrow(c echo.Context) error {
-	response, err := h.service.GetMyBorrow(c.Request().Context(), c.Param("user_id"))
+	authUser, err := contextutil.GetUserFromContext(c)
+	fmt.Println(authUser)
+	if err != nil {
+		log.Error().Err(err).Msg("internal server error")
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "internal server error",
+		})
+	}
+	response, err := h.service.GetMyBorrow(c.Request().Context(), authUser.ID)
 
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{
