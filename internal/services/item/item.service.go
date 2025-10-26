@@ -2,15 +2,16 @@ package item
 
 import (
 	"context"
+	"strings"
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/requests"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/responses"
 	ItemRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
+	repository "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item/strategies"
 	ItemSetRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item_set"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/item/factory"
-	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/item/strategy"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/utils/itemutil"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
@@ -22,20 +23,17 @@ type Service interface {
 	GetAll(ctx context.Context) ([]responses.ItemResponse, error)
 	GetMyBorrow(ctx context.Context, userID string) ([]responses.ItemResponse, error)
 	GetChildItemByParentID(ctx context.Context, itemID string) ([]responses.ItemResponse, error)
-	GetFiltered(ctx context.Context, strat string, query []string) ([]responses.ItemResponse, error)
-	Search(ctx context.Context, strat string, query string) ([]responses.ItemResponse, error)
+	SearchItems(ctx context.Context, strategies ItemRepo.SearchStrategyMap) ([]responses.ItemResponse, error)
 }
 
 type itemService struct {
 	itemRepo    ItemRepo.Repository
 	itemSetRepo ItemSetRepo.Repository
-	f           map[string]strategy.FilterStrategy
-	s		   	map[string]strategy.SearchStrategy
 }
 
 
 func NewItemService(itemRepo ItemRepo.Repository, itemSetRepo ItemSetRepo.Repository) Service {
-	return &itemService{itemRepo: itemRepo, itemSetRepo: itemSetRepo, f: strategy.NewFilterMap(nil)}
+	return &itemService{itemRepo: itemRepo, itemSetRepo: itemSetRepo}
 }
 
 func (i *itemService) GetChildItemByParentID(ctx context.Context, itemID string) ([]responses.ItemResponse, error) {
@@ -168,39 +166,35 @@ func (i *itemService) GetMyBorrow(ctx context.Context, userID string) ([]respons
 	return response, nil
 }
 
-func (i *itemService) GetFiltered(ctx context.Context, strat string, query []string) ([]responses.ItemResponse, error) {
-	i.f = strategy.NewFilterMap(query)
-	
-	filter := i.f[strat]
-
-	if filter == nil {
-		return nil, exceptions.ErrNoSuchStrategy
+func (i *itemService) SearchItems(ctx context.Context, strategiesMap ItemRepo.SearchStrategyMap) ([]responses.ItemResponse, error) {
+	var tagsCleaned []string
+	unique := map[string]struct{}{}
+	for _, tag := range strategiesMap.Tags {
+		for _, t := range strings.Split(tag, ",") {
+            t = strings.TrimSpace(t)
+            if t != "" {
+                unique[t] = struct{}{}
+            }
+        }
 	}
 
-	filter.InitFilter(i.itemRepo)
+	for tag := range unique {
+		tagsCleaned = append(tagsCleaned, tag)
+	}
 
-	items, err := filter.Filter(ctx)
+	strategies := []ItemRepo.SearchStrategy{
+		repository.NameSearch{Query: strategiesMap.Name},
+		repository.TagSearch{Tags: tagsCleaned},
+		repository.StatusSearch{Status: strategiesMap.Status},
+
+	}
+
+	items, err := i.itemRepo.SearchItems(ctx, strategies)
 
 	if err != nil {
 		return nil, err
 	}
-	response := itemutil.ToResponses(items)
 
-	return response, nil
-}
+	return itemutil.ToResponses(items), nil
 
-func (i *itemService) Search(ctx context.Context, strat string, query string) ([]responses.ItemResponse, error) {
-	i.s = strategy.NewSearchStrategyMap(query)
-	search := i.s[strat]
-	if search == nil {
-		return nil, exceptions.ErrNoSuchStrategy
-	}	
-	search.Init(i.itemRepo)
-	items, err := search.Search(ctx)
-	if err != nil {
-		return nil, err
-	}
-	response := itemutil.ToResponses(items)
-
-	return response, nil
 }

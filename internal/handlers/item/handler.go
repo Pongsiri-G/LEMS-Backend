@@ -5,6 +5,7 @@ import (
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/requests"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
 	itemService "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/item"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
@@ -16,8 +17,7 @@ type ItemHandler interface {
 	GetAll(c echo.Context) error
 	GetMyBorrow(c echo.Context) error
 	GetChildItemByParentID(c echo.Context) error
-	GetFiltered(c echo.Context) error
-	Search(c echo.Context) error
+	SearchItems(c echo.Context) error
 }
 
 type handler struct {
@@ -115,32 +115,20 @@ func (h *handler) GetMyBorrow(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-func (h *handler) GetFiltered(c echo.Context) error {
-	response, err := h.service.GetFiltered(c.Request().Context(), c.Param("strategy"), c.QueryParams()["tags"])
+func (h *handler) SearchItems(c echo.Context) error {
+	name := c.QueryParam("name")
+	tags := c.QueryParams()["tags"]
+	status := c.QueryParam("status")
 
-	if err != nil {
-		if err == exceptions.ErrNoSuchStrategy {
-			return c.JSON(http.StatusBadRequest, echo.Map{
-				"message": err.Error(),
-			})
-		}
-		return c.JSON(http.StatusInternalServerError, echo.Map{
-			"message": exceptions.ErrInternalServer.Error(),
-		})
+	strategies := item.SearchStrategyMap{
+		Name:   name,
+		Tags:   tags,
+		Status: status,
 	}
 
-	return c.JSON(http.StatusOK, response)
-}
-
-func (h *handler) Search(c echo.Context) error {
-	response, err := h.service.Search(c.Request().Context(), c.Param("strategy"), c.QueryParam("name"))
+	response, err := h.service.SearchItems(c.Request().Context(), strategies)
 
 	if err != nil {
-		if err == exceptions.ErrNoSuchStrategy {
-			return c.JSON(http.StatusBadRequest, echo.Map{
-				"message": err.Error(),
-			})
-		}
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"message": "Internal Server Error",
 		})

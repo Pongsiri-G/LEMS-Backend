@@ -19,11 +19,22 @@ type Repository interface {
 	GetAvailable(ctx context.Context) ([]models.Item, error)
 	GetByTags(ctx context.Context, tags []string) ([]models.Item, error)
 	GetByName(ctx context.Context, name string) ([]models.Item, error)
+	SearchItems(ctx context.Context, strategies []SearchStrategy) ([]models.Item, error)
 	DeleteItem(ctx context.Context, itemID uuid.UUID) error
 }
 
 type repository struct {
 	db *gorm.DB
+}
+
+type SearchStrategy interface {
+    Apply(db *gorm.DB) *gorm.DB
+}
+
+type SearchStrategyMap struct {
+	Tags   []string
+	Name   string
+	Status string
 }
 
 // Constuctor
@@ -135,6 +146,24 @@ func (r *repository) GetByName(ctx context.Context, name string) ([]models.Item,
 	if err != nil {
 		return nil, err
 	}
+	return items, nil
+}
+
+func (r *repository) SearchItems(ctx context.Context, strategies []SearchStrategy) ([]models.Item, error) {
+	var items []models.Item
+	log.Info().Msgf("Searching items with %d strategies", len(strategies))
+	db := r.db.Model(&models.Item{})
+
+	for _, strategy := range strategies {
+		db = strategy.Apply(db)
+	}
+
+	err := db.Find(&items).Error
+	if err != nil {
+		return nil, err
+	}
+
+	log.Info().Msgf("Found %d items matching search criteria", len(items))
 	return items, nil
 }
 
