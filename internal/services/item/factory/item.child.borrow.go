@@ -68,12 +68,12 @@ func (i *ItemChildBorrowable) BorrowItem(ctx context.Context, userID uuid.UUID, 
 		UpdatedAt:    utils.BangkokNow(),
 	}
 
-	if item.ItemQuantity-1 < 0 {
+	if item.ItemCurrentQuantity-1 < 0 {
 		log.Error().Err(exceptions.ErrItemQuantityInSufficient).Msg("quantity of the item less than zero")
 		return exceptions.ErrItemQuantityInSufficient
 	}
 
-	item.ItemQuantity -= 1
+	item.ItemCurrentQuantity -= 1
 	borrowLogs, err := i.borrowChildItems(userID, parentBorrowLog.BorrowID, itemResp)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to borrow child items")
@@ -147,7 +147,7 @@ func (i *ItemChildBorrowable) borrowChildItems(userID uuid.UUID, parentID uuid.U
 			UpdatedAt:      utils.BangkokNow(),
 		}
 
-		if child.Quantity-1 < 0 {
+		if child.CurrentQuantity-1 < 0 {
 			return nil, exceptions.ErrItemQuantityInSufficient
 		}
 
@@ -206,7 +206,7 @@ func (i *ItemChildBorrowable) ReturnItem(ctx context.Context, borrowLog *models.
 		// childBorrowLog.ReturnDate = &now
 		// childBorrowLog.UpdatedAt = now
 		childBorrowLog.ReturnImgURL = borrowLog.ReturnImgURL
-		childItem.ItemQuantity += 1
+		childItem.ItemCurrentQuantity += 1
 		childItem.ItemUpdatedAt = now
 		allItem = append(allItem, allItemStruct{
 			Item:      childItem,

@@ -5,11 +5,13 @@ import (
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/requests"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/responses"
 	borrowRepository "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrow_log"
 	itemRepository "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
 	itemsetRepository "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item_set"
 	logsystem "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/log"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/item/factory"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/utils"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 )
@@ -17,6 +19,8 @@ import (
 type Service interface {
 	Return(ctx context.Context, userID string, req *requests.ReturnRequest) error
 	Borrow(ctx context.Context, userID string, itemID string) error
+
+	GetUsersBorrowedItems(ctx context.Context, userID string) ([]responses.UserBorrrowResponse, error)
 }
 
 type service struct {
@@ -123,4 +127,47 @@ func (s *service) Return(ctx context.Context, userID string, req *requests.Retur
 		itemBorrowableFactory = factory.NewNormalItemBorrowable(s.itemRepo, s.borrowRepo, s.logRepo)
 	}
 	return itemBorrowableFactory.ReturnItem(ctx, borrow, &children)
+}
+
+// GetUsersBorrowedItems implements Service.
+func (s *service) GetUsersBorrowedItems(ctx context.Context, userID string) ([]responses.UserBorrrowResponse, error) {
+	userIDUUID, err := uuid.Parse(userID)
+	if err != nil {
+		log.Error().Err(err).Msg("invalid uuid format")
+		return nil, exceptions.ErrInvalidUUID
+	}
+
+	borrows, err := s.borrowRepo.FindBorrowLogByUserID(ctx, userIDUUID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get borrow logs by user id")
+		return nil, err
+	}
+
+	var results []responses.UserBorrrowResponse
+	for _, borrow := range borrows {
+		item, err := s.itemRepo.GetItemByID(ctx, borrow.ItemID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to get item by id")
+			return nil, err
+		}
+		if item == nil {
+			log.Error().Err(err).Msg("item not found")
+			return nil, exceptions.ErrItemNotFound
+		}
+
+		result := responses.UserBorrrowResponse{
+			BorrowID:     borrow.BorrowID.String(),
+			ItemName:     item.ItemName,
+			BorrowDate:   utils.ToStringDateTime(borrow.BorrowDate),
+			BorrowStatus: borrow.BorrowStatus,
+		}
+
+		if borrow.ReturnDate != nil {
+			timeResult := utils.ToStringDateTime(*borrow.ReturnDate)
+			result.ReturnDate = &timeResult
+		}
+		results = append(results, result)
+	}
+
+	return results, nil
 }

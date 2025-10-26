@@ -5,6 +5,7 @@ import (
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
 
@@ -13,6 +14,8 @@ type Repository interface {
 	EditBorrowLog(ctx context.Context, borrowLog *models.BorrowLog) error
 	CreateBorrowLog(ctx context.Context, borrowLog models.BorrowLog) error
 	GetChildren(ctx context.Context, parentID uuid.UUID) ([]models.BorrowLog, error)
+
+	FindBorrowLogByUserID(ctx context.Context, userID uuid.UUID) ([]models.BorrowLog, error)
 }
 
 type repository struct {
@@ -50,6 +53,17 @@ func (r *repository) GetChildren(ctx context.Context, parentID uuid.UUID) ([]mod
 	var borrowLogs []models.BorrowLog
 	err := r.db.WithContext(ctx).Where("borrow_parent_id = ? AND borrow_status = ?", parentID, "BORROWED").Find(&borrowLogs).Error
 	if err != nil {
+		return nil, err
+	}
+	return borrowLogs, nil
+}
+
+// FindBorrowLogByUserID implements Repository.
+func (r *repository) FindBorrowLogByUserID(ctx context.Context, userID uuid.UUID) ([]models.BorrowLog, error) {
+	var borrowLogs []models.BorrowLog
+	err := r.db.WithContext(ctx).Where("user_id = ?", userID).Find(&borrowLogs).Error
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get borrow logs by user id")
 		return nil, err
 	}
 	return borrowLogs, nil
