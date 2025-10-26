@@ -6,6 +6,7 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/requests"
 	borrowSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/borrow"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/utils/contextutil"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
@@ -31,7 +32,15 @@ func (h *handler) Borrow(c echo.Context) error {
 		})
 	}
 
-	err := h.servicce.Borrow(c.Request().Context(), &req)
+	authUser, err := contextutil.GetUserFromContext(c)
+	if err != nil {
+		log.Error().Err(err).Msg("internal server error")
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "internal server error",
+		})
+	}
+
+	err = h.servicce.Borrow(c.Request().Context(), authUser.ID, req.ItemID)
 	if err != nil {
 		switch err {
 		case exceptions.ErrInvalidUUID:
@@ -69,7 +78,15 @@ func (h *handler) Return(c echo.Context) error {
 		})
 	}
 
-	err := h.servicce.Return(c.Request().Context(), &req)
+	authUser, err := contextutil.GetUserFromContext(c)
+	if err != nil {
+		log.Error().Err(err).Msg("internal server error")
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "internal server error",
+		})
+	}
+
+	err = h.servicce.Return(c.Request().Context(), authUser.ID, req.BorrowID)
 	if err != nil {
 		switch err {
 		case exceptions.ErrInvalidUUID:

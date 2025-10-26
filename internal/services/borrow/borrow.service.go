@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
-	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/requests"
 	borrowRepository "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrow_log"
 	itemRepository "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
 	itemsetRepository "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item_set"
@@ -15,8 +14,8 @@ import (
 )
 
 type Service interface {
-	Return(ctx context.Context, req *requests.ReturnRequest) error
-	Borrow(ctx context.Context, req *requests.BorrowRequest) error
+	Return(ctx context.Context, userID string, borrowID string) error
+	Borrow(ctx context.Context, userID string, itemID string) error
 }
 
 type service struct {
@@ -39,20 +38,22 @@ func NewBorrowService(
 	}
 }
 
-func (s *service) Borrow(ctx context.Context, req *requests.BorrowRequest) error {
+func (s *service) Borrow(ctx context.Context, userID string, itemID string) error {
 	var borrowFactory factory.Borrowable
-	userID, err := uuid.Parse(req.UserID)
+
+
+	userIDUUID, err := uuid.Parse(userID)
 	if err != nil {
 		log.Error().Err(err).Msg("invalid uuid format")
 		return exceptions.ErrInvalidUUID
 	}
-	itemID, err := uuid.Parse(req.ItemID)
+	itemIDUUID, err := uuid.Parse(itemID)
 	if err != nil {
 		log.Error().Err(err).Msg("invalid uuid format")
 		return exceptions.ErrInvalidUUID
 	}
 
-	item, err := s.itemRepo.GetItemByID(ctx, itemID)
+	item, err := s.itemRepo.GetItemByID(ctx, itemIDUUID)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get item by id")
 		return err
@@ -74,25 +75,25 @@ func (s *service) Borrow(ctx context.Context, req *requests.BorrowRequest) error
 		borrowFactory = factory.NewNormalItemBorrowable(s.itemRepo, s.borrowRepo, s.logRepo)
 	}
 
-	return borrowFactory.BorrowItem(ctx, userID, item, &children)
+	return borrowFactory.BorrowItem(ctx, userIDUUID, item, &children)
 
 }
 
 // Return implements Service.
-func (s *service) Return(ctx context.Context, req *requests.ReturnRequest) error {
+func (s *service) Return(ctx context.Context, userID string, borrowID string) error {
 	var itemBorrowableFactory factory.Borrowable
-	userID, err := uuid.Parse(req.UserID)
+	userIDUUID, err := uuid.Parse(userID)
 	if err != nil {
 		log.Error().Err(err).Msg("invalid uuid format")
 		return exceptions.ErrInvalidUUID
 	}
-	borrowID, err := uuid.Parse(req.BorrowID)
+	borrowIDUUID, err := uuid.Parse(borrowID)
 	if err != nil {
 		log.Error().Err(err).Msg("invalid uuid format")
 		return exceptions.ErrInvalidUUID
 	}
 
-	borrow, err := s.borrowRepo.FindBorrowLogByUserIDAndBorrowID(ctx, userID, borrowID)
+	borrow, err := s.borrowRepo.FindBorrowLogByUserIDAndBorrowID(ctx, userIDUUID, borrowIDUUID)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to find borrow log")
 		return err

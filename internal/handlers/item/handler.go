@@ -1,6 +1,7 @@
 package item
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
@@ -119,6 +120,7 @@ func (h *handler) GetMyBorrow(c echo.Context) error {
 		})
 	}
 
+	fmt.Println("HAAHAH" , response)
 	return c.JSON(http.StatusOK, response)
 }
 
