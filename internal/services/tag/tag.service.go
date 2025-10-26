@@ -3,6 +3,8 @@ package tag
 import (
 	"context"
 
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/requests"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/responses"
 	tagRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/tag"
 	"github.com/google/uuid"
@@ -12,6 +14,7 @@ import (
 type Service interface {
 	GetTagsNameByItemID(ctx context.Context, itemID string) ([]responses.TagResponse, error)
 	GetAllTags(ctx context.Context) ([]responses.TagResponse, error)
+	CreateTag(ctx context.Context, req *requests.CreateTagRequest) error
 }
 
 type tagService struct {
@@ -70,4 +73,19 @@ func (i *tagService) GetAllTags(ctx context.Context) ([]responses.TagResponse, e
 		response = append(response, r)
 	}
 	return response, nil
+}
+
+// CreateTag implements Service.
+func (i *tagService) CreateTag(ctx context.Context, req *requests.CreateTagRequest) error {
+	tag := models.Tag{
+		TagID:    uuid.New(),
+		TagName:  req.Name,
+		TagColor: req.Color,
+	}
+	err := i.repo.CreateTag(ctx, &tag)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to create tag")
+		return err
+	}
+	return nil
 }

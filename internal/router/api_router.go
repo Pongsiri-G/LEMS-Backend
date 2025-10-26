@@ -93,6 +93,7 @@ func (r *Router) RegisterItemRouter() {
 func (r *Router) RegisterTagRouter() {
 	v1 := r.echo.Group("/api/v1")
 	protected := v1.Group("", r.authMiddleware.Middleware)
+	protected.POST("/tag", r.handlers.Tag.CreateTag)
 	protected.GET("/tags", r.handlers.Tag.GetTags)
 	protected.GET("/tag/:itemID", r.handlers.Tag.GetNameTagByItemID)
 }

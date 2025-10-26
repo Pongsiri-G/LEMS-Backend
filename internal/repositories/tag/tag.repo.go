@@ -12,6 +12,8 @@ import (
 type Repository interface {
 	GetTagsByItemID(ctx context.Context, itemID uuid.UUID) ([]models.Tag, error)
 	GetAllTags(ctx context.Context) ([]models.Tag, error)
+
+	CreateTag(ctx context.Context, tag *models.Tag) error
 }
 
 type repository struct {
@@ -53,4 +55,14 @@ func (r *repository) GetAllTags(ctx context.Context) ([]models.Tag, error) {
 		return []models.Tag{}, err
 	}
 	return tags, nil
+}
+
+// CreateTag implements Repository.
+func (r *repository) CreateTag(ctx context.Context, tag *models.Tag) error {
+	err := r.db.Create(tag).Error
+	if err != nil {
+		log.Error().Err(err).Msg("failed to create tag in database")
+		return err
+	}
+	return nil
 }
