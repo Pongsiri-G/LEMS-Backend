@@ -15,6 +15,7 @@ type BorrowHandler interface {
 	Return(c echo.Context) error
 	Borrow(c echo.Context) error
 	GetMyBorrowLog(c echo.Context) error
+	GetBorrowID(c echo.Context) error
 }
 
 type handler struct {
@@ -139,4 +140,29 @@ func (h *handler) GetMyBorrowLog(c echo.Context) error {
 		}
 	}
 	return c.JSON(http.StatusOK, borrowLogs)
+}
+
+func (h *handler) GetBorrowID(c echo.Context) error {
+	userID, err := contextutil.GetUserFromContext(c)
+
+	if (err != nil) {
+		log.Error().Err(err).Msg("internal server error")
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "internal server error",
+		})
+	}
+
+	itemID := c.Param("item-id")
+
+	borrowID, err := h.service.GetBorrowID(c.Request().Context(), userID.ID, itemID) 
+
+	if (err != nil) {
+		log.Error().Err(err).Msg("internal server error")
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "internal server error",
+		})
+	}
+
+	return c.JSON(http.StatusOK, borrowID)
+	
 }
