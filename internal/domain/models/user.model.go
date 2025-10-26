@@ -20,6 +20,8 @@ type User struct {
 	CreatedAt      time.Time          `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt      time.Time          `gorm:"autoUpdateTime" json:"updated_at"`
 	LastLoggedIn   *time.Time         `json:"last_logged_in"`
+
+	BorrowQueues []BorrowQueue `gorm:"foreignKey:UserID"`
 }
 
 func (User) TableName() string { return "users" }
