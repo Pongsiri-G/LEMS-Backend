@@ -108,6 +108,8 @@ func (s *service) Return(ctx context.Context, req *requests.ReturnRequest) error
 		return exceptions.ErrCannotReturnChildItemDirectly
 	}
 
+	borrow.ReturnImgURL = &req.ImageURL
+
 	children, err := s.borrowRepo.GetChildren(ctx, borrow.BorrowID)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get child borrow logs")

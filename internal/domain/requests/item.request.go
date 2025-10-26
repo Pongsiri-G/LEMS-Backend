@@ -9,12 +9,5 @@ type CreateItemRequest struct {
 	Quantity     int               `json:"quantity" validate:"gte=0"`
 	Status       *enums.ItemStatus `json:"status" validate:"omitempty"`
 	Prerequisite *[]string         `json:"prerequisite" validate:"omitempty,max=500"`
+	Tags         *[]string         `json:"tags" validate:"omitempty"`
 }
-
-/*
-{
-	id
-
-	prerequisite: ["" , "" , ""]
-}
-*/
