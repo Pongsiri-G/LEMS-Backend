@@ -11,6 +11,7 @@ import (
 	BorrowRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrow_log"
 	ItemRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
 	ItemSetRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item_set"
+	logsystem "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/log"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/utils"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
@@ -23,9 +24,15 @@ type ItemChildBorrowable struct {
 	itemRepo    ItemRepo.Repository
 	itemSetRepo ItemSetRepo.Repository
 	borrowRepo  BorrowRepo.Repository
+	logRepo     logsystem.Repository
 }
 
-func NewChildItemBorrowable(itemRepo ItemRepo.Repository, borrowRepo BorrowRepo.Repository, itemSetRepo ItemSetRepo.Repository) Borrowable {
+func NewChildItemBorrowable(
+	itemRepo ItemRepo.Repository,
+	borrowRepo BorrowRepo.Repository,
+	itemSetRepo ItemSetRepo.Repository,
+	logRepo logsystem.Repository,
+) Borrowable {
 	if childBorrowable == nil {
 		childBorrowableLock.Lock()
 		defer childBorrowableLock.Unlock()
@@ -34,6 +41,7 @@ func NewChildItemBorrowable(itemRepo ItemRepo.Repository, borrowRepo BorrowRepo.
 				itemRepo:    itemRepo,
 				borrowRepo:  borrowRepo,
 				itemSetRepo: itemSetRepo,
+				logRepo:     logRepo,
 			}
 		}
 	}
@@ -76,10 +84,21 @@ func (i *ItemChildBorrowable) BorrowItem(ctx context.Context, userID uuid.UUID, 
 		log.Error().Err(err).Msg("failed to create borrow log for parent item")
 		return err
 	}
+
+	if err := i.logRepo.CreateBorrowLog(ctx, userID, parentBorrowLog.ItemID); err != nil {
+		log.Error().Err(err).Msg("failed to create log system borrow log")
+		return err
+	}
+
 	for _, borrowLog := range borrowLogs {
 		err = i.borrowRepo.CreateBorrowLog(ctx, borrowLog)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to create borrow log for child item")
+			return err
+		}
+
+		if err := i.logRepo.CreateBorrowLog(ctx, userID, borrowLog.ItemID); err != nil {
+			log.Error().Err(err).Msg("failed to create log system borrow log for child item")
 			return err
 		}
 	}
@@ -197,6 +216,12 @@ func (i *ItemChildBorrowable) ReturnItem(ctx context.Context, borrowLog *models.
 		err = i.itemRepo.UpdateItem(ctx, itemStruct.Item)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to update quantity of item")
+			return err
+		}
+
+		err = i.logRepo.CreateReturnLog(ctx, itemStruct.BorrowLog.UserID, itemStruct.BorrowLog.ItemID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to create log system return log")
 			return err
 		}
 	}

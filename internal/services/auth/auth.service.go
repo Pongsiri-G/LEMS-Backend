@@ -47,7 +47,7 @@ func (s *authService) Login(ctx context.Context, key string, req *strategy.Authe
 		return nil, errors.New(err.Error())
 	}
 
-	accessToken, refreshToken, err := s.generateJWTToken(u.UserID.String(), u.UserEmail)
+	accessToken, refreshToken, err := s.generateJWTToken(u.UserID.String(), u.UserEmail, string(u.UserRole))
 
 	if err != nil {
 		log.Debug().Stack()
@@ -78,7 +78,7 @@ func (s *authService) RefreshToken(ctx context.Context, tokenStr string) (*respo
 		return nil, jwt.ErrTokenInvalidClaims
 	}
 
-	access, refresh, err := s.generateJWTToken(claims.UserID, claims.Email)
+	access, refresh, err := s.generateJWTToken(claims.UserID, claims.Email, claims.Role)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +89,7 @@ func (s *authService) RefreshToken(ctx context.Context, tokenStr string) (*respo
 	}, nil
 }
 
-func (s *authService) generateJWTToken(userID string, userEmail string) (string, string, error) {
+func (s *authService) generateJWTToken(userID string, userEmail string, userRole string) (string, string, error) {
 	now := timeutil.BangkokNow()
 
 	accessTokenExpiration, err := time.ParseDuration(s.cfg.JWT.JwtExpirationMinutes)
@@ -113,6 +113,7 @@ func (s *authService) generateJWTToken(userID string, userEmail string) (string,
 	claims := auth.JWTClaims{
 		UserID: userID,
 		Email:  userEmail,
+		Role:   userRole,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        claimsID,
 			Issuer:    "laboratory-equipment-management-system",
@@ -133,6 +134,7 @@ func (s *authService) generateJWTToken(userID string, userEmail string) (string,
 	claims = auth.JWTClaims{
 		UserID: userID,
 		Email:  userEmail,
+		Role:   userRole,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        claimsID,
 			Issuer:    "refresh-token",

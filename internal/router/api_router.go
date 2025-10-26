@@ -33,16 +33,44 @@ func (r *Router) RegisterAPIRoutes() {
 
 	// auth group
 	auth := v1.Group("/auth")
-	auth.POST("/register", r.handlers.User.Register)
 	auth.POST("/login", r.handlers.Auth.Login)
 	auth.GET("/google/login", r.handlers.Auth.GoogleLogin())
 	auth.GET("/google/callback", r.handlers.Auth.GoogleCallback)
 	auth.POST("/refresh", r.handlers.Auth.RefreshToken)
 
+	//protectd := v1.Group("", r.authMiddleware.Middleware)
+	/*
+		protectd.GET("/p", func(c echo.Context) error {
+			return c.JSON(http.StatusOK, map[string]string{"msg": "success"})
+		})
+
+	*/
+
+}
+
+func (r *Router) RegisterAdminRoutes() {
+	v1 := r.echo.Group("/api/v1")
+	// protected := v1.Group("", r.authMiddleware.Middleware)
+	protected := v1.Group("") // for testing
+
+	admin := protected.Group("/admin") // Maybe apply adminMiddleware later
+	admin.GET("/users", r.handlers.Admin.GetAllUsers)
+
+	admin.POST("/user/:user_id/accept", r.handlers.Admin.Accept)
+	admin.POST("/user/:user_id/reject", r.handlers.Admin.Reject)
+	admin.POST("/user/:user_id/deactivate", r.handlers.Admin.Deactivate)
+	admin.DELETE("/user/:user_id", r.handlers.Admin.Delete)
+	admin.POST("/user/:user_id/grant-admin", r.handlers.Admin.GrantAdmin)
+	admin.POST("/user/:user_id/revoke-admin", r.handlers.Admin.RevokeAdmin)
+	v1.POST("/user/register", r.handlers.User.Register)
 	protectd := v1.Group("", r.authMiddleware.Middleware)
 	protectd.GET("/p", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{"msg": "success"})
 	})
+
+	// user group
+	user := protectd.Group("/user")
+	user.GET("/me", r.handlers.User.Me)
 }
 
 func (r *Router) RegisterMinioRoutes() {
@@ -70,4 +98,11 @@ func (r *Router) RegisterItemRouter() {
 func (r *Router) RegisterTagRouter() {
 	v1 := r.echo.Group("/api/v1")
 	v1.GET("/tag/:itemID", r.handlers.Tag.GetNameTagByItemID)
+}
+func (r *Router) RegisterRequestRouter() {
+	v1 := r.echo.Group("/api/v1")
+	v1.GET("/requests/", r.handlers.Request.GetRequests)
+	v1.GET("/requests/:user_id", r.handlers.Request.GetMyRequests)
+	v1.POST("/request", r.handlers.Request.CreateRequest)
+	v1.PUT("/request", r.handlers.Request.EditRequest)
 }
