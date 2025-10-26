@@ -12,6 +12,7 @@ import (
 	ItemRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
 	ItemSetRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item_set"
 	logsystem "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/log"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/borrow/state"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/utils"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
@@ -164,6 +165,7 @@ type allItemStruct struct {
 // ReturnItem implements Borrowable.
 func (i *ItemChildBorrowable) ReturnItem(ctx context.Context, borrowLog *models.BorrowLog, children *[]models.BorrowLog) error {
 	log.Info().Msg("Returning child item")
+	borrowLogContext := state.NewStateContext(ctx, *borrowLog, i.borrowRepo)
 	now := utils.BangkokNow()
 	var allItem []allItemStruct
 	item, err := i.itemRepo.GetItemByID(ctx, borrowLog.ItemID)
@@ -175,9 +177,11 @@ func (i *ItemChildBorrowable) ReturnItem(ctx context.Context, borrowLog *models.
 		return exceptions.ErrItemNotFound
 	}
 
-	borrowLog.BorrowStatus = enums.StatusReturned
-	borrowLog.ReturnDate = &now
-	borrowLog.UpdatedAt = now
+	borrowLogContext.GetState().Return(borrowLogContext)
+	// ---------------------------OLD CODE---------------------------
+	// borrowLog.BorrowStatus = enums.StatusReturned
+	// borrowLog.ReturnDate = &now
+	// borrowLog.UpdatedAt = now
 	item.ItemQuantity += 1
 	item.ItemUpdatedAt = now
 	allItem = append(allItem, allItemStruct{
@@ -195,9 +199,12 @@ func (i *ItemChildBorrowable) ReturnItem(ctx context.Context, borrowLog *models.
 			return exceptions.ErrItemNotFound
 		}
 
-		childBorrowLog.BorrowStatus = enums.StatusReturned
-		childBorrowLog.ReturnDate = &now
-		childBorrowLog.UpdatedAt = now
+		childBorrowLogContext := state.NewStateContext(ctx, childBorrowLog, i.borrowRepo)
+		childBorrowLogContext.GetState().Return(childBorrowLogContext)
+
+		// childBorrowLog.BorrowStatus = enums.StatusReturned
+		// childBorrowLog.ReturnDate = &now
+		// childBorrowLog.UpdatedAt = now
 		childItem.ItemQuantity += 1
 		childItem.ItemUpdatedAt = now
 		allItem = append(allItem, allItemStruct{
@@ -207,11 +214,11 @@ func (i *ItemChildBorrowable) ReturnItem(ctx context.Context, borrowLog *models.
 	}
 
 	for _, itemStruct := range allItem {
-		err = i.borrowRepo.EditBorrowLog(ctx, itemStruct.BorrowLog)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to update borrow log")
-			return err
-		}
+		// err = i.borrowRepo.EditBorrowLog(ctx, itemStruct.BorrowLog)
+		// if err != nil {
+		// 	log.Error().Err(err).Msg("failed to update borrow log")
+		// 	return err
+		// }
 
 		err = i.itemRepo.UpdateItem(ctx, itemStruct.Item)
 		if err != nil {

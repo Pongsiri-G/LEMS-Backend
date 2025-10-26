@@ -21,7 +21,7 @@ type Service interface {
 	CreateItem(ctx context.Context, req *requests.CreateItemRequest) error
 	GetBorrowItem(ctx context.Context, itemID string) (*responses.ItemResponse, error)
 	GetAll(ctx context.Context) ([]responses.ItemResponse, error)
-	GetMyBorrow(ctx context.Context, userID string) ([]responses.ItemResponse, error)
+	GetMyBorrow(ctx context.Context, userID string) ([]responses.ItemResponseBorrow, error)
 	GetChildItemByParentID(ctx context.Context, itemID string) ([]responses.ItemResponse, error)
 	SearchItems(ctx context.Context, strategies ItemRepo.SearchStrategyMap) ([]responses.ItemResponse, error)
 }
@@ -133,7 +133,7 @@ func (i *itemService) GetAll(ctx context.Context) ([]responses.ItemResponse, err
 	return res, nil
 }
 
-func (i *itemService) GetMyBorrow(ctx context.Context, userID string) ([]responses.ItemResponse, error) {
+func (i *itemService) GetMyBorrow(ctx context.Context, userID string) ([]responses.ItemResponseBorrow, error) {
 	userUID, err := uuid.Parse(userID)
 
 	if err != nil {
@@ -141,16 +141,16 @@ func (i *itemService) GetMyBorrow(ctx context.Context, userID string) ([]respons
 		return nil, err
 	}
 
-	var items []models.Item
+	var items []models.ItemBorrow
 	items, err = i.itemRepo.GetMyBorrow(ctx, userUID)
 
 	if err != nil {
 		return nil, err
 	}
 
-	var response []responses.ItemResponse
+	var response []responses.ItemResponseBorrow
 	for _, i := range items {
-		r := responses.ItemResponse{
+		r := responses.ItemResponseBorrow{
 			ID:          i.ItemID,
 			Name:        i.ItemName,
 			Description: i.ItemDescription,
@@ -159,6 +159,7 @@ func (i *itemService) GetMyBorrow(ctx context.Context, userID string) ([]respons
 			Quantity:    i.ItemQuantity,
 			CreatedAt:   i.ItemCreatedAt,
 			UpdatedAt:   i.ItemUpdatedAt,
+			BorrowID:    i.BorrowID,
 		}
 		response = append(response, r)
 	}

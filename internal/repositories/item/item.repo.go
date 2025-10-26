@@ -14,7 +14,7 @@ type Repository interface {
 	GetItemByID(ctx context.Context, itemID uuid.UUID) (*models.Item, error)
 	UpdateItem(ctx context.Context, item *models.Item) error
 	GetAll(ctx context.Context) ([]models.Item, error)
-	GetMyBorrow(ctx context.Context, userID uuid.UUID) ([]models.Item, error)
+	GetMyBorrow(ctx context.Context, userID uuid.UUID) ([]models.ItemBorrow, error)
 	GetChildItemByParentID(ctx context.Context, itemID uuid.UUID) ([]models.Item, error)
 	GetAvailable(ctx context.Context) ([]models.Item, error)
 	GetByTags(ctx context.Context, tags []string) ([]models.Item, error)
@@ -100,15 +100,18 @@ func (r *repository) GetAll(ctx context.Context) ([]models.Item, error) {
 	return items, nil
 }
 
-func (r *repository) GetMyBorrow(ctx context.Context, userID uuid.UUID) ([]models.Item, error) {
-	var items []models.Item
-	sub := r.db.Model(&models.BorrowLog{}).Select("item_id").Where("user_id::uuid = ? AND borrow_status = ?", userID, "BORROWED")
+func (r *repository) GetMyBorrow(ctx context.Context, userID uuid.UUID) ([]models.ItemBorrow, error) {
+	var items []models.ItemBorrow
+	err := r.db.
+		Table("items").
+		Select("items.item_id, items.item_name, borrow_logs.borrow_id, items.item_description, items.item_picture_url, items.item_status, items.item_quantity, items.item_created_at, items.item_updated_at, items.item_current_quantity").
+		Joins("JOIN borrow_logs ON items.item_id::uuid = borrow_logs.item_id").
+		Where("borrow_logs.user_id = ? AND borrow_logs.borrow_status = ?", userID, "BORROWED").
+		Find(&items).Error
 
-	err := r.db.Where("item_id IN (?)", sub).Find(&items).Error
 	if err != nil {
 		return nil, err
 	}
-
 	return items, nil
 }
 

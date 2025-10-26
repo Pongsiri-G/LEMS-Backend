@@ -84,7 +84,7 @@ func (r *Router) RegisterItemRouter() {
 	protected := v1.Group("", r.authMiddleware.Middleware)
 	protected.GET("/item/:item-id", r.handlers.Item.GetBorrowItem)
 	protected.GET("/item/list", r.handlers.Item.GetAll)
-	protected.GET("/item/list/:user_id", r.handlers.Item.GetMyBorrow)
+	protected.GET("/item/list/my-borrow", r.handlers.Item.GetMyBorrow)
 	protected.GET("/item/child/:item-id", r.handlers.Item.GetChildItemByParentID)
 	protected.GET("/item/list/search", r.handlers.Item.SearchItems)
 	protected.POST("/item", r.handlers.Item.CreateItem)
