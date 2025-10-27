@@ -28,14 +28,14 @@ type repository struct {
 }
 
 type SearchStrategy interface {
-    Apply(db *gorm.DB) *gorm.DB
+	Apply(db *gorm.DB) *gorm.DB
 }
 
 type SearchStrategyMap struct {
-	Tags   	[]string
-	Name   	string
-	Status 	string
-	User	string
+	Tags   []string
+	Name   string
+	Status string
+	User   string
 }
 
 // Constuctor
