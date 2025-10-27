@@ -141,34 +141,44 @@ func (s *service) GetRequests(ctx context.Context, userID *uuid.UUID) ([]respons
 			return nil, exceptions.ErrUserNotFound
 		}
 
-		item, err := s.itemRepo.GetItemByID(ctx, req.ItemID)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to get item by ID")
-			return nil, err
-		}
-
-		if item == nil {
-			log.Error().Msg("item not found for item ID: " + req.ItemID.String())
-			return nil, exceptions.ErrItemNotFound
-		}
-
-		response = append(response, responses.GetAllRequestsResponse{
+		var res = responses.GetAllRequestsResponse{
 			RequestID:          req.RequestID,
-			RequestItemName:    item.ItemName,
 			RequestType:        req.RequestType,
 			RequestStatus:      req.RequestStatus,
 			RequestImageURL:    req.RequestImageURL,
 			RequestCreatedBy:   user.UserFullName,
 			RequestCreatedDate: utils.ToStringDateTime(req.CreatedAt),
 			RequestUpdatedDate: utils.ToStringDateTime(req.UpdatedAt),
-		})
+		}
+
+		if req.RequestType == enums.RequestTypeRequest {
+			itemRequested, err := s.itemRequestedRepo.FindByID(ctx, req.ItemID)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to get item requested by ID")
+				return nil, err
+			}
+			if itemRequested == nil {
+				log.Error().Msg("item requested not found for item ID: " + req.ItemID.String())
+				return nil, exceptions.ErrRequestedItemNotFound
+			}
+			res.RequestItemName = itemRequested.Name
+		} else {
+			item, err := s.itemRepo.GetItemByID(ctx, req.ItemID)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to get item by ID")
+				return nil, err
+			}
+			if item == nil {
+				log.Error().Msg("item not found for item ID: " + req.ItemID.String())
+				return nil, exceptions.ErrItemNotFound
+			}
+
+			res.RequestItemName = item.ItemName
+		}
+
+		response = append(response, res)
 
 	}
 
 	return response, nil
-}
-
-// GetMyRequests implements Service.
-func (s *service) GetMyRequests(ctx context.Context, userID string) ([]responses.GetAllRequestsResponse, error) {
-	panic("unimplemented")
 }
