@@ -45,7 +45,7 @@ func (h *handler) CreateRequest(c echo.Context) error {
 		return c.JSON(401, nil)
 	}
 
-	err = h.service.CreateRequest(c.Request().Context(), &userID, req)
+	err = h.service.CreateRequest(c.Request().Context(), userID, req)
 	if err != nil {
 		switch err {
 		case exceptions.ErrRequestNotExpectItemID:
