@@ -40,6 +40,9 @@ func NewExistRequestFactory(
 
 // CreateRequest implements Requestable.
 func (e *existRequest) CreateRequest(ctx context.Context, req requests.CreateRequest) error {
+	if e.userID == nil {
+		log.Error().Msg("user ID is nil")
+	}
 	if req.Item != nil {
 		log.Error().Msg("request type does not expect item")
 		return exceptions.ErrRequestNotExpectItem

@@ -68,6 +68,10 @@ func (h *handler) CreateRequest(c echo.Context) error {
 			})
 		case exceptions.ErrUserNotFound:
 			return c.JSON(404, nil)
+		case exceptions.ErrUserIDIsNil:
+			return c.JSON(400, echo.Map{
+				"message": exceptions.ErrUserIDIsNil.Error(),
+			})
 		default:
 			return c.JSON(500, echo.Map{
 				"message": exceptions.ErrInternalServer.Error(),

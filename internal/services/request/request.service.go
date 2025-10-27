@@ -53,6 +53,10 @@ func NewRequestService(
 
 // CreateRequest implements Service.
 func (s *service) CreateRequest(ctx context.Context, userID *uuid.UUID, req requests.CreateRequest) error {
+	if userID == nil {
+		log.Error().Msg("user ID is nil")
+		return exceptions.ErrUserIDIsNil
+	}
 	var requestFactory factory.Requestable
 	ok := enums.IsValidRequestType(req.RequestType)
 	if !ok {
