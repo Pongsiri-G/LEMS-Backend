@@ -46,6 +46,7 @@ func (e *existRequest) CreateRequest(ctx context.Context, req requests.CreateReq
 	}
 	itemID, err := uuid.Parse(*req.ItemID)
 	if err != nil {
+		log.Error().Err(err).Msg("invalid item ID UUID")
 		return exceptions.ErrInvalidUUID
 	}
 	item, err := e.itemRepo.GetItemByID(ctx, itemID)
