@@ -16,6 +16,7 @@ type Repository interface {
 	GetChildren(ctx context.Context, parentID uuid.UUID) ([]models.BorrowLog, error)
 	GetBorrowID(ctx context.Context, userID uuid.UUID, itemID uuid.UUID) (string, error)
 	FindBorrowLogByUserID(ctx context.Context, userID uuid.UUID) ([]models.BorrowLog, error)
+	GetAllBorrowLogs(ctx context.Context) ([]models.BorrowLog, error)
 }
 
 type repository struct {
@@ -64,6 +65,17 @@ func (r *repository) FindBorrowLogByUserID(ctx context.Context, userID uuid.UUID
 	err := r.db.WithContext(ctx).Where("user_id = ?", userID).Find(&borrowLogs).Error
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get borrow logs by user id")
+		return nil, err
+	}
+	return borrowLogs, nil
+}
+
+// GetAllBorrowLogs implements Repository.
+func (r *repository) GetAllBorrowLogs(ctx context.Context) ([]models.BorrowLog, error) {
+	var borrowLogs []models.BorrowLog
+	err := r.db.WithContext(ctx).Find(&borrowLogs).Error
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get all borrow logs")
 		return nil, err
 	}
 	return borrowLogs, nil

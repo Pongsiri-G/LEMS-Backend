@@ -15,6 +15,7 @@ type BorrowHandler interface {
 	Return(c echo.Context) error
 	Borrow(c echo.Context) error
 	GetMyBorrowLog(c echo.Context) error
+	GetBorrowLog(c echo.Context) error
 	GetBorrowID(c echo.Context) error
 }
 
@@ -142,10 +143,24 @@ func (h *handler) GetMyBorrowLog(c echo.Context) error {
 	return c.JSON(http.StatusOK, borrowLogs)
 }
 
+// GetBorrowLog implements BorrowHandler.
+func (h *handler) GetBorrowLog(c echo.Context) error {
+	borrowLogs, err := h.service.GetAllBorrowedItems(c.Request().Context())
+	if err != nil {
+		switch err {
+		default:
+			log.Error().Err(err).Msg("error while getting all borrowed items")
+			return c.JSON(http.StatusInternalServerError, nil)
+		}
+	}
+	return c.JSON(http.StatusOK, borrowLogs)
+
+}
+
 func (h *handler) GetBorrowID(c echo.Context) error {
 	userID, err := contextutil.GetUserFromContext(c)
 
-	if (err != nil) {
+	if err != nil {
 		log.Error().Err(err).Msg("internal server error")
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"message": "internal server error",
@@ -154,9 +169,9 @@ func (h *handler) GetBorrowID(c echo.Context) error {
 
 	itemID := c.Param("item-id")
 
-	borrowID, err := h.service.GetBorrowID(c.Request().Context(), userID.ID, itemID) 
+	borrowID, err := h.service.GetBorrowID(c.Request().Context(), userID.ID, itemID)
 
-	if (err != nil) {
+	if err != nil {
 		log.Error().Err(err).Msg("internal server error")
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"message": "internal server error",
@@ -164,5 +179,5 @@ func (h *handler) GetBorrowID(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, borrowID)
-	
+
 }

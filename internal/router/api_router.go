@@ -64,6 +64,7 @@ func (r *Router) RegisterAdminRoutes() {
 	admin.DELETE("/user/:user_id", r.handlers.Admin.Delete)
 	admin.POST("/user/:user_id/grant-admin", r.handlers.Admin.GrantAdmin)
 	admin.POST("/user/:user_id/revoke-admin", r.handlers.Admin.RevokeAdmin)
+	admin.GET("/logs", r.handlers.Log.GetAllLogs)
 	protectd := v1.Group("", r.authMiddleware.Middleware)
 	protectd.GET("/p", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{"msg": "success"})
@@ -89,6 +90,7 @@ func (r *Router) RegisterBorrowRouter() {
 	protected.POST("/borrow", r.handlers.Borrow.Borrow)
 	protected.GET("/borrow/user", r.handlers.Borrow.GetMyBorrowLog)
 	protected.GET("/borrow-id/:item-id", r.handlers.Borrow.GetBorrowID)
+	protected.GET("/oorrows", r.handlers.Borrow.GetBorrowLog)
 }
 
 func (r *Router) RegisterItemRouter() {
