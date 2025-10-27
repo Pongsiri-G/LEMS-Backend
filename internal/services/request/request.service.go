@@ -25,6 +25,7 @@ type Service interface {
 	CreateRequest(ctx context.Context, userID uuid.UUID, req requests.CreateRequest) error
 	EditRequest(ctx context.Context, req requests.EditRequest) error
 	ExportRequests(ctx context.Context, exportType enums.ExportType) error
+	ChangeRequestStatus(ctx context.Context, requestID string, status enums.RequestStatus) error
 }
 
 type service struct {
@@ -181,4 +182,14 @@ func (s *service) GetRequests(ctx context.Context, userID *uuid.UUID) ([]respons
 	}
 
 	return response, nil
+}
+
+// ChangeRequestStatus implements Service.
+func (s *service) ChangeRequestStatus(ctx context.Context, requestID string, status enums.RequestStatus) error {
+	requestUUID, err := uuid.Parse(requestID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to parse request ID")
+		return exceptions.ErrInvalidUUID
+	}
+	return s.requestRepo.ChangeRequestStatus(ctx, requestUUID, status)
 }
