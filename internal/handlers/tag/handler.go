@@ -56,7 +56,7 @@ func (h *handler) CreateTag(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, nil)
 	}
 
-	err := h.service.CreateTag(c.Request().Context(), &req)
+	response, err := h.service.CreateTag(c.Request().Context(), &req)
 	if err != nil {
 		switch err {
 		default:
@@ -66,5 +66,5 @@ func (h *handler) CreateTag(c echo.Context) error {
 			})
 		}
 	}
-	return c.JSON(http.StatusCreated, nil)
+	return c.JSON(http.StatusCreated, response)
 }

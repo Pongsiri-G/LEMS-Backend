@@ -15,7 +15,7 @@ import (
 type Service interface {
 	GetTagsNameByItemID(ctx context.Context, itemID string) ([]responses.TagResponse, error)
 	GetAllTags(ctx context.Context) ([]responses.TagResponse, error)
-	CreateTag(ctx context.Context, req *requests.CreateTagRequest) error
+	CreateTag(ctx context.Context, req *requests.CreateTagRequest) (responses.TagResponse, error)
 }
 
 type tagService struct {
@@ -77,15 +77,15 @@ func (i *tagService) GetAllTags(ctx context.Context) ([]responses.TagResponse, e
 }
 
 // CreateTag implements Service.
-func (i *tagService) CreateTag(ctx context.Context, req *requests.CreateTagRequest) error {
+func (i *tagService) CreateTag(ctx context.Context, req *requests.CreateTagRequest) (responses.TagResponse, error) {
 	tag, err := i.repo.GetTagByName(ctx, req.Name)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get tag by name")
-		return err
+		return responses.TagResponse{}, err
 	}
 
 	if tag != nil {
-		return exceptions.ErrTagAlreadyExists
+		return responses.TagResponse{}, exceptions.ErrTagAlreadyExists
 	}
 	newTag := models.Tag{
 		TagID:    uuid.New(),
@@ -95,7 +95,11 @@ func (i *tagService) CreateTag(ctx context.Context, req *requests.CreateTagReque
 	err = i.repo.CreateTag(ctx, &newTag)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create tag")
-		return err
+		return responses.TagResponse{}, err
 	}
-	return nil
+	return responses.TagResponse{
+		TagID:    newTag.TagID,
+		TagName:  newTag.TagName,
+		TagColor: newTag.TagColor,
+	}, nil
 }
