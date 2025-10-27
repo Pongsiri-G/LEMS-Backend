@@ -4,6 +4,7 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/requests"
 	requestSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/request"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/utils/contextutil"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
@@ -34,7 +35,17 @@ func (h *handler) CreateRequest(c echo.Context) error {
 		})
 	}
 
-	err = h.service.CreateRequest(c.Request().Context(), req)
+	auth, err := contextutil.GetUserFromContext(c)
+	if err != nil {
+		return c.JSON(500, err.Error())
+	}
+
+	userID, err := uuid.Parse(auth.ID)
+	if err != nil {
+		return c.JSON(401, nil)
+	}
+
+	err = h.service.CreateRequest(c.Request().Context(), &userID, req)
 	if err != nil {
 		switch err {
 		case exceptions.ErrRequestNotExpectItemID:
@@ -101,8 +112,11 @@ func (h *handler) EditRequest(c echo.Context) error {
 
 // GetMyRequests implements RequestHandler.
 func (h *handler) GetMyRequests(c echo.Context) error {
-	id := c.Param("id")
-	userID, err := uuid.Parse(id)
+	auth, err := contextutil.GetUserFromContext(c)
+	if err != nil {
+		return c.JSON(500, err.Error())
+	}
+	userID, err := uuid.Parse(auth.ID)
 	if err != nil {
 		return c.JSON(400, echo.Map{
 			"message": exceptions.ErrInvalidUUID.Error(),
