@@ -22,7 +22,7 @@ import (
 type Service interface {
 	GetRequests(ctx context.Context, userID *uuid.UUID) ([]responses.GetAllRequestsResponse, error)
 
-	CreateRequest(ctx context.Context, userID *uuid.UUID, req requests.CreateRequest) error
+	CreateRequest(ctx context.Context, userID uuid.UUID, req requests.CreateRequest) error
 	EditRequest(ctx context.Context, req requests.EditRequest) error
 	ExportRequests(ctx context.Context, exportType enums.ExportType) error
 }
@@ -52,11 +52,8 @@ func NewRequestService(
 }
 
 // CreateRequest implements Service.
-func (s *service) CreateRequest(ctx context.Context, userID *uuid.UUID, req requests.CreateRequest) error {
-	if userID == nil {
-		log.Error().Msg("user ID is nil")
-		return exceptions.ErrUserIDIsNil
-	}
+func (s *service) CreateRequest(ctx context.Context, userID uuid.UUID, req requests.CreateRequest) error {
+
 	var requestFactory factory.Requestable
 	ok := enums.IsValidRequestType(req.RequestType)
 	if !ok {
@@ -104,9 +101,9 @@ func (s *service) EditRequest(ctx context.Context, req requests.EditRequest) err
 	}
 
 	if request.RequestType == enums.RequestTypeRequest {
-		requestFactory = factory.NewWithdrawRequestFactory(s.requestRepo, s.itemRequestedRepo, s.minioRepo, request, nil)
+		requestFactory = factory.NewWithdrawRequestFactory(s.requestRepo, s.itemRequestedRepo, s.minioRepo, request, uuid.UUID{})
 	} else {
-		requestFactory = factory.NewExistRequestFactory(s.requestRepo, s.itemRepo, s.minioRepo, nil, request)
+		requestFactory = factory.NewExistRequestFactory(s.requestRepo, s.itemRepo, s.minioRepo, uuid.UUID{}, request)
 	}
 
 	return requestFactory.EditRequest(ctx, req)
