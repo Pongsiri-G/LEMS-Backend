@@ -15,7 +15,6 @@ import (
 	User "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/request/factory"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/utils"
-	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/utils/timeutil"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 )
@@ -213,7 +212,7 @@ func (s *service) ChangeRequestStatus(ctx context.Context, requestID string, sta
 		return err
 	}
 
-	request.UpdatedAt = timeutil.BangkokNow()
+	request.UpdatedAt = utils.BangkokNow()
 	request.RequestStatus = status
 	return s.requestRepo.EditRequest(ctx, request)
 }
