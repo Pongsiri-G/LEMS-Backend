@@ -37,12 +37,15 @@ func NewBorrowService(
 	borrowRepo borrowRepository.Repository,
 	itemRepo itemRepository.Repository,
 	itemSetRepo itemsetRepository.Repository,
-	logRepo logsystem.Repository) Service {
+	logRepo logsystem.Repository,
+	userRepo userRepository.Repository,
+	) Service {
 	return &service{
 		borrowRepo:  borrowRepo,
 		itemRepo:    itemRepo,
 		itemSetRepo: itemSetRepo,
 		logRepo:     logRepo,
+		userRepo:    userRepo,
 	}
 }
 
