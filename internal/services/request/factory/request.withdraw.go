@@ -41,6 +41,10 @@ func NewWithdrawRequestFactory(
 
 // CreateRequest implements Requestable.
 func (w *withdrawRequestFactory) CreateRequest(ctx context.Context, req requests.CreateRequest) error {
+	if w.userID == nil {
+		log.Error().Msg("user ID is nil")
+		return exceptions.ErrUserIDIsNil
+	}
 	if req.ItemID != nil {
 		log.Error().Msg("request type does not expect item ID")
 		return exceptions.ErrRequestNotExpectItemID
