@@ -12,7 +12,7 @@ type RequestStatus string
 
 const (
 	RequestStatusPending  RequestStatus = "PENDING"
-	RequestStatusCancel   RequestStatus = "CANCELLED"
+	RequestStatusCancel   RequestStatus = "CANCELED"
 	RequestStatusAccept   RequestStatus = "ACCEPTED"
 	RequestStatusReject   RequestStatus = "REJECTED"
 	RequestStatusComplete RequestStatus = "COMPLETED"

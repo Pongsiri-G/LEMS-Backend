@@ -29,3 +29,12 @@ type EditRequest struct {
 	ItemQuantity    *int     `json:"item_quantity" validate:"omitempty,min=1"`
 	ItemPrice       *float64 `json:"item_price" validate:"omitempty,gt=0"`
 }
+
+type ChangeRequestStatus struct {
+	RequestID string `json:"request_id" validate:"required"`
+	Status    string `json:"status" validate:"required"`
+}
+
+type CancelRequest struct {
+	RequestID string `json:"request_id" validate:"required"`
+}
