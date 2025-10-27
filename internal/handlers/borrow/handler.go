@@ -15,6 +15,7 @@ type BorrowHandler interface {
 	Return(c echo.Context) error
 	Borrow(c echo.Context) error
 	GetMyBorrowLog(c echo.Context) error
+	GetBorrowLog(c echo.Context) error
 }
 
 type handler struct {
@@ -139,4 +140,18 @@ func (h *handler) GetMyBorrowLog(c echo.Context) error {
 		}
 	}
 	return c.JSON(http.StatusOK, borrowLogs)
+}
+
+// GetBorrowLog implements BorrowHandler.
+func (h *handler) GetBorrowLog(c echo.Context) error {
+	borrowLogs, err := h.service.GetAllBorrowedItems(c.Request().Context())
+	if err != nil {
+		switch err {
+		default:
+			log.Error().Err(err).Msg("error while getting all borrowed items")
+			return c.JSON(http.StatusInternalServerError, nil)
+		}
+	}
+	return c.JSON(http.StatusOK, borrowLogs)
+
 }

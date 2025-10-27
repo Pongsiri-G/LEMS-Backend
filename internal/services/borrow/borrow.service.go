@@ -10,6 +10,7 @@ import (
 	itemRepository "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
 	itemsetRepository "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item_set"
 	logsystem "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/log"
+	userRepository "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/item/factory"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/utils"
 	"github.com/google/uuid"
@@ -21,9 +22,11 @@ type Service interface {
 	Borrow(ctx context.Context, userID string, itemID string) error
 
 	GetUsersBorrowedItems(ctx context.Context, userID string) ([]responses.UserBorrrowResponse, error)
+	GetAllBorrowedItems(ctx context.Context) ([]responses.AdminBorrowResponse, error)
 }
 
 type service struct {
+	userRepo    userRepository.Repository
 	borrowRepo  borrowRepository.Repository
 	itemRepo    itemRepository.Repository
 	itemSetRepo itemsetRepository.Repository
@@ -165,6 +168,60 @@ func (s *service) GetUsersBorrowedItems(ctx context.Context, userID string) ([]r
 		if borrow.ReturnDate != nil {
 			timeResult := utils.ToStringDateTime(*borrow.ReturnDate)
 			result.ReturnDate = &timeResult
+		}
+		results = append(results, result)
+	}
+
+	return results, nil
+}
+
+// GetAllBorrowedItems implements Service.
+func (s *service) GetAllBorrowedItems(ctx context.Context) ([]responses.AdminBorrowResponse, error) {
+	borrows, err := s.borrowRepo.GetAllBorrowLogs(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get all borrow logs")
+		return nil, err
+	}
+
+	var results []responses.AdminBorrowResponse
+	for _, borrow := range borrows {
+		user, err := s.userRepo.FindByID(ctx, borrow.UserID.String())
+		if err != nil {
+			log.Error().Err(err).Msg("failed to get user by id")
+			return nil, err
+		}
+		item, err := s.itemRepo.GetItemByID(ctx, borrow.ItemID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to get item by id")
+			return nil, err
+		}
+		if item == nil {
+			log.Error().Err(err).Msg("item not found")
+			return nil, exceptions.ErrItemNotFound
+		}
+
+		result := responses.AdminBorrowResponse{
+			BorrowID:     borrow.BorrowID.String(),
+			UserName:     user.UserFullName,
+			ItemName:     item.ItemName,
+			BorrowDate:   utils.ToStringDateTime(borrow.BorrowDate),
+			UserID:       user.UserID.String(),
+			ItemID:       item.ItemID.String(),
+			BorrowStatus: borrow.BorrowStatus,
+		}
+
+		if borrow.BorrowParentID != nil {
+			parentID := borrow.BorrowParentID.String()
+			result.BorrowParentID = &parentID
+		}
+
+		if borrow.ReturnDate != nil {
+			timeResult := utils.ToStringDateTime(*borrow.ReturnDate)
+			result.ReturnDate = &timeResult
+		}
+
+		if borrow.ReturnImgURL != nil {
+			result.ReturnURL = borrow.ReturnImgURL
 		}
 		results = append(results, result)
 	}
