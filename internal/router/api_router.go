@@ -64,6 +64,7 @@ func (r *Router) RegisterAdminRoutes() {
 	admin.DELETE("/user/:user_id", r.handlers.Admin.Delete)
 	admin.POST("/user/:user_id/grant-admin", r.handlers.Admin.GrantAdmin)
 	admin.POST("/user/:user_id/revoke-admin", r.handlers.Admin.RevokeAdmin)
+	admin.POST("/request/change-status", r.handlers.Request.ChangeRequestStatus)
 	admin.GET("/logs", r.handlers.Log.GetAllLogs)
 	protectd := v1.Group("", r.authMiddleware.Middleware)
 	protectd.GET("/p", func(c echo.Context) error {
@@ -118,4 +119,5 @@ func (r *Router) RegisterRequestRouter() {
 	protected.GET("/requests/user", r.handlers.Request.GetMyRequests)
 	protected.POST("/request", r.handlers.Request.CreateRequest)
 	protected.PUT("/request", r.handlers.Request.EditRequest)
+	protected.POST("/request/cancel", r.handlers.Request.CancelRequest)
 }
