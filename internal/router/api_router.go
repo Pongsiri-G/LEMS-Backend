@@ -88,6 +88,7 @@ func (r *Router) RegisterBorrowRouter() {
 	protected.POST("/borrow/return", r.handlers.Borrow.Return)
 	protected.POST("/borrow", r.handlers.Borrow.Borrow)
 	protected.GET("/borrow/user", r.handlers.Borrow.GetMyBorrowLog)
+	protected.GET("/borrow-id/:item-id", r.handlers.Borrow.GetBorrowID)
 }
 
 func (r *Router) RegisterItemRouter() {
