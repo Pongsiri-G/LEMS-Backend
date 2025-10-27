@@ -20,12 +20,14 @@ type existRequest struct {
 	itemRepo    ItemRepo.Repository
 	minioRepo   Minio.Repository
 	request     *models.Request
+	userID      *uuid.UUID
 }
 
 func NewExistRequestFactory(
 	requestRepo RequestRepo.Repository,
 	itemRepo ItemRepo.Repository,
 	minioRepo Minio.Repository,
+	userID *uuid.UUID,
 	request *models.Request,
 ) Requestable {
 	return &existRequest{
@@ -41,10 +43,6 @@ func (e *existRequest) CreateRequest(ctx context.Context, req requests.CreateReq
 	if req.Item != nil {
 		log.Error().Msg("request type does not expect item")
 		return exceptions.ErrRequestNotExpectItem
-	}
-	userID, err := uuid.Parse(req.UserID)
-	if err != nil {
-		return exceptions.ErrInvalidUUID
 	}
 	itemID, err := uuid.Parse(*req.ItemID)
 	if err != nil {
@@ -62,7 +60,7 @@ func (e *existRequest) CreateRequest(ctx context.Context, req requests.CreateReq
 
 	request := models.Request{
 		RequestID:          uuid.New(),
-		UserID:             userID,
+		UserID:             *e.userID,
 		RequestType:        req.RequestType,
 		ItemID:             itemID,
 		RequestImageURL:    req.ImageURL,

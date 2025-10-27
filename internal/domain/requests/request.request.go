@@ -3,7 +3,6 @@ package requests
 import "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
 
 type CreateRequest struct {
-	UserID             string                `json:"user_id" validate:"required"`
 	RequestType        enums.RequestType     `json:"request_type" validate:"required"`
 	RequestDescription string                `json:"request_description" validate:"required"`
 	ImageURL           *string               `json:"image_url" validate:"required"`
