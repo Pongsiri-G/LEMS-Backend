@@ -20,7 +20,7 @@ import (
 type Service interface {
 	Return(ctx context.Context, userID string, req *requests.ReturnRequest) error
 	Borrow(ctx context.Context, userID string, itemID string) error
-
+	GetBorrowID(ctx context.Context, userID string, itemID string) (string, error)
 	GetUsersBorrowedItems(ctx context.Context, userID string) ([]responses.UserBorrrowResponse, error)
 	GetAllBorrowedItems(ctx context.Context) ([]responses.AdminBorrowResponse, error)
 }
@@ -227,4 +227,20 @@ func (s *service) GetAllBorrowedItems(ctx context.Context) ([]responses.AdminBor
 	}
 
 	return results, nil
+}
+
+func (s *service) GetBorrowID(ctx context.Context, userID string, itemID string) (string, error) {
+	userUUID, err := uuid.Parse(userID)
+
+	if (err != nil) {
+		return "", err
+	}
+
+	itemUUID, err := uuid.Parse(itemID)
+
+	if (err != nil) {
+		return "", err
+	}
+
+	return s.borrowRepo.GetBorrowID(ctx, userUUID, itemUUID)
 }

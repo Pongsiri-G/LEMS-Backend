@@ -14,7 +14,7 @@ type Repository interface {
 	EditBorrowLog(ctx context.Context, borrowLog *models.BorrowLog) error
 	CreateBorrowLog(ctx context.Context, borrowLog models.BorrowLog) error
 	GetChildren(ctx context.Context, parentID uuid.UUID) ([]models.BorrowLog, error)
-
+	GetBorrowID(ctx context.Context, userID uuid.UUID, itemID uuid.UUID) (string, error)
 	FindBorrowLogByUserID(ctx context.Context, userID uuid.UUID) ([]models.BorrowLog, error)
 	GetAllBorrowLogs(ctx context.Context) ([]models.BorrowLog, error)
 }
@@ -79,4 +79,19 @@ func (r *repository) GetAllBorrowLogs(ctx context.Context) ([]models.BorrowLog, 
 		return nil, err
 	}
 	return borrowLogs, nil
+}
+
+
+func (r *repository) GetBorrowID(ctx context.Context, userID uuid.UUID, itemID uuid.UUID) (string, error) {
+	var borrowID string
+
+	err := r.db.Table("borrow_logs").
+				Select("borrow_id").
+				Where("item_id = ? AND user_id = ? AND borrow_status = 'BORROWED'", itemID, userID).
+				Find(&borrowID).Error
+
+	if (err != nil) {
+		return "", err
+	}
+	return borrowID, nil
 }
