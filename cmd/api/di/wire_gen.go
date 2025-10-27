@@ -14,6 +14,7 @@ import (
 	auth3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/auth"
 	borrow2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/borrow"
 	item3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/item"
+	log3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/log"
 	minio4 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/minio"
 	request3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/request"
 	tag3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/tag"
@@ -36,6 +37,7 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/borrow"
 	item2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/item"
+	log2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/log"
 	minio3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/minio"
 	request2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/request"
 	tag2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/tag"
@@ -80,7 +82,9 @@ func InitializeAPI() (*server.EchoServer, error) {
 	itemrequestedRepository := itemrequested.NewItemRequestedRepository(db)
 	requestService := request2.NewRequestService(requestRepository, itemrequestedRepository, itemRepository, minioRepository, repository)
 	requestHandler := request3.NewRequestHandler(requestService)
-	handlersHandlers := handlers.NewHandlers(adminHandler, authHandler, fileHandler, borrowHandler, userHandler, itemHandler, tagHandler, requestHandler)
+	logService := log2.NewLogService(logRepository, repository)
+	logHandler := log3.NewLogHandler(logService)
+	handlersHandlers := handlers.NewHandlers(adminHandler, authHandler, fileHandler, borrowHandler, userHandler, itemHandler, tagHandler, requestHandler, logHandler)
 	authMiddleware := middlewares.NewAuthMiddleware(config)
 	rbacMiddleware := middlewares.NewRbacMiddleware(config)
 	echoServer := server.NewEchoServer(config, handlersHandlers, authMiddleware, rbacMiddleware)
