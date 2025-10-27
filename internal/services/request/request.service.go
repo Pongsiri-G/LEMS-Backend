@@ -129,7 +129,7 @@ func (s *service) GetRequests(ctx context.Context, userID *uuid.UUID) ([]respons
 		return nil, err
 	}
 
-	var response []responses.GetAllRequestsResponse
+	var response []responses.GetAllRequestsResponse = make([]responses.GetAllRequestsResponse, 0)
 	for _, req := range requestsData {
 		user, err := s.userRepo.FindByID(ctx, req.UserID.String())
 		if err != nil {
