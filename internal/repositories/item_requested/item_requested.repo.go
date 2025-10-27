@@ -31,7 +31,7 @@ func (r *repository) CreateItemRequested(ctx context.Context, item *models.ItemR
 // FindByID implements Repository.
 func (r *repository) FindByID(ctx context.Context, itemID uuid.UUID) (*models.ItemRequested, error) {
 	var item models.ItemRequested
-	if err := r.db.WithContext(ctx).First(&item, "item_requested_id = ?", itemID).Error; err != nil {
+	if err := r.db.WithContext(ctx).First(&item, "id = ?", itemID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			log.Warn().Msg("item requested not found for ID: " + itemID.String())
 			return nil, nil
