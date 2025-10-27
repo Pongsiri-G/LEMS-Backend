@@ -17,6 +17,7 @@ type Service interface {
 	GetAllTags(ctx context.Context) ([]responses.TagResponse, error)
 	CreateTag(ctx context.Context, req *requests.CreateTagRequest) (responses.TagResponse, error)
 	UnAssignTagFromItem(ctx context.Context, itemID string, tagID string) error
+	AssignTagToItem(ctx context.Context, itemID string, tagID string) error
 }
 
 type tagService struct {
@@ -127,4 +128,20 @@ func (i *tagService) UnAssignTagFromItem(ctx context.Context, itemID string, tag
 		return exceptions.ErrTagNotAssigned
 	}
 	return i.repo.UnAssignTagFromItem(ctx, itemIDUUID, tagIDUUID)
+}
+
+// AssignTagToItem implements Service.
+func (i *tagService) AssignTagToItem(ctx context.Context, itemID string, tagID string) error {
+	itemIDUUID, err := uuid.Parse(itemID)
+	if err != nil {
+		log.Error().Err(err).Msg("invalid uuid format for item ID")
+		return exceptions.ErrInvalidUUID
+	}
+	tagIDUUID, err := uuid.Parse(tagID)
+	if err != nil {
+		log.Error().Err(err).Msg("invalid uuid format for tag ID")
+		return exceptions.ErrInvalidUUID
+	}
+
+	return i.repo.AssignTagToItem(ctx, itemIDUUID, tagIDUUID)
 }
