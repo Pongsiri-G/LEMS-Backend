@@ -70,7 +70,7 @@ func InitializeAPI() (*server.EchoServer, error) {
 	itemRepository := item.NewItemRepository(db)
 	itemsetRepository := itemset.NewItemSetRepository(db)
 	logRepository := log.NewLogRepository(db)
-	borrowService := borrow.NewBorrowService(borrowlogRepository, itemRepository, itemsetRepository, logRepository)
+	borrowService := borrow.NewBorrowService(borrowlogRepository, itemRepository, itemsetRepository, logRepository, repository)
 	borrowHandler := borrow2.NewBorrowHandler(borrowService)
 	userHandler := user3.NewUserHandler(userService, oauth2Config)
 	tagRepository := tag.NewTagRepository(db)
