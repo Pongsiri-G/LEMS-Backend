@@ -163,6 +163,13 @@ func (s *service) GetRequests(ctx context.Context, userID *uuid.UUID) ([]respons
 				return nil, exceptions.ErrRequestedItemNotFound
 			}
 			res.RequestItemName = itemRequested.Name
+			res.ItemRequest = &responses.ItemRequestedResponse{
+				Name:        itemRequested.Name,
+				Description: itemRequested.Description,
+				Type:        itemRequested.Type,
+				Quantity:    itemRequested.Quantity,
+				Price:       itemRequested.Price,
+			}
 		} else {
 			item, err := s.itemRepo.GetItemByID(ctx, req.ItemID)
 			if err != nil {
@@ -175,6 +182,13 @@ func (s *service) GetRequests(ctx context.Context, userID *uuid.UUID) ([]respons
 			}
 
 			res.RequestItemName = item.ItemName
+			res.Item = &responses.ItemResponse{
+				ID:          item.ItemID,
+				Name:        item.ItemName,
+				Description: item.ItemDescription,
+				PictureURL:  item.ItemPictureURL,
+				Status:      item.ItemStatus,
+			}
 		}
 
 		response = append(response, res)
