@@ -25,6 +25,7 @@ type Service interface {
 	GetMyBorrow(ctx context.Context, userID string) ([]responses.ItemResponseBorrow, error)
 	GetChildItemByParentID(ctx context.Context, itemID string) ([]responses.ItemResponse, error)
 	SearchItems(ctx context.Context, strategies ItemRepo.SearchStrategyMap) ([]responses.ItemResponse, error)
+	DeleteItem(ctx context.Context, itemID string) error
 }
 
 type itemService struct {
@@ -237,4 +238,32 @@ func (i *itemService) SearchItems(ctx context.Context, strategiesMap ItemRepo.Se
 
 	return itemutil.ToResponses(items), nil
 
+}
+
+// DeleteItem implements Service.
+func (i *itemService) DeleteItem(ctx context.Context, itemID string) error {
+	itemUUID, err := uuid.Parse(itemID)
+	if err != nil {
+		log.Error().Err(err).Msg("invalid uuid format")
+		return exceptions.ErrInvalidUUID
+	}
+
+	item, err := i.itemRepo.GetItemByID(ctx, itemUUID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get item by ID")
+		return err
+	}
+
+	if item == nil {
+		log.Error().Msg("item not found for ID: " + itemID)
+		return exceptions.ErrItemNotFound
+	}
+
+	err = i.itemRepo.DeleteItem(ctx, itemUUID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to delete item")
+		return err
+	}
+
+	return nil
 }

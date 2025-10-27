@@ -20,6 +20,7 @@ type ItemHandler interface {
 	GetMyBorrow(c echo.Context) error
 	GetChildItemByParentID(c echo.Context) error
 	SearchItems(c echo.Context) error
+	DeleteItem(c echo.Context) error
 }
 
 type handler struct {
@@ -121,7 +122,7 @@ func (h *handler) GetMyBorrow(c echo.Context) error {
 		})
 	}
 
-	fmt.Println("HAAHAH" , response)
+	fmt.Println("HAAHAH", response)
 	return c.JSON(http.StatusOK, response)
 }
 
@@ -132,9 +133,9 @@ func (h *handler) SearchItems(c echo.Context) error {
 	user := c.QueryParam("user")
 	var userId = ""
 
-	if (user != "") {
+	if user != "" {
 		userDetail, err := contextutil.GetUserFromContext(c)
-	
+
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, echo.Map{
 				"message": "Internal Server Error",
@@ -143,12 +144,11 @@ func (h *handler) SearchItems(c echo.Context) error {
 		userId = userDetail.ID
 	}
 
-
 	strategies := item.SearchStrategyMap{
 		Name:   name,
 		Tags:   tags,
 		Status: status,
-		User: userId,
+		User:   userId,
 	}
 
 	response, err := h.service.SearchItems(c.Request().Context(), strategies)
@@ -159,4 +159,26 @@ func (h *handler) SearchItems(c echo.Context) error {
 		})
 	}
 	return c.JSON(http.StatusOK, response)
+}
+
+// DeleteItem implements ItemHandler.
+func (h *handler) DeleteItem(c echo.Context) error {
+	itemID := c.Param("item-id")
+	err := h.service.DeleteItem(c.Request().Context(), itemID)
+	if err != nil {
+		switch err {
+		case exceptions.ErrInvalidUUID:
+			return c.JSON(http.StatusBadRequest, echo.Map{
+				"message": "invalid uuid format",
+			})
+		case exceptions.ErrItemNotFound:
+			return c.JSON(http.StatusNotFound, nil)
+		default:
+			log.Error().Err(err).Msg(exceptions.ErrInternalServer.Error())
+			return c.JSON(http.StatusInternalServerError, echo.Map{
+				"message": exceptions.ErrInternalServer.Error(),
+			})
+		}
+	}
+	return c.JSON(http.StatusOK, nil)
 }
