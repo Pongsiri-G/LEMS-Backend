@@ -205,5 +205,14 @@ func (s *service) ChangeRequestStatus(ctx context.Context, requestID string, sta
 		log.Error().Err(err).Msg("failed to parse request ID")
 		return exceptions.ErrInvalidUUID
 	}
-	return s.requestRepo.ChangeRequestStatus(ctx, requestUUID, status)
+
+	request, err := s.requestRepo.FindByID(ctx, requestUUID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to find request by ID")
+		return err
+	}
+
+	request.UpdatedAt = utils.BangkokNow()
+	request.RequestStatus = status
+	return s.requestRepo.EditRequest(ctx, request)
 }
