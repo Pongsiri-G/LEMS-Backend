@@ -45,7 +45,7 @@ func (h *handler) CreateRequest(c echo.Context) error {
 		return c.JSON(401, nil)
 	}
 
-	err = h.service.CreateRequest(c.Request().Context(), &userID, req)
+	err = h.service.CreateRequest(c.Request().Context(), userID, req)
 	if err != nil {
 		switch err {
 		case exceptions.ErrRequestNotExpectItemID:
@@ -68,6 +68,10 @@ func (h *handler) CreateRequest(c echo.Context) error {
 			})
 		case exceptions.ErrUserNotFound:
 			return c.JSON(404, nil)
+		case exceptions.ErrUserIDIsNil:
+			return c.JSON(400, echo.Map{
+				"message": exceptions.ErrUserIDIsNil.Error(),
+			})
 		default:
 			return c.JSON(500, echo.Map{
 				"message": exceptions.ErrInternalServer.Error(),

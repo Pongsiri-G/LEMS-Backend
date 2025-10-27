@@ -35,7 +35,7 @@ type itemService struct {
 }
 
 func NewItemService(itemRepo ItemRepo.Repository, itemSetRepo ItemSetRepo.Repository, tagRepo TagRepo.Repository) Service {
-	return &itemService{itemRepo: itemRepo, itemSetRepo: itemSetRepo}
+	return &itemService{itemRepo: itemRepo, itemSetRepo: itemSetRepo, tagRepo: tagRepo}
 }
 
 func (i *itemService) GetChildItemByParentID(ctx context.Context, itemID string) ([]responses.ItemResponse, error) {
