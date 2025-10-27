@@ -112,6 +112,7 @@ func (r *Router) RegisterTagRouter() {
 	protected.GET("/tags", r.handlers.Tag.GetTags)
 	protected.GET("/tag/:itemID", r.handlers.Tag.GetNameTagByItemID)
 	protected.DELETE("/tag/unassign/:item_id/:tag_id", r.handlers.Tag.UnAssignTagFromItem)
+	protected.POST("/tag/assign/:item_id/:tag_id", r.handlers.Tag.AssignTagToItem)
 }
 func (r *Router) RegisterRequestRouter() {
 	v1 := r.echo.Group("/api/v1")
