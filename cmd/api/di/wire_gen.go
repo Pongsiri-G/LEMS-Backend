@@ -19,9 +19,11 @@ import (
 	request3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/request"
 	tag3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/tag"
 	user3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/user"
+	ws2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/ws"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/database"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/minio"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/ws"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/middlewares"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrow_log"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrowq"
@@ -40,6 +42,7 @@ import (
 	borrowq2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/borrowq"
 	item2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/item"
 	minio3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/minio"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/noti"
 	request2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/request"
 	tag2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/tag"
 	user2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/user"
@@ -71,7 +74,11 @@ func InitializeAPI() (*server.EchoServer, error) {
 	itemRepository := item.NewItemRepository(db)
 	itemsetRepository := itemset.NewItemSetRepository(db)
 	logRepository := log.NewLogRepository(db)
-	borrowService := borrow.NewBorrowService(borrowlogRepository, itemRepository, itemsetRepository, logRepository)
+	notificationSubject := noti.NewNotificationSubject()
+	hub := ws.NewHub()
+	subject := noti.ProvideSubjectWithObservers(notificationSubject, hub)
+	borrowQueueRepository := borrowq.NewBorrowQueueRepository(db)
+	borrowService := borrow.NewBorrowService(borrowlogRepository, itemRepository, itemsetRepository, logRepository, subject, borrowQueueRepository)
 	borrowHandler := borrow2.NewBorrowHandler(borrowService)
 	userHandler := user3.NewUserHandler(userService, oauth2Config)
 	itemService := item2.NewItemService(itemRepository, itemsetRepository)
@@ -83,13 +90,13 @@ func InitializeAPI() (*server.EchoServer, error) {
 	itemrequestedRepository := itemrequested.NewItemRequestedRepository(db)
 	requestService := request2.NewRequestService(requestRepository, itemrequestedRepository, itemRepository, minioRepository, repository)
 	requestHandler := request3.NewRequestHandler(requestService)
-	borrowQueueRepository := borrowq.NewBorrowQueueRepository(db)
 	transactionManager := database.NewTransactionManager(db)
 	borrowQueueService := borrowq2.NewBorrowQueueService(config, borrowQueueRepository, transactionManager, borrowlogRepository)
 	borrowQueueHandler := borrowq3.NewBorrowQueueHandler(borrowQueueService)
-	handlersHandlers := handlers.NewHandlers(adminHandler, authHandler, fileHandler, borrowHandler, userHandler, itemHandler, tagHandler, requestHandler, borrowQueueHandler)
+	wsHandler := ws2.NewWsHandler(hub)
+	handlersHandlers := handlers.NewHandlers(adminHandler, authHandler, fileHandler, borrowHandler, userHandler, itemHandler, tagHandler, requestHandler, borrowQueueHandler, wsHandler)
 	authMiddleware := middlewares.NewAuthMiddleware(config)
 	rbacMiddleware := middlewares.NewRbacMiddleware(config)
-	echoServer := server.NewEchoServer(config, handlersHandlers, authMiddleware, rbacMiddleware)
+	echoServer := server.NewEchoServer(config, handlersHandlers, authMiddleware, rbacMiddleware, hub)
 	return echoServer, nil
 }
