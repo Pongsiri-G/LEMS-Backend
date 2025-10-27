@@ -41,10 +41,14 @@ func (r *Router) RegisterAPIRoutes() {
 	auth.GET("/google/callback", r.handlers.Auth.GoogleCallback)
 	auth.POST("/refresh", r.handlers.Auth.RefreshToken)
 
+	protected := v1.Group("/", r.authMiddleware.Middleware)
+
 	// user group
 	user := v1.Group("/user")
 	user.POST("/register", r.handlers.User.Register)
 	user.GET("/me", r.handlers.User.Me, r.authMiddleware.Middleware)
+
+	r.registerBorrowQueueRouter(protected)
 }
 
 func (r *Router) RegisterAdminRoutes() {
@@ -97,6 +101,7 @@ func (r *Router) RegisterTagRouter() {
 	protected.GET("/tags", r.handlers.Tag.GetTags)
 	protected.GET("/tag/:itemID", r.handlers.Tag.GetNameTagByItemID)
 }
+
 func (r *Router) RegisterRequestRouter() {
 	v1 := r.echo.Group("/api/v1")
 	protected := v1.Group("", r.authMiddleware.Middleware)
@@ -105,3 +110,9 @@ func (r *Router) RegisterRequestRouter() {
 	protected.POST("/request", r.handlers.Request.CreateRequest)
 	protected.PUT("/request", r.handlers.Request.EditRequest)
 }
+
+func (r *Router) registerBorrowQueueRouter(route *echo.Group) {
+	bq := route.Group("bq")	
+	bq.POST("/enqueue", r.handlers.BorrowQueue.Enqueue)
+}
+

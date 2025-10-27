@@ -13,6 +13,7 @@ import (
 	admin2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/admin"
 	auth3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/auth"
 	borrow2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/borrow"
+	borrowq3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/borrowq"
 	item3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/item"
 	minio4 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/minio"
 	request3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/request"
@@ -23,6 +24,7 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/minio"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/middlewares"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrow_log"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrowq"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item_requested"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item_set"
@@ -35,6 +37,7 @@ import (
 	auth2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/borrow"
+	borrowq2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/borrowq"
 	item2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/item"
 	minio3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/minio"
 	request2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/request"
@@ -80,7 +83,11 @@ func InitializeAPI() (*server.EchoServer, error) {
 	itemrequestedRepository := itemrequested.NewItemRequestedRepository(db)
 	requestService := request2.NewRequestService(requestRepository, itemrequestedRepository, itemRepository, minioRepository, repository)
 	requestHandler := request3.NewRequestHandler(requestService)
-	handlersHandlers := handlers.NewHandlers(adminHandler, authHandler, fileHandler, borrowHandler, userHandler, itemHandler, tagHandler, requestHandler)
+	borrowQueueRepository := borrowq.NewBorrowQueueRepository(db)
+	transactionManager := database.NewTransactionManager(db)
+	borrowQueueService := borrowq2.NewBorrowQueueService(config, borrowQueueRepository, transactionManager, borrowlogRepository)
+	borrowQueueHandler := borrowq3.NewBorrowQueueHandler(borrowQueueService)
+	handlersHandlers := handlers.NewHandlers(adminHandler, authHandler, fileHandler, borrowHandler, userHandler, itemHandler, tagHandler, requestHandler, borrowQueueHandler)
 	authMiddleware := middlewares.NewAuthMiddleware(config)
 	rbacMiddleware := middlewares.NewRbacMiddleware(config)
 	echoServer := server.NewEchoServer(config, handlersHandlers, authMiddleware, rbacMiddleware)
