@@ -62,7 +62,12 @@ func (r *repository) GetChildren(ctx context.Context, parentID uuid.UUID) ([]mod
 // FindBorrowLogByUserID implements Repository.
 func (r *repository) FindBorrowLogByUserID(ctx context.Context, userID uuid.UUID) ([]models.BorrowLog, error) {
 	var borrowLogs []models.BorrowLog
-	err := r.db.WithContext(ctx).Where("user_id = ?", userID).Find(&borrowLogs).Error
+	err := r.db.
+		WithContext(ctx).
+		Where("user_id = ?", userID).
+		Order("borrow_date DESC").
+		Find(&borrowLogs).Error
+
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get borrow logs by user id")
 		return nil, err
