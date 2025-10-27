@@ -35,6 +35,7 @@ func NewExistRequestFactory(
 		itemRepo:    itemRepo,
 		minioRepo:   minioRepo,
 		request:     request,
+		userID: userID,
 	}
 }
 
