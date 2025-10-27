@@ -43,7 +43,7 @@ func (b *borrowQueueService) Enqueue(ctx context.Context, request requests.Creat
 	}
 
 	return b.txManager.Do(ctx, func(ctx context.Context) error {
-		b.borrowlog.CreateBorrowLog(ctx, models.BorrowLog{
+		b.borrowlog.CreateBorrowLogTx(ctx, models.BorrowLog{
 			BorrowID:     uuid.New(),
 			UserID:       userID,
 			ItemID:       request.ItemID,
