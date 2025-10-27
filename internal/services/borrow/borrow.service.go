@@ -3,15 +3,19 @@ package borrow
 import (
 	"context"
 
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/events"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/requests"
 	borrowRepository "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrow_log"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrowq"
 	itemRepository "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
 	itemsetRepository "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item_set"
 	logsystem "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/log"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/item/factory"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/noti"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
+	"gorm.io/gorm"
 )
 
 type Service interface {
@@ -24,18 +28,25 @@ type service struct {
 	itemRepo    itemRepository.Repository
 	itemSetRepo itemsetRepository.Repository
 	logRepo     logsystem.Repository
+	events      noti.Subject
+	bqRepo      borrowq.BorrowQueueRepository
 }
 
 func NewBorrowService(
 	borrowRepo borrowRepository.Repository,
 	itemRepo itemRepository.Repository,
 	itemSetRepo itemsetRepository.Repository,
-	logRepo logsystem.Repository) Service {
+	logRepo logsystem.Repository,
+	events noti.Subject,
+	bqRepo borrowq.BorrowQueueRepository,
+) Service {
 	return &service{
 		borrowRepo:  borrowRepo,
 		itemRepo:    itemRepo,
 		itemSetRepo: itemSetRepo,
 		logRepo:     logRepo,
+		events:      events,
+		bqRepo:      bqRepo,
 	}
 }
 
@@ -119,5 +130,56 @@ func (s *service) Return(ctx context.Context, req *requests.ReturnRequest) error
 	} else {
 		itemBorrowableFactory = factory.NewNormalItemBorrowable(s.itemRepo, s.borrowRepo, s.logRepo)
 	}
+
+	err = s.noitification(ctx, borrow.ItemID.String())
+	if err != nil {
+		return err
+	}
+
 	return itemBorrowableFactory.ReturnItem(ctx, borrow, &children)
+}
+
+func (s *service) noitification(ctx context.Context, itemID string) error {
+	// Process queue (greedy: only head; call repeatedly or loop)
+	for {
+		next, err := s.bqRepo.PeekOldest(ctx, itemID)
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				return nil
+			}
+			return err
+		}
+
+		if next == nil {
+			return nil
+		}
+
+		// parsedUUID, err := uuid.Parse(itemID)
+		// if err != nil {
+		// 	return err
+		// }
+
+		// cur, _ := s.itemRepo.GetItemByID(ctx, parsedUUID)
+
+		// mark the borrow request to READY (simple lookup not shown here; typically tie queue ID to borrow ID)
+		// You can add a find-by(user,equipment,WAITING) here in a real repo
+		err = s.bqRepo.Dequeue(ctx, next.QueueID)
+		if err != nil {
+			return err
+		}
+
+		// if s.events == nil {
+		// 	continue
+		// }
+
+		s.events.Notify(events.Event{
+			Type: events.ItemAvaliable,
+			Payload: map[string]any{
+				"userId":      next.UserID,
+				"equipmentId": next.ItemID,
+				"message":     "Your requested equipment is ready for pickup",
+			},
+		
+		})	
+	}
 }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/ws"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/middlewares"
 	"github.com/labstack/echo/v4"
 )
@@ -14,14 +15,16 @@ type Router struct {
 	handlers       *handlers.Handlers
 	authMiddleware middlewares.AuthMiddleware
 	rbacMiddleware middlewares.RbacMiddleware
+	hub            *ws.Hub
 }
 
-func NewRouter(echo *echo.Echo, handlers *handlers.Handlers, authMiddleware middlewares.AuthMiddleware, rbacMiddleware middlewares.RbacMiddleware) *Router {
+func NewRouter(echo *echo.Echo, handlers *handlers.Handlers, authMiddleware middlewares.AuthMiddleware, rbacMiddleware middlewares.RbacMiddleware, hub *ws.Hub) *Router {
 	return &Router{
 		echo:           echo,
 		handlers:       handlers,
 		authMiddleware: authMiddleware,
 		rbacMiddleware: rbacMiddleware,
+		hub:            hub,
 	}
 }
 
@@ -31,6 +34,8 @@ func (r *Router) RegisterAPIRoutes() {
 		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 	})
 
+	r.echo.GET("/ws", r.handlers.WebSocket.Run, r.authMiddleware.Middleware)
+	
 	// v1 group
 	v1 := r.echo.Group("/api/v1")
 
@@ -112,7 +117,6 @@ func (r *Router) RegisterRequestRouter() {
 }
 
 func (r *Router) registerBorrowQueueRouter(route *echo.Group) {
-	bq := route.Group("bq")	
+	bq := route.Group("bq")
 	bq.POST("/enqueue", r.handlers.BorrowQueue.Enqueue)
 }
-
