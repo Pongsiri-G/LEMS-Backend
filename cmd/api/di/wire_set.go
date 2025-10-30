@@ -13,6 +13,7 @@ import (
 	authHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/auth"
 	borrowHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/borrow"
 	itemHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/item"
+	logHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/log"
 	minioHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/minio"
 	requestHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/request"
 	tagHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/tag"
@@ -29,6 +30,8 @@ import (
 	itemRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
 	itemRequestedRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item_requested"
 	itemsetRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item_set"
+
+	// logRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/log"
 	logsystem "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/log"
 	minioRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/minio"
 	requestRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/request"
@@ -41,6 +44,7 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
 	borrowSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/borrow"
 	itemSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/item"
+	logSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/log"
 	minioSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/minio"
 	requestSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/request"
 	tagSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/tag"
@@ -89,6 +93,7 @@ var ServiceSet = wire.NewSet(
 	itemSvc.NewItemService,
 	tagSvc.NewTagService,
 	requestSvc.NewRequestService,
+	logSvc.NewLogService,
 )
 
 // ---- Handlers ----
@@ -103,6 +108,7 @@ var HandlerSet = wire.NewSet(
 	itemHd.NewItemHandler,
 	tagHd.NewTagHandler,
 	requestHd.NewRequestHandler,
+	logHd.NewLogHandler,
 )
 
 // ---- Middlewares ----

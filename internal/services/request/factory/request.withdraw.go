@@ -20,6 +20,7 @@ type withdrawRequestFactory struct {
 	itemRequestedRepo ItemRequested.Repository
 	minioRepo         Minio.Repository
 	request           *models.Request
+	userID            uuid.UUID
 }
 
 func NewWithdrawRequestFactory(
@@ -27,31 +28,30 @@ func NewWithdrawRequestFactory(
 	itemRequestedRepo ItemRequested.Repository,
 	minioRepo Minio.Repository,
 	request *models.Request,
+	userID uuid.UUID,
 ) Requestable {
 	return &withdrawRequestFactory{
 		requestRepo:       requestRepo,
 		itemRequestedRepo: itemRequestedRepo,
 		minioRepo:         minioRepo,
 		request:           request,
+		userID:            userID,
 	}
 }
 
 // CreateRequest implements Requestable.
 func (w *withdrawRequestFactory) CreateRequest(ctx context.Context, req requests.CreateRequest) error {
+
 	if req.ItemID != nil {
 		log.Error().Msg("request type does not expect item ID")
 		return exceptions.ErrRequestNotExpectItemID
-	}
-	userID, err := uuid.Parse(req.UserID)
-	if err != nil {
-		return exceptions.ErrInvalidUUID
 	}
 	itemRequested := models.ItemRequested{
 		ID:          uuid.New(),
 		Name:        req.Item.Name,
 		Description: req.Item.Description,
 		Type:        req.Item.Type,
-		UserID:      userID,
+		UserID:      w.userID,
 		Quantity:    req.Item.Quantity,
 		Price:       req.Item.Price,
 	}
@@ -63,7 +63,7 @@ func (w *withdrawRequestFactory) CreateRequest(ctx context.Context, req requests
 
 	request := models.Request{
 		RequestID:          uuid.New(),
-		UserID:             userID,
+		UserID:             w.userID,
 		RequestType:        req.RequestType,
 		RequestDescription: req.RequestDescription,
 		ItemID:             itemRequested.ID,

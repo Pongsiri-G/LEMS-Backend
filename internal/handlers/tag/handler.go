@@ -14,6 +14,8 @@ type TagHandler interface {
 	GetNameTagByItemID(c echo.Context) error
 	GetTags(c echo.Context) error
 	CreateTag(c echo.Context) error
+	AssignTagToItem(c echo.Context) error
+	UnAssignTagFromItem(c echo.Context) error
 }
 
 type handler struct {
@@ -56,7 +58,7 @@ func (h *handler) CreateTag(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, nil)
 	}
 
-	err := h.service.CreateTag(c.Request().Context(), &req)
+	response, err := h.service.CreateTag(c.Request().Context(), &req)
 	if err != nil {
 		switch err {
 		default:
@@ -66,5 +68,62 @@ func (h *handler) CreateTag(c echo.Context) error {
 			})
 		}
 	}
-	return c.JSON(http.StatusCreated, nil)
+	return c.JSON(http.StatusCreated, response)
+}
+
+// UnAssignTagFromItem implements TagHandler.
+func (h *handler) UnAssignTagFromItem(c echo.Context) error {
+	itemID := c.Param("item_id")
+	tagID := c.Param("tag_id")
+
+	if itemID == "" || tagID == "" {
+		return c.JSON(400, nil)
+	}
+
+	err := h.service.UnAssignTagFromItem(c.Request().Context(), itemID, tagID)
+	if err != nil {
+		switch err {
+		case exceptions.ErrInvalidUUID:
+			return c.JSON(400, echo.Map{
+				"message": exceptions.ErrInvalidUUID.Error(),
+			})
+		case exceptions.ErrTagNotAssigned:
+			return c.JSON(404, nil)
+		default:
+			log.Error().Err(err).Msg("failed to unassign tag from item")
+			return c.JSON(500, echo.Map{
+				"message": exceptions.ErrInternalServer.Error(),
+			})
+		}
+	}
+	return c.JSON(200, nil)
+}
+
+// AssignTagToItem implements TagHandler.
+func (h *handler) AssignTagToItem(c echo.Context) error {
+	itemID := c.Param("item_id")
+	tagID := c.Param("tag_id")
+	if itemID == "" || tagID == "" {
+		return c.JSON(400, nil)
+	}
+
+	err := h.service.AssignTagToItem(c.Request().Context(), itemID, tagID)
+	if err != nil {
+		switch err {
+		case exceptions.ErrInvalidUUID:
+			return c.JSON(400, echo.Map{
+				"message": exceptions.ErrInvalidUUID.Error(),
+			})
+		case exceptions.ErrTagAlreadyAssigned:
+			return c.JSON(409, echo.Map{
+				"message": exceptions.ErrTagAlreadyAssigned.Error(),
+			})
+		default:
+			log.Error().Err(err).Msg("failed to assign tag to item")
+			return c.JSON(500, echo.Map{
+				"message": exceptions.ErrInternalServer.Error(),
+			})
+		}
+	}
+	return c.JSON(201, nil)
 }

@@ -3,8 +3,8 @@ package requests
 import "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
 
 type CreateRequest struct {
-	UserID             string                `json:"user_id" validate:"required"`
 	RequestType        enums.RequestType     `json:"request_type" validate:"required"`
+	RequestQuantity    *int                  `json:"request_quantity" validate:"omitempty,min=1"`
 	RequestDescription string                `json:"request_description" validate:"required"`
 	ImageURL           *string               `json:"image_url" validate:"required"`
 	Item               *ItemRequestedRequest `json:"item_requested" validate:"omitempty,dive"`
@@ -23,10 +23,20 @@ type EditRequest struct {
 	RequestID          string  `json:"request_id" validate:"required"`
 	RequestDescription *string `json:"request_description" validate:"required"`
 	ImageURL           *string `json:"image_url" validate:"required"`
+	RequestQuantity    *int    `json:"request_quantity" validate:"omitempty,min=1"`
 	// for item
 	ItemName        *string  `json:"item_name" validate:"omitempty"`
 	ItemDescription *string  `json:"item_description" validate:"omitempty"`
 	ItemType        *string  `json:"item_type" validate:"omitempty"`
 	ItemQuantity    *int     `json:"item_quantity" validate:"omitempty,min=1"`
 	ItemPrice       *float64 `json:"item_price" validate:"omitempty,gt=0"`
+}
+
+type ChangeRequestStatus struct {
+	RequestID string `json:"request_id" validate:"required"`
+	Status    string `json:"status" validate:"required"`
+}
+
+type CancelRequest struct {
+	RequestID string `json:"request_id" validate:"required"`
 }

@@ -22,9 +22,10 @@ import (
 type Service interface {
 	GetRequests(ctx context.Context, userID *uuid.UUID) ([]responses.GetAllRequestsResponse, error)
 
-	CreateRequest(ctx context.Context, req requests.CreateRequest) error
+	CreateRequest(ctx context.Context, userID uuid.UUID, req requests.CreateRequest) error
 	EditRequest(ctx context.Context, req requests.EditRequest) error
 	ExportRequests(ctx context.Context, exportType enums.ExportType) error
+	ChangeRequestStatus(ctx context.Context, requestID string, status enums.RequestStatus) error
 }
 
 type service struct {
@@ -52,7 +53,8 @@ func NewRequestService(
 }
 
 // CreateRequest implements Service.
-func (s *service) CreateRequest(ctx context.Context, req requests.CreateRequest) error {
+func (s *service) CreateRequest(ctx context.Context, userID uuid.UUID, req requests.CreateRequest) error {
+
 	var requestFactory factory.Requestable
 	ok := enums.IsValidRequestType(req.RequestType)
 	if !ok {
@@ -64,12 +66,12 @@ func (s *service) CreateRequest(ctx context.Context, req requests.CreateRequest)
 			log.Error().Msg("item requested is nil for request type 'request'")
 			return exceptions.ErrRequestItemInvalid
 		}
-		requestFactory = factory.NewWithdrawRequestFactory(s.requestRepo, s.itemRequestedRepo, s.minioRepo, nil)
+		requestFactory = factory.NewWithdrawRequestFactory(s.requestRepo, s.itemRequestedRepo, s.minioRepo, nil, userID)
 	} else {
 		if req.ItemID == nil {
 			return exceptions.ErrRequestItemIDInvalid
 		}
-		requestFactory = factory.NewExistRequestFactory(s.requestRepo, s.itemRepo, s.minioRepo, nil)
+		requestFactory = factory.NewExistRequestFactory(s.requestRepo, s.itemRepo, s.minioRepo, userID, nil)
 	}
 
 	return requestFactory.CreateRequest(ctx, req)
@@ -100,9 +102,9 @@ func (s *service) EditRequest(ctx context.Context, req requests.EditRequest) err
 	}
 
 	if request.RequestType == enums.RequestTypeRequest {
-		requestFactory = factory.NewWithdrawRequestFactory(s.requestRepo, s.itemRequestedRepo, s.minioRepo, request)
+		requestFactory = factory.NewWithdrawRequestFactory(s.requestRepo, s.itemRequestedRepo, s.minioRepo, request, uuid.UUID{})
 	} else {
-		requestFactory = factory.NewExistRequestFactory(s.requestRepo, s.itemRepo, s.minioRepo, request)
+		requestFactory = factory.NewExistRequestFactory(s.requestRepo, s.itemRepo, s.minioRepo, uuid.UUID{}, request)
 	}
 
 	return requestFactory.EditRequest(ctx, req)
@@ -127,7 +129,7 @@ func (s *service) GetRequests(ctx context.Context, userID *uuid.UUID) ([]respons
 		return nil, err
 	}
 
-	var response []responses.GetAllRequestsResponse
+	var response []responses.GetAllRequestsResponse = make([]responses.GetAllRequestsResponse, 0)
 	for _, req := range requestsData {
 		user, err := s.userRepo.FindByID(ctx, req.UserID.String())
 		if err != nil {
@@ -140,34 +142,75 @@ func (s *service) GetRequests(ctx context.Context, userID *uuid.UUID) ([]respons
 			return nil, exceptions.ErrUserNotFound
 		}
 
-		item, err := s.itemRepo.GetItemByID(ctx, req.ItemID)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to get item by ID")
-			return nil, err
-		}
-
-		if item == nil {
-			log.Error().Msg("item not found for item ID: " + req.ItemID.String())
-			return nil, exceptions.ErrItemNotFound
-		}
-
-		response = append(response, responses.GetAllRequestsResponse{
+		var res = responses.GetAllRequestsResponse{
 			RequestID:          req.RequestID,
-			RequestItemName:    item.ItemName,
 			RequestType:        req.RequestType,
 			RequestStatus:      req.RequestStatus,
 			RequestImageURL:    req.RequestImageURL,
 			RequestCreatedBy:   user.UserFullName,
+			Quantity:           req.Quantity,
 			RequestCreatedDate: utils.ToStringDateTime(req.CreatedAt),
 			RequestUpdatedDate: utils.ToStringDateTime(req.UpdatedAt),
-		})
+		}
+
+		if req.RequestType == enums.RequestTypeRequest {
+			itemRequested, err := s.itemRequestedRepo.FindByID(ctx, req.ItemID)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to get item requested by ID")
+				return nil, err
+			}
+			if itemRequested == nil {
+				log.Error().Msg("item requested not found for item ID: " + req.ItemID.String())
+				return nil, exceptions.ErrRequestedItemNotFound
+			}
+			res.RequestItemName = itemRequested.Name
+			res.ItemID = itemRequested.ID
+			res.RequestDescription = req.RequestDescription
+			res.ItemRequest = &responses.ItemRequestedResponse{
+				Name:        itemRequested.Name,
+				Description: itemRequested.Description,
+				Type:        itemRequested.Type,
+				Quantity:    itemRequested.Quantity,
+				Price:       itemRequested.Price,
+			}
+		} else {
+			item, err := s.itemRepo.GetItemByID(ctx, req.ItemID)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to get item by ID")
+				return nil, err
+			}
+			if item == nil {
+				log.Error().Msg("item not found for item ID: " + req.ItemID.String())
+				return nil, exceptions.ErrItemNotFound
+			}
+
+			res.RequestItemName = item.ItemName
+			res.RequestDescription = req.RequestDescription
+			res.ItemID = item.ItemID
+		}
+
+		response = append(response, res)
 
 	}
 
 	return response, nil
 }
 
-// GetMyRequests implements Service.
-func (s *service) GetMyRequests(ctx context.Context, userID string) ([]responses.GetAllRequestsResponse, error) {
-	panic("unimplemented")
+// ChangeRequestStatus implements Service.
+func (s *service) ChangeRequestStatus(ctx context.Context, requestID string, status enums.RequestStatus) error {
+	requestUUID, err := uuid.Parse(requestID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to parse request ID")
+		return exceptions.ErrInvalidUUID
+	}
+
+	request, err := s.requestRepo.FindByID(ctx, requestUUID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to find request by ID")
+		return err
+	}
+
+	request.UpdatedAt = utils.BangkokNow()
+	request.RequestStatus = status
+	return s.requestRepo.EditRequest(ctx, request)
 }

@@ -5,6 +5,7 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/auth"
 	borrowhd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/borrow"
 	item "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/item"
+	logHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/log"
 	miniohd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/minio"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/request"
 	tag "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/tag"
@@ -20,6 +21,7 @@ type Handlers struct {
 	Item    item.ItemHandler
 	Tag     tag.TagHandler
 	Request request.RequestHandler
+	Log     logHd.LogHandler
 }
 
 func NewHandlers(
@@ -31,6 +33,7 @@ func NewHandlers(
 	item item.ItemHandler,
 	tag tag.TagHandler,
 	request request.RequestHandler,
+	log logHd.LogHandler,
 ) *Handlers {
 	return &Handlers{
 		Admin:   admin,
@@ -41,5 +44,6 @@ func NewHandlers(
 		Item:    item,
 		Tag:     tag,
 		Request: request,
+		Log:     log,
 	}
 }

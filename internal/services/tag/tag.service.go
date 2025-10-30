@@ -15,7 +15,9 @@ import (
 type Service interface {
 	GetTagsNameByItemID(ctx context.Context, itemID string) ([]responses.TagResponse, error)
 	GetAllTags(ctx context.Context) ([]responses.TagResponse, error)
-	CreateTag(ctx context.Context, req *requests.CreateTagRequest) error
+	CreateTag(ctx context.Context, req *requests.CreateTagRequest) (responses.TagResponse, error)
+	UnAssignTagFromItem(ctx context.Context, itemID string, tagID string) error
+	AssignTagToItem(ctx context.Context, itemID string, tagID string) error
 }
 
 type tagService struct {
@@ -77,15 +79,15 @@ func (i *tagService) GetAllTags(ctx context.Context) ([]responses.TagResponse, e
 }
 
 // CreateTag implements Service.
-func (i *tagService) CreateTag(ctx context.Context, req *requests.CreateTagRequest) error {
+func (i *tagService) CreateTag(ctx context.Context, req *requests.CreateTagRequest) (responses.TagResponse, error) {
 	tag, err := i.repo.GetTagByName(ctx, req.Name)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get tag by name")
-		return err
+		return responses.TagResponse{}, err
 	}
 
 	if tag != nil {
-		return exceptions.ErrTagAlreadyExists
+		return responses.TagResponse{}, exceptions.ErrTagAlreadyExists
 	}
 	newTag := models.Tag{
 		TagID:    uuid.New(),
@@ -95,7 +97,51 @@ func (i *tagService) CreateTag(ctx context.Context, req *requests.CreateTagReque
 	err = i.repo.CreateTag(ctx, &newTag)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create tag")
+		return responses.TagResponse{}, err
+	}
+	return responses.TagResponse{
+		TagID:    newTag.TagID,
+		TagName:  newTag.TagName,
+		TagColor: newTag.TagColor,
+	}, nil
+}
+
+// UnAssignTagFromItem implements Service.
+func (i *tagService) UnAssignTagFromItem(ctx context.Context, itemID string, tagID string) error {
+	itemIDUUID, err := uuid.Parse(itemID)
+	if err != nil {
+		log.Error().Err(err).Msg("invalid uuid format for item ID")
+		return exceptions.ErrInvalidUUID
+	}
+	tagIDUUID, err := uuid.Parse(tagID)
+	if err != nil {
+		log.Error().Err(err).Msg("invalid uuid format for tag ID")
+		return exceptions.ErrInvalidUUID
+	}
+
+	tag, err := i.repo.FindAssignedTagsByItemIDAndTagID(ctx, itemIDUUID, tagIDUUID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to find assigned tag by item ID and tag ID")
 		return err
 	}
-	return nil
+	if tag == nil {
+		return exceptions.ErrTagNotAssigned
+	}
+	return i.repo.UnAssignTagFromItem(ctx, itemIDUUID, tagIDUUID)
+}
+
+// AssignTagToItem implements Service.
+func (i *tagService) AssignTagToItem(ctx context.Context, itemID string, tagID string) error {
+	itemIDUUID, err := uuid.Parse(itemID)
+	if err != nil {
+		log.Error().Err(err).Msg("invalid uuid format for item ID")
+		return exceptions.ErrInvalidUUID
+	}
+	tagIDUUID, err := uuid.Parse(tagID)
+	if err != nil {
+		log.Error().Err(err).Msg("invalid uuid format for tag ID")
+		return exceptions.ErrInvalidUUID
+	}
+
+	return i.repo.AssignTagToItem(ctx, itemIDUUID, tagIDUUID)
 }

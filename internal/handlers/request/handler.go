@@ -1,9 +1,11 @@
 package request
 
 import (
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/requests"
 	requestSvc "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/request"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/utils/contextutil"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
@@ -14,6 +16,8 @@ type RequestHandler interface {
 
 	CreateRequest(c echo.Context) error
 	EditRequest(c echo.Context) error
+	CancelRequest(c echo.Context) error
+	ChangeRequestStatus(c echo.Context) error
 }
 
 type handler struct {
@@ -34,7 +38,17 @@ func (h *handler) CreateRequest(c echo.Context) error {
 		})
 	}
 
-	err = h.service.CreateRequest(c.Request().Context(), req)
+	auth, err := contextutil.GetUserFromContext(c)
+	if err != nil {
+		return c.JSON(500, err.Error())
+	}
+
+	userID, err := uuid.Parse(auth.ID)
+	if err != nil {
+		return c.JSON(401, nil)
+	}
+
+	err = h.service.CreateRequest(c.Request().Context(), userID, req)
 	if err != nil {
 		switch err {
 		case exceptions.ErrRequestNotExpectItemID:
@@ -57,6 +71,10 @@ func (h *handler) CreateRequest(c echo.Context) error {
 			})
 		case exceptions.ErrUserNotFound:
 			return c.JSON(404, nil)
+		case exceptions.ErrUserIDIsNil:
+			return c.JSON(400, echo.Map{
+				"message": exceptions.ErrUserIDIsNil.Error(),
+			})
 		default:
 			return c.JSON(500, echo.Map{
 				"message": exceptions.ErrInternalServer.Error(),
@@ -101,8 +119,11 @@ func (h *handler) EditRequest(c echo.Context) error {
 
 // GetMyRequests implements RequestHandler.
 func (h *handler) GetMyRequests(c echo.Context) error {
-	id := c.Param("id")
-	userID, err := uuid.Parse(id)
+	auth, err := contextutil.GetUserFromContext(c)
+	if err != nil {
+		return c.JSON(500, err.Error())
+	}
+	userID, err := uuid.Parse(auth.ID)
 	if err != nil {
 		return c.JSON(400, echo.Map{
 			"message": exceptions.ErrInvalidUUID.Error(),
@@ -149,4 +170,62 @@ func (h *handler) GetRequests(c echo.Context) error {
 	}
 
 	return c.JSON(200, requestsData)
+}
+
+// CancelRequest implements RequestHandler.
+func (h *handler) CancelRequest(c echo.Context) error {
+	var req requests.CancelRequest
+	err := c.Bind(&req)
+	if err != nil {
+		return c.JSON(400, echo.Map{
+			"message": "bad request",
+		})
+	}
+
+	err = h.service.ChangeRequestStatus(c.Request().Context(), req.RequestID, enums.RequestStatusCancel)
+	if err != nil {
+		switch err {
+		case exceptions.ErrRequestNotFound:
+			return c.JSON(404, nil)
+		case exceptions.ErrInvalidUUID:
+			return c.JSON(400, echo.Map{
+				"message": exceptions.ErrInvalidUUID.Error(),
+			})
+		default:
+			return c.JSON(500, echo.Map{
+				"message": exceptions.ErrInternalServer.Error(),
+			})
+		}
+	}
+	return c.JSON(200, nil)
+}
+
+// ChangeRequestStatus implements RequestHandler.
+func (h *handler) ChangeRequestStatus(c echo.Context) error {
+	var req requests.ChangeRequestStatus
+	err := c.Bind(&req)
+	if err != nil {
+		return c.JSON(400, echo.Map{
+			"message": "bad request",
+		})
+	}
+
+	status := enums.RequestStatus(req.Status)
+
+	err = h.service.ChangeRequestStatus(c.Request().Context(), req.RequestID, status)
+	if err != nil {
+		switch err {
+		case exceptions.ErrRequestNotFound:
+			return c.JSON(404, nil)
+		case exceptions.ErrInvalidUUID:
+			return c.JSON(400, echo.Map{
+				"message": exceptions.ErrInvalidUUID.Error(),
+			})
+		default:
+			return c.JSON(500, echo.Map{
+				"message": exceptions.ErrInternalServer.Error(),
+			})
+		}
+	}
+	return c.JSON(200, nil)
 }
