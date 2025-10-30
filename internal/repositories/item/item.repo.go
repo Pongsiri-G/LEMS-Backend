@@ -12,8 +12,11 @@ import (
 
 type Repository interface {
 	CreateItem(ctx context.Context, item *models.Item) error
-	GetItemByID(ctx context.Context, itemID uuid.UUID) (*models.Item, error)
 	UpdateItem(ctx context.Context, item *models.Item) error
+
+	
+
+	GetItemByID(ctx context.Context, itemID uuid.UUID) (*models.Item, error)
 	GetAll(ctx context.Context) ([]models.Item, error)
 	GetMyBorrow(ctx context.Context, userID uuid.UUID) ([]models.ItemBorrow, error)
 	GetChildItemByParentID(ctx context.Context, itemID uuid.UUID) ([]models.Item, error)
@@ -183,3 +186,5 @@ func (r *repository) DeleteItem(ctx context.Context, itemID uuid.UUID) error {
 	}
 	return nil
 }
+
+

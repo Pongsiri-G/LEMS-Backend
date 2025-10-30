@@ -73,12 +73,12 @@ func (i *ItemFactoryWithChildrenConcrete) CreateItem(ctx context.Context) (*mode
 	}
 
 	for _, childID := range childrenIDs {
-		err := i.itemSetRepo.CreateItemSet(parentItem.ItemID, childID)
+		err := i.itemSetRepo.CreateItemSet(ctx, parentItem.ItemID, childID)
 		// if any error occurs, rollback the parent item creation and any previously created item sets
 		if err != nil {
 			log.Error().Err(err).Msg("failed to create item set, rolling back parent item creation")
 			for _, child := range childrenIDs {
-				_ = i.itemSetRepo.DeleteItemSet(parentItem.ItemID, child)
+				_ = i.itemSetRepo.DeleteItemSet(ctx, parentItem.ItemID, child)
 			}
 			_ = i.itemRepo.DeleteItem(ctx, parentItem.ItemID)
 			return nil, err
