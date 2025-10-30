@@ -69,7 +69,7 @@ func (h *Hub) SendToUser(userID string, msg []byte) {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
-	log.Info().Str("user", userID).Msg("Boardcasting")
+	log.Info().Str("user", userID).Msg("Boardcasting to user")
 
 	if _, ok:= h.userClients[userID]; ok {
 		for c := range h.clients {

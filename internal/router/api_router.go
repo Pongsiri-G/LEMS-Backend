@@ -34,7 +34,7 @@ func (r *Router) RegisterAPIRoutes() {
 		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 	})
 
-	r.echo.GET("/ws", r.handlers.WebSocket.Run, r.authMiddleware.Middleware)
+	r.echo.GET("/ws", r.handlers.WebSocket.Run)
 	
 	// v1 group
 	v1 := r.echo.Group("/api/v1")
@@ -54,6 +54,8 @@ func (r *Router) RegisterAPIRoutes() {
 	user.GET("/me", r.handlers.User.Me, r.authMiddleware.Middleware)
 
 	r.registerBorrowQueueRouter(protected)
+
+	v1.POST("/ws/noti", r.handlers.WebSocket.SendNoti, r.authMiddleware.Middleware)
 }
 
 func (r *Router) RegisterAdminRoutes() {

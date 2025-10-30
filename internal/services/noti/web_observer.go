@@ -5,7 +5,6 @@ import (
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/events"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/ws"
-	"github.com/rs/zerolog/log"
 )
 
 type WebAppObserver interface {
@@ -23,17 +22,18 @@ func NewWebAppObserver(hub *ws.Hub) WebAppObserver {
 
 type pushMsg struct {
 	Type    string `json:"type"`
-	Message string `json:"massage"`
+	Message string `json:"message"`
 	UserID  string `json:"userId,omitempty"`
+	ItemID  string `json:"itemId,omitempty"`
 }
 
 func (w *webAppObserver) Update(event events.Event) {
 	msg := pushMsg{
-		Type: string(event.Type),
+		Type:    string(event.Type),
 		Message: "Notification",
 	}
 
-	if m, ok := event.Payload.(map[string]any); ok {
+	if m, ok := event.Payload.(map[string]interface{}); ok {
 		if uid, ok2 := m["userId"].(string); ok2 {
 			msg.UserID = uid
 		}
@@ -42,9 +42,7 @@ func (w *webAppObserver) Update(event events.Event) {
 		}
 	}
 
-	if b, err := json.Marshal(msg); err == nil {
-		w.hub.SendToUser(msg.UserID, b)
+	if byteData, err := json.Marshal(msg); err == nil {
+		w.hub.SendToUser(msg.UserID, byteData)
 	}
-
-	log.Info().Msgf("%s success", string(event.Type))
 }

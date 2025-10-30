@@ -2,6 +2,7 @@ package borrow
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/events"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
@@ -15,7 +16,6 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/noti"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
-	"gorm.io/gorm"
 )
 
 type Service interface {
@@ -131,7 +131,7 @@ func (s *service) Return(ctx context.Context, req *requests.ReturnRequest) error
 		itemBorrowableFactory = factory.NewNormalItemBorrowable(s.itemRepo, s.borrowRepo, s.logRepo)
 	}
 
-	err = s.noitification(ctx, borrow.ItemID.String())
+	err = s.noitification(ctx, borrow.ItemID)
 	if err != nil {
 		return err
 	}
@@ -139,47 +139,52 @@ func (s *service) Return(ctx context.Context, req *requests.ReturnRequest) error
 	return itemBorrowableFactory.ReturnItem(ctx, borrow, &children)
 }
 
-func (s *service) noitification(ctx context.Context, itemID string) error {
-	// Process queue (greedy: only head; call repeatedly or loop)
-	for {
-		next, err := s.bqRepo.PeekOldest(ctx, itemID)
-		if err != nil {
-			if err == gorm.ErrRecordNotFound {
-				return nil
-			}
-			return err
-		}
-
-		if next == nil {
-			return nil
-		}
-
-		// parsedUUID, err := uuid.Parse(itemID)
-		// if err != nil {
-		// 	return err
-		// }
-
-		// cur, _ := s.itemRepo.GetItemByID(ctx, parsedUUID)
-
-		// mark the borrow request to READY (simple lookup not shown here; typically tie queue ID to borrow ID)
-		// You can add a find-by(user,equipment,WAITING) here in a real repo
-		err = s.bqRepo.Dequeue(ctx, next.QueueID)
-		if err != nil {
-			return err
-		}
-
-		// if s.events == nil {
-		// 	continue
-		// }
-
-		s.events.Notify(events.Event{
-			Type: events.ItemAvaliable,
-			Payload: map[string]any{
-				"userId":      next.UserID,
-				"equipmentId": next.ItemID,
-				"message":     "Your requested equipment is ready for pickup",
-			},
-		
-		})	
+func (s *service) noitification(ctx context.Context, itemID uuid.UUID) error {
+	item, err := s.itemRepo.GetItemByID(ctx, itemID)
+	if err != nil {
+		return err
 	}
+
+	if item == nil {
+		return exceptions.ErrItemNotFound
+	}
+
+	// Process queue (greedy: only head; call repeatedly or loop)
+	next, err := s.bqRepo.PeekOldest(ctx, itemID.String())
+	if err != nil {
+		return err
+	}
+
+	if next == nil {
+		return nil
+	}
+
+	// parsedUUID, err := uuid.Parse(itemID)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// cur, _ := s.itemRepo.GetItemByID(ctx, parsedUUID)
+
+	// mark the borrow request to READY (simple lookup not shown here; typically tie queue ID to borrow ID)
+	// You can add a find-by(user,equipment,WAITING) here in a real repo
+	err = s.bqRepo.Dequeue(ctx, next.QueueID)
+	if err != nil {
+		return err
+	}
+
+	// if s.events == nil {
+	// 	continue
+	// }
+
+	s.events.Notify(events.Event{
+		Type: events.ItemAvaliable,
+		Payload: map[string]interface{}{
+			"userId":      next.UserID.String(),
+			"message":     fmt.Sprintf("Your requested equipment (%s) is ready for pickup", item.ItemName),
+		},
+	
+	})	
+
+	return nil
 }

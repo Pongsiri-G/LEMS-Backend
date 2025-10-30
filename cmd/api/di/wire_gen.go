@@ -93,7 +93,7 @@ func InitializeAPI() (*server.EchoServer, error) {
 	transactionManager := database.NewTransactionManager(db)
 	borrowQueueService := borrowq2.NewBorrowQueueService(config, borrowQueueRepository, transactionManager, borrowlogRepository)
 	borrowQueueHandler := borrowq3.NewBorrowQueueHandler(borrowQueueService)
-	wsHandler := ws2.NewWsHandler(hub)
+	wsHandler := ws2.NewWsHandler(hub, subject)
 	handlersHandlers := handlers.NewHandlers(adminHandler, authHandler, fileHandler, borrowHandler, userHandler, itemHandler, tagHandler, requestHandler, borrowQueueHandler, wsHandler)
 	authMiddleware := middlewares.NewAuthMiddleware(config)
 	rbacMiddleware := middlewares.NewRbacMiddleware(config)
