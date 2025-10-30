@@ -164,6 +164,7 @@ func (s *service) GetRequests(ctx context.Context, userID *uuid.UUID) ([]respons
 			}
 			res.RequestItemName = itemRequested.Name
 			res.ItemID = itemRequested.ID
+			res.RequestDescription = req.RequestDescription
 			res.ItemRequest = &responses.ItemRequestedResponse{
 				Name:        itemRequested.Name,
 				Description: itemRequested.Description,
@@ -183,6 +184,7 @@ func (s *service) GetRequests(ctx context.Context, userID *uuid.UUID) ([]respons
 			}
 
 			res.RequestItemName = item.ItemName
+			res.RequestDescription = req.RequestDescription
 			res.ItemID = item.ItemID
 		}
 
