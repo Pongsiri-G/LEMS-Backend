@@ -103,6 +103,7 @@ func (r *Router) RegisterItemRouter() {
 	protected.GET("/item/child/:item-id", r.handlers.Item.GetChildItemByParentID)
 	protected.GET("/item/list/search", r.handlers.Item.SearchItems)
 	protected.POST("/item", r.handlers.Item.CreateItem)
+	protected.DELETE("/item/:item-id", r.handlers.Item.DeleteItem)
 }
 
 func (r *Router) RegisterTagRouter() {
@@ -111,6 +112,8 @@ func (r *Router) RegisterTagRouter() {
 	protected.POST("/tag", r.handlers.Tag.CreateTag)
 	protected.GET("/tags", r.handlers.Tag.GetTags)
 	protected.GET("/tag/:itemID", r.handlers.Tag.GetNameTagByItemID)
+	protected.DELETE("/tag/unassign/:item_id/:tag_id", r.handlers.Tag.UnAssignTagFromItem)
+	protected.POST("/tag/assign/:item_id/:tag_id", r.handlers.Tag.AssignTagToItem)
 }
 func (r *Router) RegisterRequestRouter() {
 	v1 := r.echo.Group("/api/v1")

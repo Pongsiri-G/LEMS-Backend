@@ -16,6 +16,7 @@ type Repository interface {
 
 	CreateTag(ctx context.Context, tag *models.Tag) error
 	AssignTagToItem(ctx context.Context, itemID uuid.UUID, tagID uuid.UUID) error
+	UnAssignTagFromItem(ctx context.Context, itemID uuid.UUID, tagID uuid.UUID) error
 	FindAssignedTagsByItemIDAndTagID(ctx context.Context, itemID uuid.UUID, tagID uuid.UUID) (*models.ItemTag, error)
 	GetTagByName(ctx context.Context, tagName string) (*models.Tag, error)
 	GetTagByID(ctx context.Context, tagID uuid.UUID) (*models.Tag, error)
@@ -134,4 +135,14 @@ func (r *repository) FindAssignedTagsByItemIDAndTagID(ctx context.Context, itemI
 		return nil, err
 	}
 	return &itemTag, nil
+}
+
+// UnAssignTagFromItem implements Repository.
+func (r *repository) UnAssignTagFromItem(ctx context.Context, itemID uuid.UUID, tagID uuid.UUID) error {
+	err := r.db.Where("item_id = ? AND tag_id = ?", itemID, tagID).Delete(&models.ItemTag{}).Error
+	if err != nil {
+		log.Error().Err(err).Msg("failed to unassign tag from item in database")
+		return err
+	}
+	return nil
 }
