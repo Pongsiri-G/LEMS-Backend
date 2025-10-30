@@ -11,3 +11,5 @@ type CreateItemRequest struct {
 	Prerequisite *[]string         `json:"prerequisite" validate:"omitempty,max=500"`
 	Tags         *[]string         `json:"tags" validate:"omitempty"`
 }
+
+type EditItemRequest struct{}
