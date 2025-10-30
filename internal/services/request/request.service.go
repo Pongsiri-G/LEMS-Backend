@@ -163,6 +163,7 @@ func (s *service) GetRequests(ctx context.Context, userID *uuid.UUID) ([]respons
 				return nil, exceptions.ErrRequestedItemNotFound
 			}
 			res.RequestItemName = itemRequested.Name
+			res.ItemID = itemRequested.ID
 			res.ItemRequest = &responses.ItemRequestedResponse{
 				Name:        itemRequested.Name,
 				Description: itemRequested.Description,
@@ -182,6 +183,7 @@ func (s *service) GetRequests(ctx context.Context, userID *uuid.UUID) ([]respons
 			}
 
 			res.RequestItemName = item.ItemName
+			res.ItemID = item.ItemID
 		}
 
 		response = append(response, res)
