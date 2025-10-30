@@ -148,6 +148,7 @@ func (s *service) GetRequests(ctx context.Context, userID *uuid.UUID) ([]respons
 			RequestStatus:      req.RequestStatus,
 			RequestImageURL:    req.RequestImageURL,
 			RequestCreatedBy:   user.UserFullName,
+			Quantity:           req.Quantity,
 			RequestCreatedDate: utils.ToStringDateTime(req.CreatedAt),
 			RequestUpdatedDate: utils.ToStringDateTime(req.UpdatedAt),
 		}
@@ -163,6 +164,8 @@ func (s *service) GetRequests(ctx context.Context, userID *uuid.UUID) ([]respons
 				return nil, exceptions.ErrRequestedItemNotFound
 			}
 			res.RequestItemName = itemRequested.Name
+			res.ItemID = itemRequested.ID
+			res.RequestDescription = req.RequestDescription
 			res.ItemRequest = &responses.ItemRequestedResponse{
 				Name:        itemRequested.Name,
 				Description: itemRequested.Description,
@@ -182,13 +185,8 @@ func (s *service) GetRequests(ctx context.Context, userID *uuid.UUID) ([]respons
 			}
 
 			res.RequestItemName = item.ItemName
-			res.Item = &responses.ItemResponse{
-				ID:          item.ItemID,
-				Name:        item.ItemName,
-				Description: item.ItemDescription,
-				PictureURL:  item.ItemPictureURL,
-				Status:      item.ItemStatus,
-			}
+			res.RequestDescription = req.RequestDescription
+			res.ItemID = item.ItemID
 		}
 
 		response = append(response, res)
