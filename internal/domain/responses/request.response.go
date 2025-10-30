@@ -8,7 +8,6 @@ import (
 type GetAllRequestsResponse struct {
 	RequestID          uuid.UUID              `json:"request_id"`
 	RequestItemName    string                 `json:"request_item_name"`
-	Item               *ItemResponse          `json:"item"`
 	ItemRequest        *ItemRequestedResponse `json:"item_requested"`
 	RequestType        enums.RequestType      `json:"request_type"`
 	RequestStatus      enums.RequestStatus    `json:"request_status"`
