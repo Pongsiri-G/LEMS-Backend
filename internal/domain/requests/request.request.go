@@ -4,6 +4,7 @@ import "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal
 
 type CreateRequest struct {
 	RequestType        enums.RequestType     `json:"request_type" validate:"required"`
+	RequestQuantity    *int                  `json:"request_quantity" validate:"omitempty,min=1"`
 	RequestDescription string                `json:"request_description" validate:"required"`
 	ImageURL           *string               `json:"image_url" validate:"required"`
 	Item               *ItemRequestedRequest `json:"item_requested" validate:"omitempty,dive"`
@@ -22,6 +23,7 @@ type EditRequest struct {
 	RequestID          string  `json:"request_id" validate:"required"`
 	RequestDescription *string `json:"request_description" validate:"required"`
 	ImageURL           *string `json:"image_url" validate:"required"`
+	RequestQuantity    *int    `json:"request_quantity" validate:"omitempty,min=1"`
 	// for item
 	ItemName        *string  `json:"item_name" validate:"omitempty"`
 	ItemDescription *string  `json:"item_description" validate:"omitempty"`

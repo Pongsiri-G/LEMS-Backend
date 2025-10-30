@@ -35,7 +35,7 @@ func NewExistRequestFactory(
 		itemRepo:    itemRepo,
 		minioRepo:   minioRepo,
 		request:     request,
-		userID: userID,
+		userID:      userID,
 	}
 }
 
@@ -61,6 +61,12 @@ func (e *existRequest) CreateRequest(ctx context.Context, req requests.CreateReq
 		return exceptions.ErrItemNotFound
 	}
 
+	if req.RequestQuantity == nil {
+		log.Error().Msg("request quantity is required")
+		value := 1
+		req.RequestQuantity = &value
+	}
+
 	request := models.Request{
 		RequestID:          uuid.New(),
 		UserID:             e.userID,
@@ -69,6 +75,7 @@ func (e *existRequest) CreateRequest(ctx context.Context, req requests.CreateReq
 		RequestImageURL:    req.ImageURL,
 		RequestStatus:      enums.RequestStatusPending,
 		RequestDescription: req.RequestDescription,
+		Quantity:           req.RequestQuantity,
 		CreatedAt:          utils.BangkokNow(),
 		UpdatedAt:          utils.BangkokNow(),
 	}
@@ -80,6 +87,10 @@ func (e *existRequest) CreateRequest(ctx context.Context, req requests.CreateReq
 func (e *existRequest) EditRequest(ctx context.Context, req requests.EditRequest) error {
 	if req.RequestDescription != nil {
 		e.request.RequestDescription = *req.RequestDescription
+	}
+
+	if req.RequestQuantity != nil {
+		e.request.Quantity = req.RequestQuantity
 	}
 
 	if req.ImageURL != nil {
