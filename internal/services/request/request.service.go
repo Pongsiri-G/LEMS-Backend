@@ -148,6 +148,7 @@ func (s *service) GetRequests(ctx context.Context, userID *uuid.UUID) ([]respons
 			RequestStatus:      req.RequestStatus,
 			RequestImageURL:    req.RequestImageURL,
 			RequestCreatedBy:   user.UserFullName,
+			Quantity:           req.Quantity,
 			RequestCreatedDate: utils.ToStringDateTime(req.CreatedAt),
 			RequestUpdatedDate: utils.ToStringDateTime(req.UpdatedAt),
 		}
