@@ -115,6 +115,10 @@ func (r *Router) RegisterItemRouter() {
 	protected.GET("/item/list/search", r.handlers.Item.SearchItems)
 	protected.POST("/item", r.handlers.Item.CreateItem)
 	protected.DELETE("/item/:item-id", r.handlers.Item.DeleteItem)
+
+	protected.PUT("/item", r.handlers.Item.EditItem)
+	protected.POST("/item/assign-item-set/:parent_id/:child_id", r.handlers.Item.AssignItemSet)
+	protected.POST("/item/remove-item-set/:parent_id/:child_id", r.handlers.Item.RemoveItemSet)
 }
 
 func (r *Router) RegisterTagRouter() {
