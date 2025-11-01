@@ -120,28 +120,31 @@ func (e *ExcelExportStrategy) createRow(ctx context.Context, f *excelize.File, s
 		if err != nil {
 			log.Warn().Err(err).Msg("failed to extract URL, skipping image")
 		} else {
-			image, objType, err := e.minio.GetImage(ctx, bucket, obj)
+			image, contentType, err := e.minio.GetImage(ctx, bucket, obj)
 			if err != nil {
 				log.Warn().Err(err).Msg("failed to get image from minio, skipping image")
 			} else {
-				// Normalize extension - excelize expects extensions without dot and in lowercase
-				ext := objType
-				if len(ext) > 0 && ext[0] == '.' {
-					ext = ext[1:]
-				}
-				// Map content types to extensions if needed
-				switch ext {
+				// Map content types to extensions that excelize supports
+				var ext string
+				switch contentType {
 				case "image/jpeg", "image/jpg":
 					ext = ".jpg"
 				case "image/png":
 					ext = ".png"
 				case "image/gif":
 					ext = ".gif"
-				case "image/bmp":
+				case "image/bmp", "image/x-ms-bmp":
 					ext = ".bmp"
-				case "image/tiff":
+				case "image/tiff", "image/tif":
 					ext = ".tiff"
+				default:
+					// Try to extract from object name
+					log.Warn().Str("contentType", contentType).Str("object", obj).Msg("Unknown content type, trying to extract extension from filename")
+					// Default to jpg if we can't determine
+					ext = ".jpg"
 				}
+
+				log.Info().Str("contentType", contentType).Str("extension", ext).Int("imageSize", len(image)).Msg("Adding image to excel")
 
 				err = f.AddPictureFromBytes(sheetName, fmt.Sprintf("A%d", row), &excelize.Picture{
 					Extension: ext,
@@ -149,7 +152,9 @@ func (e *ExcelExportStrategy) createRow(ctx context.Context, f *excelize.File, s
 					Format:    &excelize.GraphicOptions{ScaleX: 0.3, ScaleY: 0.3},
 				})
 				if err != nil {
-					log.Warn().Err(err).Str("extension", ext).Msg("failed to add picture to excel, skipping image")
+					log.Warn().Err(err).Str("extension", ext).Str("contentType", contentType).Msg("failed to add picture to excel, skipping image")
+				} else {
+					log.Info().Int("row", row).Msg("Successfully added image to excel")
 				}
 			}
 		}
