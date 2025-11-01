@@ -90,6 +90,13 @@ func (e *ExcelExportStrategy) Export(ctx context.Context, requests []models.Requ
 }
 
 func (e *ExcelExportStrategy) setHeaders(f *excelize.File, sheetName string) error {
+	// Set column widths
+	f.SetColWidth(sheetName, "A", "A", 20) // Image column
+	f.SetColWidth(sheetName, "B", "B", 25) // Name column
+	f.SetColWidth(sheetName, "C", "C", 40) // Description column
+	f.SetColWidth(sheetName, "D", "D", 15) // Type column
+	f.SetColWidth(sheetName, "E", "E", 15) // Quantity column
+
 	err := f.SetCellValue(sheetName, "A1", "Item Image")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to set cell value for header")
@@ -119,6 +126,9 @@ func (e *ExcelExportStrategy) setHeaders(f *excelize.File, sheetName string) err
 }
 
 func (e *ExcelExportStrategy) createRow(ctx context.Context, f *excelize.File, sheetName string, row int, item *models.ItemRequested, request *models.Request) error {
+	// Set row height for image (approximately 100 pixels = 75 points)
+	f.SetRowHeight(sheetName, row, 100)
+
 	// Try to add image, but don't fail if it doesn't work
 	if request.RequestImageURL != nil && *request.RequestImageURL != "" {
 		bucket, obj, err := utils.ExtractUrl(*request.RequestImageURL)
@@ -130,11 +140,11 @@ func (e *ExcelExportStrategy) createRow(ctx context.Context, f *excelize.File, s
 				log.Warn().Err(err).Msg("failed to get image from minio, skipping image")
 			} else {
 				// Validate the image data can be decoded
-				_, format, err := image.DecodeConfig(bytes.NewReader(imageData))
+				imgConfig, format, err := image.DecodeConfig(bytes.NewReader(imageData))
 				if err != nil {
 					log.Warn().Err(err).Str("contentType", contentType).Int("dataSize", len(imageData)).Msg("failed to decode image config, image data may be corrupted")
 				} else {
-					log.Info().Str("detectedFormat", format).Str("contentType", contentType).Msg("Image format detected")
+					log.Info().Str("detectedFormat", format).Str("contentType", contentType).Int("width", imgConfig.Width).Int("height", imgConfig.Height).Msg("Image format detected")
 
 					// Map format to extension
 					var ext string
@@ -155,12 +165,34 @@ func (e *ExcelExportStrategy) createRow(ctx context.Context, f *excelize.File, s
 					}
 
 					if ext != "" {
-						log.Info().Str("extension", ext).Int("imageSize", len(imageData)).Msg("Adding image to excel")
+						// Calculate scale to fit image in cell (cell is approximately 140 pixels wide, 100 pixels tall)
+						cellWidth := 140.0
+						cellHeight := 100.0
+						scaleX := cellWidth / float64(imgConfig.Width)
+						scaleY := cellHeight / float64(imgConfig.Height)
+
+						// Use the smaller scale to ensure image fits in both dimensions
+						scale := scaleX
+						if scaleY < scaleX {
+							scale = scaleY
+						}
+
+						// Add small margin
+						scale = scale * 0.9
+
+						log.Info().Str("extension", ext).Int("imageSize", len(imageData)).Float64("scale", scale).Msg("Adding image to excel")
 
 						err = f.AddPictureFromBytes(sheetName, fmt.Sprintf("A%d", row), &excelize.Picture{
 							Extension: ext,
 							File:      imageData,
-							Format:    &excelize.GraphicOptions{ScaleX: 0.3, ScaleY: 0.3},
+							Format: &excelize.GraphicOptions{
+								ScaleX:              scale,
+								ScaleY:              scale,
+								OffsetX:             2,
+								OffsetY:             2,
+								Positioning:         "oneCell",
+								AutoFitIgnoreAspect: false,
+							},
 						})
 						if err != nil {
 							log.Warn().Err(err).Str("extension", ext).Str("format", format).Msg("failed to add picture to excel, skipping image")
