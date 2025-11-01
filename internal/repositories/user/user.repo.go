@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
@@ -11,11 +12,21 @@ import (
 	"gorm.io/gorm"
 )
 
+type UserFilter struct {
+	Status *enums.UserStatus
+	Role   *enums.UserRole
+	Search *string
+	SortBy string
+}
+
 type Repository interface {
+	// --- Query ---
 	FindByEmail(ctx context.Context, email string) (*models.User, error)
 	FindByID(ctx context.Context, userID string) (*models.User, error)
+	List(ctx context.Context, filter UserFilter) ([]models.User, error)
+
+	// --- Command ---
 	Create(ctx context.Context, u *models.User) error
-	FindById(ctx context.Context, id uuid.UUID) (*models.User, error)
 	// ใช้สำหรับ provider-based login โดยไม่แยกตาราง
 	// ข้อกำหนด: ลิงก์ด้วยอีเมลเสมอ ถ้าอีเมลมีอยู่แล้ว ให้ใช้งาน user เดิมและอัปเดต AuthProvider ตามความเหมาะสม
 	FindOrCreateByProvider(ctx context.Context, provider enums.AuthProvider, email string, seed *models.User) (*models.User, error)
@@ -23,6 +34,8 @@ type Repository interface {
 	UpdateRole(ctx context.Context, userID uuid.UUID, role enums.UserRole) error
 	UpdateLastLogin(ctx context.Context, userID uuid.UUID) error
 	SoftDelete(ctx context.Context, userID uuid.UUID) error
+
+	// --- Regacy --
 	GetAllUsers(ctx context.Context) ([]models.User, error)
 }
 
@@ -39,7 +52,7 @@ func NewUserRepository(db *gorm.DB) Repository {
 func (r *repository) FindByEmail(ctx context.Context, email string) (*models.User, error) {
 	var u models.User
 	if err := r.db.WithContext(ctx).
-		Where("user_email = ?", email).
+		Where("LOWER(user_email) = ?", email).
 		First(&u).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrNotFound
@@ -49,12 +62,40 @@ func (r *repository) FindByEmail(ctx context.Context, email string) (*models.Use
 	return &u, nil
 }
 
-func (r *repository) FindById(ctx context.Context, id uuid.UUID) (*models.User, error) {
+// FindByID implements Repository.
+func (r *repository) FindByID(ctx context.Context, userID string) (*models.User, error) {
 	var u models.User
-	if err := r.db.WithContext(ctx).First(&u, "user_id = ?", id).Error; err != nil {
+	if err := r.db.WithContext(ctx).
+		Where("user_id = ?", userID).
+		First(&u).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrNotFound
+		}
 		return nil, err
 	}
 	return &u, nil
+}
+
+func (r *repository) List(ctx context.Context, f UserFilter) ([]models.User, error) {
+	q := r.db.WithContext(ctx).Model(&models.User{})
+	if f.Status != nil {
+		q = q.Where("user_status = ?", *f.Status)
+	}
+	if f.Role != nil {
+		q = q.Where("user_role = ?", *f.Role)
+	}
+	if f.Search != nil && *f.Search != "" {
+		like := "%" + strings.ToLower(*f.Search) + "%"
+		q = q.Where("LOWER(user_email) LIKE ? OR LOWER(user_full_name) LIKE ?", like, like)
+	}
+	if f.SortBy != "" {
+		q = q.Order(f.SortBy)
+	}
+	var users []models.User
+	if err := q.Find(&users).Error; err != nil {
+		return nil, err
+	}
+	return users, nil
 }
 
 func (r *repository) Create(ctx context.Context, u *models.User) error {
@@ -107,15 +148,36 @@ func (r *repository) UpdateLastLogin(ctx context.Context, userID uuid.UUID) erro
 }
 
 func (r *repository) SoftDelete(ctx context.Context, userID uuid.UUID) error {
-	return r.db.WithContext(ctx).Delete(&models.User{}, "user_id = ?", userID).Error
+	res := r.db.WithContext(ctx).Delete(&models.User{}, "user_id = ?", userID)
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
 func (r *repository) UpdateStatus(ctx context.Context, userID uuid.UUID, status enums.UserStatus) error {
-	return r.db.WithContext(ctx).Model(&models.User{}).Where("user_id = ?", userID).Update("user_status", status).Error
+	res := r.db.WithContext(ctx).Model(&models.User{}).Where("user_id = ?", userID).Update("user_status", status)
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
 func (r *repository) UpdateRole(ctx context.Context, userID uuid.UUID, role enums.UserRole) error {
-	return r.db.WithContext(ctx).Model(&models.User{}).Where("user_id = ?", userID).Update("user_role", role).Error
+	res := r.db.WithContext(ctx).Model(&models.User{}).Where("user_id = ?", userID).Update("user_role", role)
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
 func (r *repository) GetAllUsers(ctx context.Context) ([]models.User, error) {
@@ -125,18 +187,5 @@ func (r *repository) GetAllUsers(ctx context.Context) ([]models.User, error) {
 		return nil, q.Error
 	}
 	return users, nil
-}
 
-// FindByID implements Repository.
-func (r *repository) FindByID(ctx context.Context, userID string) (*models.User, error) {
-	var u models.User
-	if err := r.db.WithContext(ctx).
-		Where("user_id = ?", userID).
-		First(&u).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ErrNotFound
-		}
-		return nil, err
-	}
-	return &u, nil
 }

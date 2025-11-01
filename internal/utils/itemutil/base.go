@@ -22,6 +22,7 @@ func ToResponse(item models.Item) responses.ItemResponse {
 		PictureURL:  item.ItemPictureURL,
 		Status:      item.ItemStatus,
 		Quantity:    item.ItemQuantity,
+		CurrentQuantity: item.ItemCurrentQuantity,
 		CreatedAt:   item.ItemCreatedAt,
 		UpdatedAt:   item.ItemUpdatedAt,
 	}

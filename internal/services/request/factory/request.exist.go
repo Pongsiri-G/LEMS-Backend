@@ -20,12 +20,14 @@ type existRequest struct {
 	itemRepo    ItemRepo.Repository
 	minioRepo   Minio.Repository
 	request     *models.Request
+	userID      uuid.UUID
 }
 
 func NewExistRequestFactory(
 	requestRepo RequestRepo.Repository,
 	itemRepo ItemRepo.Repository,
 	minioRepo Minio.Repository,
+	userID uuid.UUID,
 	request *models.Request,
 ) Requestable {
 	return &existRequest{
@@ -33,21 +35,20 @@ func NewExistRequestFactory(
 		itemRepo:    itemRepo,
 		minioRepo:   minioRepo,
 		request:     request,
+		userID:      userID,
 	}
 }
 
 // CreateRequest implements Requestable.
 func (e *existRequest) CreateRequest(ctx context.Context, req requests.CreateRequest) error {
+
 	if req.Item != nil {
 		log.Error().Msg("request type does not expect item")
 		return exceptions.ErrRequestNotExpectItem
 	}
-	userID, err := uuid.Parse(req.UserID)
-	if err != nil {
-		return exceptions.ErrInvalidUUID
-	}
 	itemID, err := uuid.Parse(*req.ItemID)
 	if err != nil {
+		log.Error().Err(err).Msg("invalid item ID UUID")
 		return exceptions.ErrInvalidUUID
 	}
 	item, err := e.itemRepo.GetItemByID(ctx, itemID)
@@ -60,14 +61,21 @@ func (e *existRequest) CreateRequest(ctx context.Context, req requests.CreateReq
 		return exceptions.ErrItemNotFound
 	}
 
+	if req.RequestQuantity == nil {
+		log.Error().Msg("request quantity is required")
+		value := 1
+		req.RequestQuantity = &value
+	}
+
 	request := models.Request{
 		RequestID:          uuid.New(),
-		UserID:             userID,
+		UserID:             e.userID,
 		RequestType:        req.RequestType,
 		ItemID:             itemID,
 		RequestImageURL:    req.ImageURL,
 		RequestStatus:      enums.RequestStatusPending,
 		RequestDescription: req.RequestDescription,
+		Quantity:           req.RequestQuantity,
 		CreatedAt:          utils.BangkokNow(),
 		UpdatedAt:          utils.BangkokNow(),
 	}
@@ -79,6 +87,10 @@ func (e *existRequest) CreateRequest(ctx context.Context, req requests.CreateReq
 func (e *existRequest) EditRequest(ctx context.Context, req requests.EditRequest) error {
 	if req.RequestDescription != nil {
 		e.request.RequestDescription = *req.RequestDescription
+	}
+
+	if req.RequestQuantity != nil {
+		e.request.Quantity = req.RequestQuantity
 	}
 
 	if req.ImageURL != nil {

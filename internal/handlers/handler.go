@@ -6,6 +6,7 @@ import (
 	borrowhd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/borrow"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/borrowq"
 	item "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/item"
+	logHd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/log"
 	miniohd "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/minio"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/request"
 	tag "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/tag"
@@ -22,6 +23,7 @@ type Handlers struct {
 	Item        item.ItemHandler
 	Tag         tag.TagHandler
 	Request     request.RequestHandler
+	Log         logHd.LogHandler
 	BorrowQueue borrowq.BorrowQueueHandler
 	WebSocket   ws.WsHandler
 }
@@ -35,6 +37,7 @@ func NewHandlers(
 	item item.ItemHandler,
 	tag tag.TagHandler,
 	request request.RequestHandler,
+	log logHd.LogHandler,
 	borrowQueue borrowq.BorrowQueueHandler,
 	webSocket ws.WsHandler,
 ) *Handlers {
@@ -47,6 +50,7 @@ func NewHandlers(
 		Item:        item,
 		Tag:         tag,
 		Request:     request,
+		Log:         log,
 		BorrowQueue: borrowQueue,
 		WebSocket:   webSocket,
 	}

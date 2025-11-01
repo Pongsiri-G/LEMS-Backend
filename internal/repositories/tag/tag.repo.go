@@ -3,6 +3,7 @@ package tag
 import (
 	"context"
 
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
@@ -14,6 +15,11 @@ type Repository interface {
 	GetAllTags(ctx context.Context) ([]models.Tag, error)
 
 	CreateTag(ctx context.Context, tag *models.Tag) error
+	AssignTagToItem(ctx context.Context, itemID uuid.UUID, tagID uuid.UUID) error
+	UnAssignTagFromItem(ctx context.Context, itemID uuid.UUID, tagID uuid.UUID) error
+	FindAssignedTagsByItemIDAndTagID(ctx context.Context, itemID uuid.UUID, tagID uuid.UUID) (*models.ItemTag, error)
+	GetTagByName(ctx context.Context, tagName string) (*models.Tag, error)
+	GetTagByID(ctx context.Context, tagID uuid.UUID) (*models.Tag, error)
 }
 
 type repository struct {
@@ -62,6 +68,80 @@ func (r *repository) CreateTag(ctx context.Context, tag *models.Tag) error {
 	err := r.db.Create(tag).Error
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create tag in database")
+		return err
+	}
+	return nil
+}
+
+// AssignTagToItem implements Repository.
+func (r *repository) AssignTagToItem(ctx context.Context, itemID uuid.UUID, tagID uuid.UUID) error {
+	tag, err := r.FindAssignedTagsByItemIDAndTagID(ctx, itemID, tagID)
+	if err != nil {
+		return err
+	}
+	if tag != nil {
+		return exceptions.ErrTagAlreadyAssigned
+	}
+	itemTag := models.ItemTag{
+		ItemID: itemID,
+		TagID:  tagID,
+	}
+	err = r.db.Create(&itemTag).Error
+	if err != nil {
+		log.Error().Err(err).Msg("failed to assign tag to item in database")
+		return err
+	}
+
+	return nil
+}
+
+// GetTagByID implements Repository.
+func (r *repository) GetTagByID(ctx context.Context, tagID uuid.UUID) (*models.Tag, error) {
+	var tag models.Tag
+	err := r.db.First(&tag, "tag_id = ?", tagID).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		log.Error().Err(err).Msg("failed to get tag by ID from database")
+		return nil, err
+	}
+	return &tag, nil
+}
+
+// GetTagByName implements Repository.
+func (r *repository) GetTagByName(ctx context.Context, tagName string) (*models.Tag, error) {
+	var tag models.Tag
+	err := r.db.First(&tag, "tag_name = ?", tagName).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		log.Error().Err(err).Msg("failed to get tag by name from database")
+		return nil, err
+	}
+	return &tag, nil
+}
+
+// FindAssignedTagsByItemIDAndTagID implements Repository.
+func (r *repository) FindAssignedTagsByItemIDAndTagID(ctx context.Context, itemID uuid.UUID, tagID uuid.UUID) (*models.ItemTag, error) {
+	var itemTag models.ItemTag
+	err := r.db.First(&itemTag, "item_id = ? AND tag_id = ?", itemID, tagID).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		log.Error().Err(err).Msg("failed to find assigned tag by item ID and tag ID from database")
+		return nil, err
+	}
+	return &itemTag, nil
+}
+
+// UnAssignTagFromItem implements Repository.
+func (r *repository) UnAssignTagFromItem(ctx context.Context, itemID uuid.UUID, tagID uuid.UUID) error {
+	err := r.db.Where("item_id = ? AND tag_id = ?", itemID, tagID).Delete(&models.ItemTag{}).Error
+	if err != nil {
+		log.Error().Err(err).Msg("failed to unassign tag from item in database")
 		return err
 	}
 	return nil

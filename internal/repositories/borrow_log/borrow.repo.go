@@ -6,6 +6,7 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/database"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
 
@@ -15,6 +16,9 @@ type Repository interface {
 	CreateBorrowLog(ctx context.Context, borrowLog models.BorrowLog) error
 	GetChildren(ctx context.Context, parentID uuid.UUID) ([]models.BorrowLog, error)
 	CreateBorrowLogTx(ctx context.Context, borrowLog models.BorrowLog) error
+	GetBorrowID(ctx context.Context, userID uuid.UUID, itemID uuid.UUID) (string, error)
+	FindBorrowLogByUserID(ctx context.Context, userID uuid.UUID) ([]models.BorrowLog, error)
+	GetAllBorrowLogs(ctx context.Context) ([]models.BorrowLog, error)
 }
 
 type repository struct {
@@ -61,4 +65,46 @@ func (r *repository) GetChildren(ctx context.Context, parentID uuid.UUID) ([]mod
 func (r *repository) CreateBorrowLogTx(ctx context.Context, borrowLog models.BorrowLog) error {
 	tx := database.FromContext(ctx, r.db)
 	return tx.Create(&borrowLog).Error
+}
+
+// FindBorrowLogByUserID implements Repository.
+func (r *repository) FindBorrowLogByUserID(ctx context.Context, userID uuid.UUID) ([]models.BorrowLog, error) {
+	var borrowLogs []models.BorrowLog
+	err := r.db.
+		WithContext(ctx).
+		Where("user_id = ?", userID).
+		Order("borrow_date DESC").
+		Find(&borrowLogs).Error
+
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get borrow logs by user id")
+		return nil, err
+	}
+	return borrowLogs, nil
+}
+
+// GetAllBorrowLogs implements Repository.
+func (r *repository) GetAllBorrowLogs(ctx context.Context) ([]models.BorrowLog, error) {
+	var borrowLogs []models.BorrowLog
+	err := r.db.WithContext(ctx).Find(&borrowLogs).Error
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get all borrow logs")
+		return nil, err
+	}
+	return borrowLogs, nil
+}
+
+
+func (r *repository) GetBorrowID(ctx context.Context, userID uuid.UUID, itemID uuid.UUID) (string, error) {
+	var borrowID string
+
+	err := r.db.Table("borrow_logs").
+				Select("borrow_id").
+				Where("item_id = ? AND user_id = ? AND borrow_status = 'BORROWED'", itemID, userID).
+				Find(&borrowID).Error
+
+	if (err != nil) {
+		return "", err
+	}
+	return borrowID, nil
 }

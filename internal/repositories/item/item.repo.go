@@ -2,6 +2,7 @@ package item
 
 import (
 	"context"
+	"time"
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
 	"github.com/google/uuid"
@@ -14,7 +15,7 @@ type Repository interface {
 	GetItemByID(ctx context.Context, itemID uuid.UUID) (*models.Item, error)
 	UpdateItem(ctx context.Context, item *models.Item) error
 	GetAll(ctx context.Context) ([]models.Item, error)
-	GetMyBorrow(ctx context.Context, userID uuid.UUID) ([]models.Item, error)
+	GetMyBorrow(ctx context.Context, userID uuid.UUID) ([]models.ItemBorrow, error)
 	GetChildItemByParentID(ctx context.Context, itemID uuid.UUID) ([]models.Item, error)
 	GetAvailable(ctx context.Context) ([]models.Item, error)
 	GetByTags(ctx context.Context, tags []string) ([]models.Item, error)
@@ -28,13 +29,14 @@ type repository struct {
 }
 
 type SearchStrategy interface {
-    Apply(db *gorm.DB) *gorm.DB
+	Apply(db *gorm.DB) *gorm.DB
 }
 
 type SearchStrategyMap struct {
 	Tags   []string
 	Name   string
 	Status string
+	User   string
 }
 
 // Constuctor
@@ -55,7 +57,7 @@ func (r *repository) GetChildItemByParentID(ctx context.Context, itemID uuid.UUI
 	}
 	for _, itemSet := range itemSets {
 		var item models.Item
-		if err := r.db.First(&item, itemSet.ChildItemID).Error; err != nil {
+		if err := r.db.Where("item_deleted_at IS NULL").First(&item, itemSet.ChildItemID).Error; err != nil {
 			log.Error().Err(err).Msg("can't get item from parent id that get from item sets")
 			continue
 		}
@@ -92,28 +94,31 @@ func (r *repository) CreateItem(ctx context.Context, item *models.Item) error {
 
 func (r *repository) GetAll(ctx context.Context) ([]models.Item, error) {
 	var items []models.Item
-	err := r.db.Find(&items).Error
+	err := r.db.Where("item_deleted_at IS NULL").Find(&items).Error
 	if err != nil {
 		return nil, err
 	}
 	return items, nil
 }
 
-func (r *repository) GetMyBorrow(ctx context.Context, userID uuid.UUID) ([]models.Item, error) {
-	var items []models.Item
-	sub := r.db.Model(&models.BorrowLog{}).Select("item_id").Where("user_id::uuid = ? AND borrow_status = ?", userID, "BORROWED")
+func (r *repository) GetMyBorrow(ctx context.Context, userID uuid.UUID) ([]models.ItemBorrow, error) {
+	var items []models.ItemBorrow
+	err := r.db.
+		Table("items").
+		Select("items.item_id, items.item_name, borrow_logs.borrow_id, items.item_description, items.item_picture_url, items.item_status, items.item_quantity, items.item_created_at, items.item_updated_at, items.item_current_quantity").
+		Joins("JOIN borrow_logs ON items.item_id::uuid = borrow_logs.item_id").
+		Where("borrow_logs.user_id = ? AND borrow_logs.borrow_status = ? AND items.item_deleted_at IS NULL", userID, "BORROWED").
+		Find(&items).Error
 
-	err := r.db.Where("item_id IN (?)", sub).Find(&items).Error
 	if err != nil {
 		return nil, err
 	}
-
 	return items, nil
 }
 
 func (r *repository) GetAvailable(ctx context.Context) ([]models.Item, error) {
 	var items []models.Item
-	err := r.db.Where("item_status=?", "AVAILABLE").Find(&items).Error
+	err := r.db.Where("item_status=?", "AVAILABLE").Where("item_deleted_at IS NULL").Find(&items).Error
 
 	if err != nil {
 		return nil, err
@@ -130,6 +135,7 @@ func (r *repository) GetByTags(ctx context.Context, tags []string) ([]models.Ite
 		Joins("JOIN item_tags it ON i.item_id = it.item_id").
 		Joins("JOIN tags t ON it.tag_id = t.tag_id").
 		Where("t.tag_name IN (?)", tags).
+		Where("i.item_deleted_at IS NULL").
 		Scan(&items).Error
 
 	if err != nil {
@@ -141,7 +147,7 @@ func (r *repository) GetByTags(ctx context.Context, tags []string) ([]models.Ite
 
 func (r *repository) GetByName(ctx context.Context, name string) ([]models.Item, error) {
 	var items []models.Item
-	err := r.db.Where("item_name ILIKE ?", "%"+name+"%").Find(&items).Error
+	err := r.db.Where("item_name ILIKE ?", "%"+name+"%").Where("item_deleted_at IS NULL").Find(&items).Error
 
 	if err != nil {
 		return nil, err
@@ -152,7 +158,7 @@ func (r *repository) GetByName(ctx context.Context, name string) ([]models.Item,
 func (r *repository) SearchItems(ctx context.Context, strategies []SearchStrategy) ([]models.Item, error) {
 	var items []models.Item
 	log.Info().Msgf("Searching items with %d strategies", len(strategies))
-	db := r.db.Model(&models.Item{})
+	db := r.db.Model(&models.Item{}).Where("item_deleted_at IS NULL")
 
 	for _, strategy := range strategies {
 		db = strategy.Apply(db)
@@ -169,14 +175,11 @@ func (r *repository) SearchItems(ctx context.Context, strategies []SearchStrateg
 
 // DeleteItem implements Repository.
 func (r *repository) DeleteItem(ctx context.Context, itemID uuid.UUID) error {
-	result := r.db.Where("item_id = ?", itemID).Delete(&models.Item{})
-	if result.RowsAffected == 0 {
-		return nil
-	}
+	// Soft delete: set item_deleted_at to current time
+	result := r.db.Model(&models.Item{}).Where("item_id = ?", itemID).Update("item_deleted_at", time.Now())
 	if result.Error != nil {
-		log.Error().Err(result.Error).Msg("failed to delete item")
+		log.Error().Err(result.Error).Msg("failed to soft-delete item")
 		return result.Error
 	}
-
 	return nil
 }

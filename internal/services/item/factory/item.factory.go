@@ -9,7 +9,7 @@ import (
 )
 
 type ItemFactory interface {
-	CreateItem(ctx context.Context) error
+	CreateItem(ctx context.Context) (*models.Item, error)
 }
 
 type ItemResponseFactory interface {

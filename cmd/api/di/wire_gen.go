@@ -15,6 +15,7 @@ import (
 	borrow2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/borrow"
 	borrowq3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/borrowq"
 	item3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/item"
+	log3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/log"
 	minio4 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/minio"
 	request3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/request"
 	tag3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/tag"
@@ -42,6 +43,7 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/borrow"
 	borrowq2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/borrowq"
 	item2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/item"
+	log2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/log"
 	minio3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/minio"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/noti"
 	request2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/request"
@@ -80,23 +82,25 @@ func InitializeAPI() (*server.EchoServer, error) {
 	smtpGoogle := email.NewSMTPGoogle(config)
 	subject := noti.ProvideSubjectWithObservers(notificationSubject, hub, smtpGoogle)
 	borrowQueueRepository := borrowq.NewBorrowQueueRepository(db)
-	borrowService := borrow.NewBorrowService(borrowlogRepository, itemRepository, itemsetRepository, logRepository, subject, borrowQueueRepository)
+	borrowService := borrow.NewBorrowService(borrowlogRepository, itemRepository, itemsetRepository, logRepository, subject, borrowQueueRepository, repository)
 	borrowHandler := borrow2.NewBorrowHandler(borrowService)
 	userHandler := user3.NewUserHandler(userService, oauth2Config)
-	itemService := item2.NewItemService(itemRepository, itemsetRepository)
-	itemHandler := item3.NewItemHandler(itemService)
 	tagRepository := tag.NewTagRepository(db)
+	itemService := item2.NewItemService(itemRepository, itemsetRepository, tagRepository)
+	itemHandler := item3.NewItemHandler(itemService)
 	tagService := tag2.NewTagService(tagRepository)
 	tagHandler := tag3.NewTagHandler(tagService)
 	requestRepository := request.NewRepository(db)
 	itemrequestedRepository := itemrequested.NewItemRequestedRepository(db)
 	requestService := request2.NewRequestService(requestRepository, itemrequestedRepository, itemRepository, minioRepository, repository)
 	requestHandler := request3.NewRequestHandler(requestService)
+	logService := log2.NewLogService(logRepository, repository)
+	logHandler := log3.NewLogHandler(logService)
 	transactionManager := database.NewTransactionManager(db)
 	borrowQueueService := borrowq2.NewBorrowQueueService(config, borrowQueueRepository, transactionManager, borrowlogRepository)
 	borrowQueueHandler := borrowq3.NewBorrowQueueHandler(borrowQueueService)
 	wsHandler := ws2.NewWsHandler(hub, subject)
-	handlersHandlers := handlers.NewHandlers(adminHandler, authHandler, fileHandler, borrowHandler, userHandler, itemHandler, tagHandler, requestHandler, borrowQueueHandler, wsHandler)
+	handlersHandlers := handlers.NewHandlers(adminHandler, authHandler, fileHandler, borrowHandler, userHandler, itemHandler, tagHandler, requestHandler, logHandler, borrowQueueHandler, wsHandler)
 	authMiddleware := middlewares.NewAuthMiddleware(config)
 	rbacMiddleware := middlewares.NewRbacMiddleware(config)
 	echoServer := server.NewEchoServer(config, handlersHandlers, authMiddleware, rbacMiddleware, hub)

@@ -57,7 +57,7 @@ func (h *authHandler) Login(c echo.Context) error {
 		case exceptions.ErrInactiveUser:
 			return c.JSON(http.StatusForbidden, map[string]string{"error": err.Error()})
 		default:
-			return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})		
 		}
 	}
 
@@ -90,7 +90,6 @@ func (h *authHandler) GoogleCallback(c echo.Context) error {
 		if err == exceptions.ErrInactiveUser {
 			return c.Redirect(http.StatusTemporaryRedirect, h.redirectWithMsg(err.Error()))
 		}
-
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
 	}
 
@@ -130,14 +129,14 @@ func (h *authHandler) redirectWithTokens(response *responses.AuthResponse) strin
 	return resURL
 }
 
-func (h *authHandler) redirectWithMsg(message string) string {
+func (h *authHandler) redirectWithMsg(massage string) string {
 	frontendURL := fmt.Sprintf("%s/oauth/callback", h.cfg.AllowOrigins[0])
 	fmt.Print(frontendURL)
 
 	resURL := fmt.Sprintf(
 		"%s?msg=%s",
 		frontendURL,
-		url.QueryEscape(message),
+		url.QueryEscape(massage),
 	)
 
 	return resURL

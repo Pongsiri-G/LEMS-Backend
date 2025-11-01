@@ -56,12 +56,12 @@ func (i *ItemBorrowable) BorrowItem(ctx context.Context, userID uuid.UUID, item 
 		UpdatedAt:    utils.BangkokNow(),
 	}
 
-	if item.ItemQuantity-1 < 0 {
+	if item.ItemCurrentQuantity-1 < 0 {
 		log.Error().Err(exceptions.ErrItemQuantityInSufficient).Msg("quantity of the item less than zero")
 		return exceptions.ErrItemQuantityInSufficient
 	}
 
-	item.ItemQuantity -= 1
+	item.ItemCurrentQuantity -= 1
 	err := i.itemRepo.UpdateItem(ctx, item)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to update quantity of item")
@@ -105,7 +105,7 @@ func (i *ItemBorrowable) ReturnItem(ctx context.Context, borrowLog *models.Borro
 		return err
 	}
 
-	item.ItemQuantity += 1
+	item.ItemCurrentQuantity += 1
 	err = i.itemRepo.UpdateItem(ctx, item)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to update quantity of item")

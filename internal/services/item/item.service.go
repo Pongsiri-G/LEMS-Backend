@@ -11,6 +11,7 @@ import (
 	ItemRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
 	repository "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item/strategies"
 	ItemSetRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item_set"
+	TagRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/tag"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/item/factory"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/utils/itemutil"
 	"github.com/google/uuid"
@@ -21,19 +22,20 @@ type Service interface {
 	CreateItem(ctx context.Context, req *requests.CreateItemRequest) error
 	GetBorrowItem(ctx context.Context, itemID string) (*responses.ItemResponse, error)
 	GetAll(ctx context.Context) ([]responses.ItemResponse, error)
-	GetMyBorrow(ctx context.Context, userID string) ([]responses.ItemResponse, error)
+	GetMyBorrow(ctx context.Context, userID string) ([]responses.ItemResponseBorrow, error)
 	GetChildItemByParentID(ctx context.Context, itemID string) ([]responses.ItemResponse, error)
 	SearchItems(ctx context.Context, strategies ItemRepo.SearchStrategyMap) ([]responses.ItemResponse, error)
+	DeleteItem(ctx context.Context, itemID string) error
 }
 
 type itemService struct {
 	itemRepo    ItemRepo.Repository
 	itemSetRepo ItemSetRepo.Repository
+	tagRepo     TagRepo.Repository
 }
 
-
-func NewItemService(itemRepo ItemRepo.Repository, itemSetRepo ItemSetRepo.Repository) Service {
-	return &itemService{itemRepo: itemRepo, itemSetRepo: itemSetRepo}
+func NewItemService(itemRepo ItemRepo.Repository, itemSetRepo ItemSetRepo.Repository, tagRepo TagRepo.Repository) Service {
+	return &itemService{itemRepo: itemRepo, itemSetRepo: itemSetRepo, tagRepo: tagRepo}
 }
 
 func (i *itemService) GetChildItemByParentID(ctx context.Context, itemID string) ([]responses.ItemResponse, error) {
@@ -90,12 +92,49 @@ func (i *itemService) GetBorrowItem(ctx context.Context, itemID string) (*respon
 // CreateItem implements Service.
 func (i *itemService) CreateItem(ctx context.Context, req *requests.CreateItemRequest) error {
 	var itemFactory factory.ItemFactory
-	if req.Prerequisite != nil && len(*req.Prerequisite) > 0 {
-		itemFactory = factory.NewItemFactoryWithChildrenConcrete(i.itemRepo, i.itemSetRepo, req)
-	} else {
-		itemFactory = factory.NewItemFactoryConcrete(i.itemRepo, req)
+
+	if req.Tags != nil && len(*req.Tags) > 0 {
+		for _, tagIDStr := range *req.Tags {
+			tagID, err := uuid.Parse(tagIDStr)
+			if err != nil {
+				return exceptions.ErrInvalidUUID
+			}
+			tagModel, err := i.tagRepo.GetTagByID(ctx, tagID)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to get tag by id")
+				return err
+			}
+			if tagModel == nil {
+				log.Error().Msgf("tag not found: %s", tagIDStr)
+				return exceptions.ErrTagNotFound
+			}
+		}
 	}
-	return itemFactory.CreateItem(ctx)
+
+	if req.Prerequisite != nil && len(*req.Prerequisite) > 0 {
+		itemFactory = factory.NewItemFactoryWithChildrenConcrete(i.itemRepo, i.itemSetRepo, i.tagRepo, req)
+	} else {
+		itemFactory = factory.NewItemFactoryConcrete(i.itemRepo, i.tagRepo, req)
+	}
+	item, err := itemFactory.CreateItem(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to create item")
+		return err
+	}
+
+	if req.Tags != nil && len(*req.Tags) > 0 {
+		for _, tagIDStr := range *req.Tags {
+			tagID, _ := uuid.Parse(tagIDStr)
+			err := i.tagRepo.AssignTagToItem(ctx, item.ItemID, tagID)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to assign tag to item")
+				return err
+			}
+		}
+	}
+
+	return nil
+
 }
 
 func (i *itemService) GetAll(ctx context.Context) ([]responses.ItemResponse, error) {
@@ -133,7 +172,7 @@ func (i *itemService) GetAll(ctx context.Context) ([]responses.ItemResponse, err
 	return res, nil
 }
 
-func (i *itemService) GetMyBorrow(ctx context.Context, userID string) ([]responses.ItemResponse, error) {
+func (i *itemService) GetMyBorrow(ctx context.Context, userID string) ([]responses.ItemResponseBorrow, error) {
 	userUID, err := uuid.Parse(userID)
 
 	if err != nil {
@@ -141,16 +180,16 @@ func (i *itemService) GetMyBorrow(ctx context.Context, userID string) ([]respons
 		return nil, err
 	}
 
-	var items []models.Item
+	var items []models.ItemBorrow
 	items, err = i.itemRepo.GetMyBorrow(ctx, userUID)
 
 	if err != nil {
 		return nil, err
 	}
 
-	var response []responses.ItemResponse
+	var response []responses.ItemResponseBorrow
 	for _, i := range items {
-		r := responses.ItemResponse{
+		r := responses.ItemResponseBorrow{
 			ID:          i.ItemID,
 			Name:        i.ItemName,
 			Description: i.ItemDescription,
@@ -159,6 +198,7 @@ func (i *itemService) GetMyBorrow(ctx context.Context, userID string) ([]respons
 			Quantity:    i.ItemQuantity,
 			CreatedAt:   i.ItemCreatedAt,
 			UpdatedAt:   i.ItemUpdatedAt,
+			BorrowID:    i.BorrowID,
 		}
 		response = append(response, r)
 	}
@@ -171,23 +211,22 @@ func (i *itemService) SearchItems(ctx context.Context, strategiesMap ItemRepo.Se
 	unique := map[string]struct{}{}
 	for _, tag := range strategiesMap.Tags {
 		for _, t := range strings.Split(tag, ",") {
-            t = strings.TrimSpace(t)
-            if t != "" {
-                unique[t] = struct{}{}
-            }
-        }
+			t = strings.TrimSpace(t)
+			if t != "" {
+				unique[t] = struct{}{}
+			}
+		}
 	}
 
 	for tag := range unique {
 		tagsCleaned = append(tagsCleaned, tag)
 	}
 
-
 	strategies := []ItemRepo.SearchStrategy{
 		repository.NameSearch{Query: strategiesMap.Name},
 		repository.TagSearch{Tags: tagsCleaned},
 		repository.StatusSearch{Status: strategiesMap.Status},
-
+		repository.UserSearch{Query: strategiesMap.User},
 	}
 
 	log.Debug().Msgf("query := name: %s, tags: %s, status: %s", strategiesMap.Name, strings.Join(tagsCleaned, ","), strategiesMap.Status)
@@ -199,4 +238,32 @@ func (i *itemService) SearchItems(ctx context.Context, strategiesMap ItemRepo.Se
 
 	return itemutil.ToResponses(items), nil
 
+}
+
+// DeleteItem implements Service.
+func (i *itemService) DeleteItem(ctx context.Context, itemID string) error {
+	itemUUID, err := uuid.Parse(itemID)
+	if err != nil {
+		log.Error().Err(err).Msg("invalid uuid format")
+		return exceptions.ErrInvalidUUID
+	}
+
+	item, err := i.itemRepo.GetItemByID(ctx, itemUUID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get item by ID")
+		return err
+	}
+
+	if item == nil {
+		log.Error().Msg("item not found for ID: " + itemID)
+		return exceptions.ErrItemNotFound
+	}
+
+	err = i.itemRepo.DeleteItem(ctx, itemUUID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to delete item")
+		return err
+	}
+
+	return nil
 }

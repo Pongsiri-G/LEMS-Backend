@@ -17,6 +17,7 @@ type Repository interface {
 
 	GetRequests(ctx context.Context, requestType *enums.RequestType, requestStatus *enums.RequestStatus) ([]models.Request, error)
 	GetRequestsByUserID(ctx context.Context, userID uuid.UUID, requestType *enums.RequestType, requestStatus *enums.RequestStatus) ([]models.Request, error)
+	ChangeRequestStatus(ctx context.Context, requestID uuid.UUID, status enums.RequestStatus) error
 }
 
 type repository struct {
@@ -88,4 +89,9 @@ func (r *repository) GetRequestsByUserID(ctx context.Context, userID uuid.UUID, 
 	}
 
 	return requests, nil
+}
+
+// ChangeRequestStatus implements Repository.
+func (r *repository) ChangeRequestStatus(ctx context.Context, requestID uuid.UUID, status enums.RequestStatus) error {
+	return r.db.WithContext(ctx).Model(&models.Request{}).Where("request_id = ?", requestID).Update("request_status", status).Error
 }

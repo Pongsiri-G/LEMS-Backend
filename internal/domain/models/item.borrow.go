@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type Item struct {
+type ItemBorrow struct {
 	ItemID              uuid.UUID        `db:"item_id" gorm:"primaryKey;type:uuid"`
 	ItemName            string           `db:"item_name"`
 	ItemDescription     *string          `db:"item_description"`
@@ -17,14 +17,12 @@ type Item struct {
 	ItemCurrentQuantity int              `db:"item_current_quantity"`
 	ItemCreatedAt       time.Time        `db:"item_created_at"`
 	ItemUpdatedAt       time.Time        `db:"item_updated_at"`
-
-	BorrowQueues  []BorrowQueue `gorm:"foreignKey:ItemID"`
-	ItemDeletedAt *time.Time    `db:"item_deleted_at"`
+	BorrowID            uuid.UUID           `db:"borrow_id"`
 }
 
-type ItemWithChildren struct {
-	Item
-	Children []Item
-}
+// type ItemWithChildren struct {
+// 	Item
+// 	Children []Item
+// }
 
-func (Item) TableName() string { return "items" }
+// func (Item) TableName() string { return "items" }
