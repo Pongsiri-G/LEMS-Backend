@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
 	ItemRequestRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item_requested"
 	Minio "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/minio"
@@ -26,15 +25,7 @@ func NewExcelExportStrategy(requestRepo RequestRepo.Repository) ExportStrategy {
 	}
 }
 
-func (e *ExcelExportStrategy) Export(ctx context.Context, key string) error {
-	requestType := enums.RequestTypeRequest
-	requestStatus := enums.RequestStatusAccept
-	requests, err := e.requestRepo.GetRequests(ctx, &requestType, &requestStatus)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get requests for excel export")
-		return err
-	}
-
+func (e *ExcelExportStrategy) Export(ctx context.Context, requests []models.Request) error {
 	var items []models.ItemRequested
 	for _, request := range requests {
 		itemRequested, err := e.itemRepo.FindByID(ctx, request.RequestID)

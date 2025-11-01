@@ -24,7 +24,7 @@ type Service interface {
 
 	CreateRequest(ctx context.Context, userID uuid.UUID, req requests.CreateRequest) error
 	EditRequest(ctx context.Context, req requests.EditRequest) error
-	ExportRequests(ctx context.Context, exportType enums.ExportType) error
+	ExportRequests(ctx context.Context, req requests.ExportRequests) error
 	ChangeRequestStatus(ctx context.Context, requestID string, status enums.RequestStatus) error
 }
 
@@ -108,11 +108,6 @@ func (s *service) EditRequest(ctx context.Context, req requests.EditRequest) err
 	}
 
 	return requestFactory.EditRequest(ctx, req)
-}
-
-// ExportRequests implements Service.
-func (s *service) ExportRequests(ctx context.Context, exportType enums.ExportType) error {
-	panic("unimplemented")
 }
 
 // GetRequests implements Service.
@@ -213,4 +208,9 @@ func (s *service) ChangeRequestStatus(ctx context.Context, requestID string, sta
 	request.UpdatedAt = utils.BangkokNow()
 	request.RequestStatus = status
 	return s.requestRepo.EditRequest(ctx, request)
+}
+
+// ExportRequests implements Service.
+func (s *service) ExportRequests(ctx context.Context, req requests.ExportRequests) error {
+	panic("unimplement")
 }

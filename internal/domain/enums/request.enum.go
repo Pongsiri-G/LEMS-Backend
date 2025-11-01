@@ -30,6 +30,8 @@ func IsValidRequestType(requestType RequestType) bool {
 type ExportType string
 
 const (
-	ExportTypeXLS ExportType = "XLS"
-	ExportTypePDF ExportType = "PDF"
+	ExportTypeXLS  ExportType = "XLS"
+	ExportTypePDF  ExportType = "PDF"
+	ExportTypeCSV  ExportType = "CSV"
+	ExportTypeJSON ExportType = "JSON"
 )
