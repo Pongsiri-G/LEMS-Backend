@@ -231,6 +231,7 @@ func (s *service) GetUsersBorrowedItems(ctx context.Context, userID string) ([]r
 			ItemName:     item.ItemName,
 			BorrowDate:   utils.ToStringDateTime(borrow.BorrowDate),
 			BorrowStatus: borrow.BorrowStatus,
+			ReturnImgURL: borrow.ReturnImgURL,
 		}
 
 		if borrow.ReturnDate != nil {
@@ -300,13 +301,13 @@ func (s *service) GetAllBorrowedItems(ctx context.Context) ([]responses.AdminBor
 func (s *service) GetBorrowID(ctx context.Context, userID string, itemID string) (string, error) {
 	userUUID, err := uuid.Parse(userID)
 
-	if (err != nil) {
+	if err != nil {
 		return "", err
 	}
 
 	itemUUID, err := uuid.Parse(itemID)
 
-	if (err != nil) {
+	if err != nil {
 		return "", err
 	}
 
