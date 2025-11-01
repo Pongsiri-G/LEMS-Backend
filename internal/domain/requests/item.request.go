@@ -12,4 +12,11 @@ type CreateItemRequest struct {
 	Tags         *[]string         `json:"tags" validate:"omitempty"`
 }
 
-type EditItemRequest struct{}
+type EditItemRequest struct {
+	ItemID      string            `json:"item_id" validate:"required"`
+	Name        *string           `json:"name" validate:"omitempty,max=100"`
+	Description *string           `json:"description" validate:"omitempty,max=500"`
+	ImageURL    *string           `json:"image_url"`
+	Quantity    *int              `json:"quantity" validate:"omitempty,gte=0"`
+	Status      *enums.ItemStatus `json:"status" validate:"omitempty"`
+}

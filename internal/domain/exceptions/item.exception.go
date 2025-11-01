@@ -7,4 +7,6 @@ var (
 	ErrItemNotFound          = errors.New("item not found")
 	ErrInvalidUUID           = errors.New("invalid uuid format")
 	ErrRequestedItemNotFound = errors.New("requested item not found")
+	ErrItemSetAlreadyExists  = errors.New("item set already exists")
+	ErrCannotReduceQuantity  = errors.New("cannot reduce quantity below zero")
 )

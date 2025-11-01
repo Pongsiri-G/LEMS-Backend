@@ -182,7 +182,7 @@ func (i *ItemChildBorrowable) ReturnItem(ctx context.Context, borrowLog *models.
 	// borrowLog.BorrowStatus = enums.StatusReturned
 	// borrowLog.ReturnDate = &now
 	// borrowLog.UpdatedAt = now
-	item.ItemQuantity += 1
+	item.ItemCurrentQuantity += 1
 	item.ItemUpdatedAt = now
 	allItem = append(allItem, allItemStruct{
 		Item:      item,

@@ -7,6 +7,7 @@ type UserBorrrowResponse struct {
 	ItemName     string             `json:"item_name"`
 	BorrowDate   string             `json:"borrow_date"`
 	ReturnDate   *string            `json:"return_date"`
+	ReturnImgURL *string            `json:"return_image_url"`
 	BorrowStatus enums.BorrowStatus `json:"borrow_status"`
 }
 

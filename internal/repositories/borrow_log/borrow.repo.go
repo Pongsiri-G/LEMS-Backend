@@ -2,6 +2,7 @@ package borrowlog
 
 import (
 	"context"
+	"time"
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/database"
@@ -48,6 +49,7 @@ func (r *repository) FindBorrowLogByUserIDAndBorrowID(ctx context.Context, userI
 
 // EditBorrowLog implements Repository.
 func (r *repository) EditBorrowLog(ctx context.Context, borrowLog *models.BorrowLog) error {
+	borrowLog.UpdatedAt = time.Now()
 	return r.db.WithContext(ctx).Save(borrowLog).Error
 }
 
@@ -94,16 +96,15 @@ func (r *repository) GetAllBorrowLogs(ctx context.Context) ([]models.BorrowLog, 
 	return borrowLogs, nil
 }
 
-
 func (r *repository) GetBorrowID(ctx context.Context, userID uuid.UUID, itemID uuid.UUID) (string, error) {
 	var borrowID string
 
 	err := r.db.Table("borrow_logs").
-				Select("borrow_id").
-				Where("item_id = ? AND user_id = ? AND borrow_status = 'BORROWED'", itemID, userID).
-				Find(&borrowID).Error
+		Select("borrow_id").
+		Where("item_id = ? AND user_id = ? AND borrow_status = 'BORROWED'", itemID, userID).
+		Find(&borrowID).Error
 
-	if (err != nil) {
+	if err != nil {
 		return "", err
 	}
 	return borrowID, nil
