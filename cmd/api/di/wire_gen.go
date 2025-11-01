@@ -22,6 +22,7 @@ import (
 	ws2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/ws"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/database"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/email"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/minio"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/ws"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/middlewares"
@@ -76,7 +77,8 @@ func InitializeAPI() (*server.EchoServer, error) {
 	logRepository := log.NewLogRepository(db)
 	notificationSubject := noti.NewNotificationSubject()
 	hub := ws.NewHub()
-	subject := noti.ProvideSubjectWithObservers(notificationSubject, hub)
+	smtpGoogle := email.NewSMTPGoogle(config)
+	subject := noti.ProvideSubjectWithObservers(notificationSubject, hub, smtpGoogle)
 	borrowQueueRepository := borrowq.NewBorrowQueueRepository(db)
 	borrowService := borrow.NewBorrowService(borrowlogRepository, itemRepository, itemsetRepository, logRepository, subject, borrowQueueRepository)
 	borrowHandler := borrow2.NewBorrowHandler(borrowService)

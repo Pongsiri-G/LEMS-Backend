@@ -2,6 +2,7 @@ package noti
 
 import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/events"
+	"github.com/rs/zerolog/log"
 )
 
 type NotificationSubject interface {
@@ -34,6 +35,7 @@ func (s *notificationSubject) Deregister(observer Observer) {
 }
 
 func (s *notificationSubject) Notify(event events.Event) {
+	log.Printf("observers %d", len(s.observers))
 	for _, obs := range s.observers {
 		obs.Update(event)
 	}

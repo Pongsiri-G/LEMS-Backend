@@ -24,6 +24,7 @@ import (
 	authInfra "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/context"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/database"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/email"
 	minioInfra "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/minio"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/ws"
 
@@ -64,6 +65,7 @@ var InfrastructureSet = wire.NewSet(
 	database.NewPostgrest,
 	minioInfra.NewMinioConnection,
 	authInfra.NewGoogleOAuthClient,
+	email.NewSMTPGoogle,
 )
 
 var RepositorySet = wire.NewSet(
