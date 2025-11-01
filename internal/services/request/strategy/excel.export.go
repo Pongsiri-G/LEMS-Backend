@@ -35,7 +35,7 @@ func (e *ExcelExportStrategy) Export(ctx context.Context, requests []models.Requ
 		if request.RequestType != enums.RequestTypeRequest {
 			return nil, exceptions.ErrRequestNotSupportedExportType
 		}
-		itemRequested, err := e.itemRepo.FindByID(ctx, request.RequestID)
+		itemRequested, err := e.itemRepo.FindByID(ctx, request.ItemID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to find item requested by request ID")
 			return nil, err
