@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/database"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
@@ -14,6 +15,7 @@ type Repository interface {
 	EditBorrowLog(ctx context.Context, borrowLog *models.BorrowLog) error
 	CreateBorrowLog(ctx context.Context, borrowLog models.BorrowLog) error
 	GetChildren(ctx context.Context, parentID uuid.UUID) ([]models.BorrowLog, error)
+	CreateBorrowLogTx(ctx context.Context, borrowLog models.BorrowLog) error
 	GetBorrowID(ctx context.Context, userID uuid.UUID, itemID uuid.UUID) (string, error)
 	FindBorrowLogByUserID(ctx context.Context, userID uuid.UUID) ([]models.BorrowLog, error)
 	GetAllBorrowLogs(ctx context.Context) ([]models.BorrowLog, error)
@@ -57,6 +59,12 @@ func (r *repository) GetChildren(ctx context.Context, parentID uuid.UUID) ([]mod
 		return nil, err
 	}
 	return borrowLogs, nil
+}
+
+// CreateBorrowLogTx implements Repository.
+func (r *repository) CreateBorrowLogTx(ctx context.Context, borrowLog models.BorrowLog) error {
+	tx := database.FromContext(ctx, r.db)
+	return tx.Create(&borrowLog).Error
 }
 
 // FindBorrowLogByUserID implements Repository.

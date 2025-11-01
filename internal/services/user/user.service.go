@@ -89,6 +89,7 @@ func (s *userService) UpdateUserStatus(ctx context.Context, userID string, statu
 
 func (s *userService) toResponse(u *models.User) *responses.UserResponse {
 	return &responses.UserResponse{
+		UserID:         u.UserID.String(),
 		UserFullName:   u.UserFullName,
 		UserEmail:      u.UserEmail,
 		UserPhone:      u.UserPhone,

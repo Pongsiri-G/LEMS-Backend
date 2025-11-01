@@ -90,7 +90,6 @@ func (h *authHandler) GoogleCallback(c echo.Context) error {
 		if err == exceptions.ErrInactiveUser {
 			return c.Redirect(http.StatusTemporaryRedirect, h.redirectWithMsg(err.Error()))
 		}
-		
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
 	}
 
