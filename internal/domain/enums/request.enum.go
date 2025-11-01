@@ -8,6 +8,23 @@ const (
 	RequestTypeRequest RequestType = "REQUEST"
 )
 
+func StringToRequestType(s string) *RequestType {
+	var reqType RequestType
+	switch s {
+	case "LOST":
+		reqType = RequestTypeLost
+		return &reqType
+	case "BROKEN":
+		reqType = RequestTypeBroken
+		return &reqType
+	case "REQUEST":
+		reqType = RequestTypeRequest
+		return &reqType
+	default:
+		return nil
+	}
+}
+
 type RequestStatus string
 
 const (
@@ -17,6 +34,29 @@ const (
 	RequestStatusReject   RequestStatus = "REJECTED"
 	RequestStatusComplete RequestStatus = "COMPLETED"
 )
+
+func StringToRequestStatus(s string) *RequestStatus {
+	var reqStatus RequestStatus
+	switch s {
+	case "PENDING":
+		reqStatus = RequestStatusPending
+		return &reqStatus
+	case "CANCELED":
+		reqStatus = RequestStatusCancel
+		return &reqStatus
+	case "ACCEPTED":
+		reqStatus = RequestStatusAccept
+		return &reqStatus
+	case "REJECTED":
+		reqStatus = RequestStatusReject
+		return &reqStatus
+	case "COMPLETED":
+		reqStatus = RequestStatusComplete
+		return &reqStatus
+	default:
+		return nil
+	}
+}
 
 func IsValidRequestType(requestType RequestType) bool {
 	switch requestType {

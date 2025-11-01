@@ -129,8 +129,10 @@ func (h *handler) GetMyRequests(c echo.Context) error {
 			"message": exceptions.ErrInvalidUUID.Error(),
 		})
 	}
+	requestType := enums.StringToRequestType(c.QueryParam("type"))
+	requestStatus := enums.StringToRequestStatus(c.QueryParam("status"))
 
-	requestsData, err := h.service.GetRequests(c.Request().Context(), &userID)
+	requestsData, err := h.service.GetRequests(c.Request().Context(), &userID, requestType, requestStatus)
 	if err != nil {
 		switch err {
 		case exceptions.ErrItemNotFound:
@@ -152,7 +154,9 @@ func (h *handler) GetMyRequests(c echo.Context) error {
 
 // GetRequests implements RequestHandler.
 func (h *handler) GetRequests(c echo.Context) error {
-	requestsData, err := h.service.GetRequests(c.Request().Context(), nil)
+	requestType := enums.StringToRequestType(c.QueryParam("type"))
+	requestStatus := enums.StringToRequestStatus(c.QueryParam("status"))
+	requestsData, err := h.service.GetRequests(c.Request().Context(), nil, requestType, requestStatus)
 	if err != nil {
 		switch err {
 		case exceptions.ErrItemNotFound:

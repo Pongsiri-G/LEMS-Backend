@@ -20,7 +20,7 @@ import (
 )
 
 type Service interface {
-	GetRequests(ctx context.Context, userID *uuid.UUID) ([]responses.GetAllRequestsResponse, error)
+	GetRequests(ctx context.Context, userID *uuid.UUID, requestType *enums.RequestType, requestStatus *enums.RequestStatus) ([]responses.GetAllRequestsResponse, error)
 
 	CreateRequest(ctx context.Context, userID uuid.UUID, req requests.CreateRequest) error
 	EditRequest(ctx context.Context, req requests.EditRequest) error
@@ -111,13 +111,13 @@ func (s *service) EditRequest(ctx context.Context, req requests.EditRequest) err
 }
 
 // GetRequests implements Service.
-func (s *service) GetRequests(ctx context.Context, userID *uuid.UUID) ([]responses.GetAllRequestsResponse, error) {
+func (s *service) GetRequests(ctx context.Context, userID *uuid.UUID, requestType *enums.RequestType, requestStatus *enums.RequestStatus) ([]responses.GetAllRequestsResponse, error) {
 	var requestsData []models.Request
 	var err error
 	if userID != nil {
-		requestsData, err = s.requestRepo.GetRequestsByUserID(ctx, *userID, nil, nil)
+		requestsData, err = s.requestRepo.GetRequestsByUserID(ctx, *userID, requestType, requestStatus)
 	} else {
-		requestsData, err = s.requestRepo.GetRequests(ctx, nil, nil)
+		requestsData, err = s.requestRepo.GetRequests(ctx, requestType, requestStatus)
 	}
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get requests")
