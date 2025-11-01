@@ -2,6 +2,7 @@ package request
 
 import (
 	"context"
+	"time"
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
@@ -45,6 +46,7 @@ func (r *repository) FindByID(ctx context.Context, requestID uuid.UUID) (*models
 
 // EditRequest implements Repository.
 func (r *repository) EditRequest(ctx context.Context, request *models.Request) error {
+	request.UpdatedAt = time.Now()
 	return r.db.WithContext(ctx).Save(request).Error
 }
 

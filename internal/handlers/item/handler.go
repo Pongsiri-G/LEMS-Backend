@@ -232,6 +232,10 @@ func (h *handler) EditItem(c echo.Context) error {
 			})
 		case exceptions.ErrItemNotFound:
 			return c.JSON(http.StatusNotFound, nil)
+		case exceptions.ErrCannotReduceQuantity:
+			return c.JSON(http.StatusBadRequest, echo.Map{
+				"message": "cannot reduce quantity below zero",
+			})
 		default:
 			log.Error().Err(err).Msg(exceptions.ErrInternalServer.Error())
 			return c.JSON(http.StatusInternalServerError, echo.Map{

@@ -359,7 +359,23 @@ func (i *itemService) UpdateItem(ctx context.Context, req *requests.EditItemRequ
 		item.ItemPictureURL = req.ImageURL
 	}
 	if req.Quantity != nil {
-		item.ItemQuantity = *req.Quantity
+		// handle quantity update logic
+		if *req.Quantity > item.ItemQuantity {
+			diff := *req.Quantity - item.ItemQuantity
+			item.ItemQuantity += diff
+			item.ItemCurrentQuantity += diff
+		} else if *req.Quantity != item.ItemQuantity {
+			diff := item.ItemQuantity - *req.Quantity
+
+			if item.ItemCurrentQuantity-diff < 0 {
+				log.Error().Msg("cannot reduce quantity below borrowed amount")
+				return exceptions.ErrCannotReduceQuantity
+			}
+
+			item.ItemQuantity -= diff
+			item.ItemCurrentQuantity -= diff
+		}
+
 	}
 	if req.Status != nil {
 		item.ItemStatus = *req.Status
