@@ -26,7 +26,18 @@ func SplitBearerToken(bearer string) (string, error) {
 func GetTokenFromEchoHeader(c echo.Context) (string, error) {
 	bearer := c.Request().Header.Get("Authorization")
 
-	bearer = strings.TrimSpace(bearer)
+	token, err := SplitBearerToken(bearer)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
+}
+
+func GetTokenFromEchoUrl(c echo.Context) (string, error) {
+	query := c.Request().URL.Query()
+	bearer := query.Get("accTk")
+
 	token, err := SplitBearerToken(bearer)
 	if err != nil {
 		return "", err

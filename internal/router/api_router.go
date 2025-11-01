@@ -5,6 +5,7 @@ import (
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/ws"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/middlewares"
 	"github.com/labstack/echo/v4"
 )
@@ -14,14 +15,16 @@ type Router struct {
 	handlers       *handlers.Handlers
 	authMiddleware middlewares.AuthMiddleware
 	rbacMiddleware middlewares.RbacMiddleware
+	hub            *ws.Hub
 }
 
-func NewRouter(echo *echo.Echo, handlers *handlers.Handlers, authMiddleware middlewares.AuthMiddleware, rbacMiddleware middlewares.RbacMiddleware) *Router {
+func NewRouter(echo *echo.Echo, handlers *handlers.Handlers, authMiddleware middlewares.AuthMiddleware, rbacMiddleware middlewares.RbacMiddleware, hub *ws.Hub) *Router {
 	return &Router{
 		echo:           echo,
 		handlers:       handlers,
 		authMiddleware: authMiddleware,
 		rbacMiddleware: rbacMiddleware,
+		hub:            hub,
 	}
 }
 
@@ -31,6 +34,8 @@ func (r *Router) RegisterAPIRoutes() {
 		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 	})
 
+	r.echo.GET("/ws", r.handlers.WebSocket.Run)
+	
 	// v1 group
 	v1 := r.echo.Group("/api/v1")
 
@@ -41,10 +46,16 @@ func (r *Router) RegisterAPIRoutes() {
 	auth.GET("/google/callback", r.handlers.Auth.GoogleCallback)
 	auth.POST("/refresh", r.handlers.Auth.RefreshToken)
 
+	protected := v1.Group("/", r.authMiddleware.Middleware)
+
 	// user group
 	user := v1.Group("/user")
 	user.POST("/register", r.handlers.User.Register)
 	user.GET("/me", r.handlers.User.Me, r.authMiddleware.Middleware)
+
+	r.registerBorrowQueueRouter(protected)
+
+	v1.POST("/ws/noti", r.handlers.WebSocket.SendNoti, r.authMiddleware.Middleware)
 }
 
 func (r *Router) RegisterAdminRoutes() {
@@ -115,6 +126,7 @@ func (r *Router) RegisterTagRouter() {
 	protected.DELETE("/tag/unassign/:item_id/:tag_id", r.handlers.Tag.UnAssignTagFromItem)
 	protected.POST("/tag/assign/:item_id/:tag_id", r.handlers.Tag.AssignTagToItem)
 }
+
 func (r *Router) RegisterRequestRouter() {
 	v1 := r.echo.Group("/api/v1")
 	protected := v1.Group("", r.authMiddleware.Middleware)
@@ -123,4 +135,9 @@ func (r *Router) RegisterRequestRouter() {
 	protected.POST("/request", r.handlers.Request.CreateRequest)
 	protected.PUT("/request", r.handlers.Request.EditRequest)
 	protected.POST("/request/cancel", r.handlers.Request.CancelRequest)
+}
+
+func (r *Router) registerBorrowQueueRouter(route *echo.Group) {
+	bq := route.Group("bq")
+	bq.POST("/enqueue", r.handlers.BorrowQueue.Enqueue)
 }

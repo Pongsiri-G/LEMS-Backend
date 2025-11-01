@@ -26,7 +26,7 @@ func (a *rbacMiddleware) Middleware(next echo.HandlerFunc, roles ...string) echo
 	return func(c echo.Context) error {
 		userRole, ok := c.Get(string(enums.UserRoleContextKey)).(string)
 		if !ok {
-			return c.JSON(http.StatusForbidden, map[string]string{"massage": "User role not found"})
+			return c.JSON(http.StatusForbidden, map[string]string{"message": "User role not found"})
 		}
 
 		hasPermission := false
@@ -39,7 +39,7 @@ func (a *rbacMiddleware) Middleware(next echo.HandlerFunc, roles ...string) echo
 		}
 
 		if !hasPermission {
-			return c.JSON(http.StatusForbidden, map[string]string{"massage": "Insufficient permission"})
+			return c.JSON(http.StatusForbidden, map[string]string{"message": "Insufficient permission"})
 		}
 
 		return next(c)

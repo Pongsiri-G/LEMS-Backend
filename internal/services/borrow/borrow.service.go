@@ -2,16 +2,20 @@ package borrow
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/events"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/requests"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/responses"
 	borrowRepository "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrow_log"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrowq"
 	itemRepository "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
 	itemsetRepository "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item_set"
 	logsystem "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/log"
 	userRepository "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/item/factory"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/noti"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/utils"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
@@ -31,6 +35,8 @@ type service struct {
 	itemRepo    itemRepository.Repository
 	itemSetRepo itemsetRepository.Repository
 	logRepo     logsystem.Repository
+	events      noti.Subject
+	bqRepo      borrowq.BorrowQueueRepository
 }
 
 func NewBorrowService(
@@ -38,13 +44,17 @@ func NewBorrowService(
 	itemRepo itemRepository.Repository,
 	itemSetRepo itemsetRepository.Repository,
 	logRepo logsystem.Repository,
+	events noti.Subject,
+	bqRepo borrowq.BorrowQueueRepository,
 	userRepo userRepository.Repository,
-	) Service {
+) Service {
 	return &service{
 		borrowRepo:  borrowRepo,
 		itemRepo:    itemRepo,
 		itemSetRepo: itemSetRepo,
 		logRepo:     logRepo,
+		events:      events,
+		bqRepo:      bqRepo,
 		userRepo:    userRepo,
 	}
 }
@@ -132,9 +142,64 @@ func (s *service) Return(ctx context.Context, userID string, req *requests.Retur
 	} else {
 		itemBorrowableFactory = factory.NewNormalItemBorrowable(s.itemRepo, s.borrowRepo, s.logRepo)
 	}
+
+	err = s.noitification(ctx, borrow.ItemID)
+	if err != nil {
+		return err
+	}
+
 	return itemBorrowableFactory.ReturnItem(ctx, borrow, &children)
 }
 
+func (s *service) noitification(ctx context.Context, itemID uuid.UUID) error {
+	item, err := s.itemRepo.GetItemByID(ctx, itemID)
+	if err != nil {
+		return err
+	}
+
+	if item == nil {
+		return exceptions.ErrItemNotFound
+	}
+
+	// Process queue (greedy: only head; call repeatedly or loop)
+	next, err := s.bqRepo.PeekOldest(ctx, itemID.String())
+	if err != nil {
+		return err
+	}
+
+	if next == nil {
+		return nil
+	}
+
+	// parsedUUID, err := uuid.Parse(itemID)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// cur, _ := s.itemRepo.GetItemByID(ctx, parsedUUID)
+
+	// mark the borrow request to READY (simple lookup not shown here; typically tie queue ID to borrow ID)
+	// You can add a find-by(user,equipment,WAITING) here in a real repo
+	err = s.bqRepo.Dequeue(ctx, next.QueueID)
+	if err != nil {
+		return err
+	}
+
+	// if s.events == nil {
+	// 	continue
+	// }
+
+	s.events.Notify(events.Event{
+		Type: events.ItemAvaliable,
+		Payload: map[string]interface{}{
+			"userId":      next.UserID.String(),
+			"message":     fmt.Sprintf("Your requested equipment (%s) is ready for pickup", item.ItemName),
+		},
+	
+	})	
+
+	return nil
+}
 // GetUsersBorrowedItems implements Service.
 func (s *service) GetUsersBorrowedItems(ctx context.Context, userID string) ([]responses.UserBorrrowResponse, error) {
 	userIDUUID, err := uuid.Parse(userID)

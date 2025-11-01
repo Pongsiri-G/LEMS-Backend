@@ -13,17 +13,22 @@ import (
 	admin2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/admin"
 	auth3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/auth"
 	borrow2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/borrow"
+	borrowq3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/borrowq"
 	item3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/item"
 	log3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/log"
 	minio4 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/minio"
 	request3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/request"
 	tag3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/tag"
 	user3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/user"
+	ws2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/handlers/ws"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/database"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/email"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/minio"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/ws"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/middlewares"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrow_log"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrowq"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item_requested"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item_set"
@@ -36,9 +41,11 @@ import (
 	auth2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/borrow"
+	borrowq2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/borrowq"
 	item2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/item"
 	log2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/log"
 	minio3 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/minio"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/noti"
 	request2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/request"
 	tag2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/tag"
 	user2 "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/user"
@@ -70,7 +77,12 @@ func InitializeAPI() (*server.EchoServer, error) {
 	itemRepository := item.NewItemRepository(db)
 	itemsetRepository := itemset.NewItemSetRepository(db)
 	logRepository := log.NewLogRepository(db)
-	borrowService := borrow.NewBorrowService(borrowlogRepository, itemRepository, itemsetRepository, logRepository, repository)
+	notificationSubject := noti.NewNotificationSubject()
+	hub := ws.NewHub()
+	smtpGoogle := email.NewSMTPGoogle(config)
+	subject := noti.ProvideSubjectWithObservers(notificationSubject, hub, smtpGoogle)
+	borrowQueueRepository := borrowq.NewBorrowQueueRepository(db)
+	borrowService := borrow.NewBorrowService(borrowlogRepository, itemRepository, itemsetRepository, logRepository, subject, borrowQueueRepository, repository)
 	borrowHandler := borrow2.NewBorrowHandler(borrowService)
 	userHandler := user3.NewUserHandler(userService, oauth2Config)
 	tagRepository := tag.NewTagRepository(db)
@@ -84,9 +96,13 @@ func InitializeAPI() (*server.EchoServer, error) {
 	requestHandler := request3.NewRequestHandler(requestService)
 	logService := log2.NewLogService(logRepository, repository)
 	logHandler := log3.NewLogHandler(logService)
-	handlersHandlers := handlers.NewHandlers(adminHandler, authHandler, fileHandler, borrowHandler, userHandler, itemHandler, tagHandler, requestHandler, logHandler)
+	transactionManager := database.NewTransactionManager(db)
+	borrowQueueService := borrowq2.NewBorrowQueueService(config, borrowQueueRepository, transactionManager, borrowlogRepository)
+	borrowQueueHandler := borrowq3.NewBorrowQueueHandler(borrowQueueService)
+	wsHandler := ws2.NewWsHandler(hub, subject)
+	handlersHandlers := handlers.NewHandlers(adminHandler, authHandler, fileHandler, borrowHandler, userHandler, itemHandler, tagHandler, requestHandler, logHandler, borrowQueueHandler, wsHandler)
 	authMiddleware := middlewares.NewAuthMiddleware(config)
 	rbacMiddleware := middlewares.NewRbacMiddleware(config)
-	echoServer := server.NewEchoServer(config, handlersHandlers, authMiddleware, rbacMiddleware)
+	echoServer := server.NewEchoServer(config, handlersHandlers, authMiddleware, rbacMiddleware, hub)
 	return echoServer, nil
 }
