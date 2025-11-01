@@ -18,6 +18,7 @@ type RequestHandler interface {
 	EditRequest(c echo.Context) error
 	CancelRequest(c echo.Context) error
 	ChangeRequestStatus(c echo.Context) error
+	ExportRequests(c echo.Context) error
 }
 
 type handler struct {
@@ -232,4 +233,47 @@ func (h *handler) ChangeRequestStatus(c echo.Context) error {
 		}
 	}
 	return c.JSON(200, nil)
+}
+
+// ExportRequests implements RequestHandler.
+func (h *handler) ExportRequests(c echo.Context) error {
+	var req requests.ExportRequests
+	err := c.Bind(&req)
+	if err != nil {
+		return c.JSON(400, echo.Map{
+			"message": "bad request",
+		})
+	}
+
+	data, filename, err := h.service.ExportRequests(c.Request().Context(), req)
+	if err != nil {
+		switch err {
+		case exceptions.ErrRequestNotFound:
+			return c.JSON(404, echo.Map{
+				"message": exceptions.ErrRequestNotFound.Error(),
+			})
+		case exceptions.ErrInvalidUUID:
+			return c.JSON(400, echo.Map{
+				"message": exceptions.ErrInvalidUUID.Error(),
+			})
+		case exceptions.ErrNotImplemented:
+			return c.JSON(501, echo.Map{
+				"message": exceptions.ErrNotImplemented.Error(),
+			})
+		case exceptions.ErrInvalidExportType:
+			return c.JSON(400, echo.Map{
+				"message": exceptions.ErrInvalidExportType.Error(),
+			})
+		default:
+			return c.JSON(500, echo.Map{
+				"message": exceptions.ErrInternalServer.Error(),
+			})
+		}
+	}
+
+	// Set response headers for file download
+	c.Response().Header().Set(echo.HeaderContentDisposition, "attachment; filename="+filename)
+	c.Response().Header().Set(echo.HeaderContentType, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+	return c.Blob(200, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", data)
 }

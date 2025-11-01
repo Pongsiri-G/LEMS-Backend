@@ -35,7 +35,7 @@ func (r *Router) RegisterAPIRoutes() {
 	})
 
 	r.echo.GET("/ws", r.handlers.WebSocket.Run)
-	
+
 	// v1 group
 	v1 := r.echo.Group("/api/v1")
 
@@ -135,6 +135,7 @@ func (r *Router) RegisterRequestRouter() {
 	protected.POST("/request", r.handlers.Request.CreateRequest)
 	protected.PUT("/request", r.handlers.Request.EditRequest)
 	protected.POST("/request/cancel", r.handlers.Request.CancelRequest)
+	protected.POST("/requests/export", r.handlers.Request.ExportRequests)
 }
 
 func (r *Router) registerBorrowQueueRouter(route *echo.Group) {
