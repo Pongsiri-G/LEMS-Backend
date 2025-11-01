@@ -20,11 +20,11 @@ import (
 )
 
 type Service interface {
-	GetRequests(ctx context.Context, userID *uuid.UUID) ([]responses.GetAllRequestsResponse, error)
+	GetRequests(ctx context.Context, userID *uuid.UUID, requestType *enums.RequestType, requestStatus *enums.RequestStatus) ([]responses.GetAllRequestsResponse, error)
 
 	CreateRequest(ctx context.Context, userID uuid.UUID, req requests.CreateRequest) error
 	EditRequest(ctx context.Context, req requests.EditRequest) error
-	ExportRequests(ctx context.Context, exportType enums.ExportType) error
+	ExportRequests(ctx context.Context, req requests.ExportRequests) error
 	ChangeRequestStatus(ctx context.Context, requestID string, status enums.RequestStatus) error
 }
 
@@ -110,19 +110,14 @@ func (s *service) EditRequest(ctx context.Context, req requests.EditRequest) err
 	return requestFactory.EditRequest(ctx, req)
 }
 
-// ExportRequests implements Service.
-func (s *service) ExportRequests(ctx context.Context, exportType enums.ExportType) error {
-	panic("unimplemented")
-}
-
 // GetRequests implements Service.
-func (s *service) GetRequests(ctx context.Context, userID *uuid.UUID) ([]responses.GetAllRequestsResponse, error) {
+func (s *service) GetRequests(ctx context.Context, userID *uuid.UUID, requestType *enums.RequestType, requestStatus *enums.RequestStatus) ([]responses.GetAllRequestsResponse, error) {
 	var requestsData []models.Request
 	var err error
 	if userID != nil {
-		requestsData, err = s.requestRepo.GetRequestsByUserID(ctx, *userID, nil, nil)
+		requestsData, err = s.requestRepo.GetRequestsByUserID(ctx, *userID, requestType, requestStatus)
 	} else {
-		requestsData, err = s.requestRepo.GetRequests(ctx, nil, nil)
+		requestsData, err = s.requestRepo.GetRequests(ctx, requestType, requestStatus)
 	}
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get requests")
@@ -213,4 +208,9 @@ func (s *service) ChangeRequestStatus(ctx context.Context, requestID string, sta
 	request.UpdatedAt = utils.BangkokNow()
 	request.RequestStatus = status
 	return s.requestRepo.EditRequest(ctx, request)
+}
+
+// ExportRequests implements Service.
+func (s *service) ExportRequests(ctx context.Context, req requests.ExportRequests) error {
+	panic("unimplement")
 }
