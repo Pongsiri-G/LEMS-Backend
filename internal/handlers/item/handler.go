@@ -189,8 +189,8 @@ func (h *handler) DeleteItem(c echo.Context) error {
 
 // AssignItemSet implements ItemHandler.
 func (h *handler) AssignItemSet(c echo.Context) error {
-	parentID := c.Param("parent-item-id")
-	childID := c.Param("child-item-id")
+	parentID := c.Param("parent_id")
+	childID := c.Param("child_id")
 
 	err := h.service.AssignChild(c.Request().Context(), parentID, childID)
 	if err != nil {
@@ -250,8 +250,8 @@ func (h *handler) EditItem(c echo.Context) error {
 
 // RemoveItemSet implements ItemHandler.
 func (h *handler) RemoveItemSet(c echo.Context) error {
-	parentID := c.Param("parent-item-id")
-	childID := c.Param("child-item-id")
+	parentID := c.Param("parent_id")
+	childID := c.Param("child_id")
 
 	err := h.service.RemoveChild(c.Request().Context(), parentID, childID)
 	if err != nil {
