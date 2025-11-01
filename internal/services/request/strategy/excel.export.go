@@ -1,8 +1,13 @@
 package strategy
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"image"
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
@@ -120,41 +125,49 @@ func (e *ExcelExportStrategy) createRow(ctx context.Context, f *excelize.File, s
 		if err != nil {
 			log.Warn().Err(err).Msg("failed to extract URL, skipping image")
 		} else {
-			image, contentType, err := e.minio.GetImage(ctx, bucket, obj)
+			imageData, contentType, err := e.minio.GetImage(ctx, bucket, obj)
 			if err != nil {
 				log.Warn().Err(err).Msg("failed to get image from minio, skipping image")
 			} else {
-				// Map content types to extensions that excelize supports
-				var ext string
-				switch contentType {
-				case "image/jpeg", "image/jpg":
-					ext = ".jpg"
-				case "image/png":
-					ext = ".png"
-				case "image/gif":
-					ext = ".gif"
-				case "image/bmp", "image/x-ms-bmp":
-					ext = ".bmp"
-				case "image/tiff", "image/tif":
-					ext = ".tiff"
-				default:
-					// Try to extract from object name
-					log.Warn().Str("contentType", contentType).Str("object", obj).Msg("Unknown content type, trying to extract extension from filename")
-					// Default to jpg if we can't determine
-					ext = ".jpg"
-				}
-
-				log.Info().Str("contentType", contentType).Str("extension", ext).Int("imageSize", len(image)).Msg("Adding image to excel")
-
-				err = f.AddPictureFromBytes(sheetName, fmt.Sprintf("A%d", row), &excelize.Picture{
-					Extension: ext,
-					File:      image,
-					Format:    &excelize.GraphicOptions{ScaleX: 0.3, ScaleY: 0.3},
-				})
+				// Validate the image data can be decoded
+				_, format, err := image.DecodeConfig(bytes.NewReader(imageData))
 				if err != nil {
-					log.Warn().Err(err).Str("extension", ext).Str("contentType", contentType).Msg("failed to add picture to excel, skipping image")
+					log.Warn().Err(err).Str("contentType", contentType).Int("dataSize", len(imageData)).Msg("failed to decode image config, image data may be corrupted")
 				} else {
-					log.Info().Int("row", row).Msg("Successfully added image to excel")
+					log.Info().Str("detectedFormat", format).Str("contentType", contentType).Msg("Image format detected")
+
+					// Map format to extension
+					var ext string
+					switch format {
+					case "jpeg", "jpg":
+						ext = ".jpg"
+					case "png":
+						ext = ".png"
+					case "gif":
+						ext = ".gif"
+					case "bmp":
+						ext = ".bmp"
+					case "tiff":
+						ext = ".tiff"
+					default:
+						log.Warn().Str("format", format).Msg("Unsupported image format")
+						ext = ""
+					}
+
+					if ext != "" {
+						log.Info().Str("extension", ext).Int("imageSize", len(imageData)).Msg("Adding image to excel")
+
+						err = f.AddPictureFromBytes(sheetName, fmt.Sprintf("A%d", row), &excelize.Picture{
+							Extension: ext,
+							File:      imageData,
+							Format:    &excelize.GraphicOptions{ScaleX: 0.3, ScaleY: 0.3},
+						})
+						if err != nil {
+							log.Warn().Err(err).Str("extension", ext).Str("format", format).Msg("failed to add picture to excel, skipping image")
+						} else {
+							log.Info().Int("row", row).Str("format", format).Msg("Successfully added image to excel")
+						}
+					}
 				}
 			}
 		}
