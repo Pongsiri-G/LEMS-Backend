@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
 	ItemRequestRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item_requested"
 	Minio "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/minio"
@@ -19,19 +21,24 @@ type ExcelExportStrategy struct {
 	minio       Minio.Repository
 }
 
-func NewExcelExportStrategy(requestRepo RequestRepo.Repository) ExportStrategy {
+func NewExcelExportStrategy(requestRepo RequestRepo.Repository, itemRepo ItemRequestRepo.Repository, minio Minio.Repository) ExportStrategy {
 	return &ExcelExportStrategy{
 		requestRepo: requestRepo,
+		itemRepo:    itemRepo,
+		minio:       minio,
 	}
 }
 
-func (e *ExcelExportStrategy) Export(ctx context.Context, requests []models.Request) error {
+func (e *ExcelExportStrategy) Export(ctx context.Context, requests []models.Request) ([]byte, error) {
 	var items []models.ItemRequested
 	for _, request := range requests {
+		if request.RequestType != enums.RequestTypeRequest {
+			return nil, exceptions.ErrRequestNotSupportedExportType
+		}
 		itemRequested, err := e.itemRepo.FindByID(ctx, request.RequestID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to find item requested by request ID")
-			return err
+			return nil, err
 		}
 		if itemRequested == nil {
 			log.Error().Msg("item requested not found for request ID: " + request.RequestID.String())
@@ -50,30 +57,31 @@ func (e *ExcelExportStrategy) Export(ctx context.Context, requests []models.Requ
 	index, err := f.NewSheet(sheetName)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create new sheet")
-		return err
+		return nil, err
 	}
 	f.SetActiveSheet(index)
 	err = e.setHeaders(f, sheetName)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to set headers in excel")
-		return err
+		return nil, err
 	}
 
 	for i, item := range items {
 		request := requests[i]
 		if err := e.createRow(ctx, f, sheetName, i+2, &item, &request); err != nil {
 			log.Error().Err(err).Msg("failed to create row in excel")
-			return err
+			return nil, err
 		}
 	}
 
-	if err := utils.SaveAtDownload(f, "requests.xlsx"); err != nil {
-		log.Error().Err(err).Msg("failed to save excel file")
-		return err
+	// Write to buffer instead of file
+	buffer, err := f.WriteToBuffer()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to write excel file to buffer")
+		return nil, err
 	}
 
-	return nil
-
+	return buffer.Bytes(), nil
 }
 
 func (e *ExcelExportStrategy) setHeaders(f *excelize.File, sheetName string) error {
@@ -97,7 +105,7 @@ func (e *ExcelExportStrategy) setHeaders(f *excelize.File, sheetName string) err
 		log.Error().Err(err).Msg("failed to set cell value for header")
 		return err
 	}
-	f.SetCellValue(sheetName, "E1", "Item Quantity")
+	err = f.SetCellValue(sheetName, "E1", "Item Quantity")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to set cell value for header")
 		return err

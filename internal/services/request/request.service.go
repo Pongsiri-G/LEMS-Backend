@@ -14,6 +14,7 @@ import (
 	RequestRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/request"
 	User "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/request/factory"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/request/strategy"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/utils"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
@@ -24,7 +25,7 @@ type Service interface {
 
 	CreateRequest(ctx context.Context, userID uuid.UUID, req requests.CreateRequest) error
 	EditRequest(ctx context.Context, req requests.EditRequest) error
-	ExportRequests(ctx context.Context, req requests.ExportRequests) error
+	ExportRequests(ctx context.Context, req requests.ExportRequests) ([]byte, string, error)
 	ChangeRequestStatus(ctx context.Context, requestID string, status enums.RequestStatus) error
 }
 
@@ -211,6 +212,50 @@ func (s *service) ChangeRequestStatus(ctx context.Context, requestID string, sta
 }
 
 // ExportRequests implements Service.
-func (s *service) ExportRequests(ctx context.Context, req requests.ExportRequests) error {
-	panic("unimplement")
+func (s *service) ExportRequests(ctx context.Context, req requests.ExportRequests) ([]byte, string, error) {
+	requestIDs := make([]uuid.UUID, 0, len(req.Requests))
+	for _, reqIDStr := range req.Requests {
+		reqID, err := uuid.Parse(reqIDStr)
+		if err != nil {
+			log.Error().Err(err).Str("requestID", reqIDStr).Msg("failed to parse request ID")
+			return nil, "", exceptions.ErrInvalidUUID
+		}
+		requestIDs = append(requestIDs, reqID)
+	}
+
+	requestModels := make([]models.Request, 0, len(requestIDs))
+	for _, reqID := range requestIDs {
+		request, err := s.requestRepo.FindByID(ctx, reqID)
+		if err != nil {
+			log.Error().Err(err).Str("requestID", reqID.String()).Msg("failed to find request by ID")
+			return nil, "", exceptions.ErrRequestNotFound
+		}
+		requestModels = append(requestModels, *request)
+	}
+
+	// Create export strategy based on export type
+	var exportStrategy strategy.ExportStrategy
+	var filename string
+
+	switch req.ExportType {
+	case enums.ExportTypeXLS:
+		exportStrategy = strategy.NewExcelExportStrategy(s.requestRepo, s.itemRequestedRepo, s.minioRepo)
+		filename = "requests.xlsx"
+	case enums.ExportTypePDF:
+		return nil, "", exceptions.ErrNotImplemented
+	case enums.ExportTypeCSV:
+		return nil, "", exceptions.ErrNotImplemented
+	case enums.ExportTypeJSON:
+		return nil, "", exceptions.ErrNotImplemented
+	default:
+		return nil, "", exceptions.ErrInvalidExportType
+	}
+
+	data, err := exportStrategy.Export(ctx, requestModels)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to export requests")
+		return nil, "", err
+	}
+
+	return data, filename, nil
 }

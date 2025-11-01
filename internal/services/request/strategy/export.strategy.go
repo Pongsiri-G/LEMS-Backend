@@ -7,5 +7,5 @@ import (
 )
 
 type ExportStrategy interface {
-	Export(ctx context.Context, request []models.Request) error
+	Export(ctx context.Context, request []models.Request) ([]byte, error)
 }
