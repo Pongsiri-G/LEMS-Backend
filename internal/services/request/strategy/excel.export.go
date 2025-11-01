@@ -114,27 +114,48 @@ func (e *ExcelExportStrategy) setHeaders(f *excelize.File, sheetName string) err
 }
 
 func (e *ExcelExportStrategy) createRow(ctx context.Context, f *excelize.File, sheetName string, row int, item *models.ItemRequested, request *models.Request) error {
-	bucket, obj, err := utils.ExtractUrl(*request.RequestImageURL)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to extract URL")
-		return err
-	}
-	image, objType, err := e.minio.GetImage(ctx, bucket, obj)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get image from minio")
-		return err
+	// Try to add image, but don't fail if it doesn't work
+	if request.RequestImageURL != nil && *request.RequestImageURL != "" {
+		bucket, obj, err := utils.ExtractUrl(*request.RequestImageURL)
+		if err != nil {
+			log.Warn().Err(err).Msg("failed to extract URL, skipping image")
+		} else {
+			image, objType, err := e.minio.GetImage(ctx, bucket, obj)
+			if err != nil {
+				log.Warn().Err(err).Msg("failed to get image from minio, skipping image")
+			} else {
+				// Normalize extension - excelize expects extensions without dot and in lowercase
+				ext := objType
+				if len(ext) > 0 && ext[0] == '.' {
+					ext = ext[1:]
+				}
+				// Map content types to extensions if needed
+				switch ext {
+				case "image/jpeg", "image/jpg":
+					ext = ".jpg"
+				case "image/png":
+					ext = ".png"
+				case "image/gif":
+					ext = ".gif"
+				case "image/bmp":
+					ext = ".bmp"
+				case "image/tiff":
+					ext = ".tiff"
+				}
+
+				err = f.AddPictureFromBytes(sheetName, fmt.Sprintf("A%d", row), &excelize.Picture{
+					Extension: ext,
+					File:      image,
+					Format:    &excelize.GraphicOptions{ScaleX: 0.3, ScaleY: 0.3},
+				})
+				if err != nil {
+					log.Warn().Err(err).Str("extension", ext).Msg("failed to add picture to excel, skipping image")
+				}
+			}
+		}
 	}
 
-	err = f.AddPictureFromBytes(sheetName, fmt.Sprintf("A%d", row), &excelize.Picture{
-		Extension: objType,
-		File:      image,
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to add picture to excel")
-		return err
-	}
-
-	err = f.SetCellValue(sheetName, fmt.Sprintf("B%d", row), item.Name)
+	err := f.SetCellValue(sheetName, fmt.Sprintf("B%d", row), item.Name)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to set cell value for item name")
 		return err
