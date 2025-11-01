@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/events"
-	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/requests"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/ws"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/noti"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/utils/contextutil"
@@ -40,7 +39,11 @@ func (w *wsHandler) Run(e echo.Context) error {
 
 
 func (w *wsHandler) SendNoti(e echo.Context) error {
-	var req requests.BorrowRequest
+	var req struct{
+		UserID string
+		ItemID string
+	}
+
 	if err := e.Bind(&req); err != nil {
 		log.Error().Err(err).Msg("failed to bind create tag request")
 		return e.JSON(http.StatusBadRequest, nil)
