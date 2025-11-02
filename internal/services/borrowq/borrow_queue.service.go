@@ -21,6 +21,8 @@ import (
 type BorrowQueueService interface {
 	GetFrontQueue(ctx context.Context, itemID uuid.UUID) (*responses.BorrowQueueResponse, error)
 	Enqueue(ctx context.Context, request requests.CreateBorrowQueueRequest) error
+	GetGetOneByUserAndItem(ctx context.Context, itemID string, userID string) (*responses.BorrowQueueResponse, error)
+	CancelMyQueue(ctx context.Context, queueId string, userID string) error
 }
 
 type borrowQueueService struct {
@@ -50,7 +52,7 @@ func (b *borrowQueueService) Enqueue(ctx context.Context, request requests.Creat
 	}
 
 	// only 1 enqueue per item
-	existing, err := b.bqRepo.GetMemberByUserAndItem(ctx, request.ItemID.String(), request.UserID)
+	existing, err := b.bqRepo.GetOneByUserAndItem(ctx, request.ItemID.String(), request.UserID)
 	if err != nil{
 		return err
 	}
@@ -85,6 +87,45 @@ func (b *borrowQueueService) Enqueue(ctx context.Context, request requests.Creat
 
 		return nil
 	})
+}
+
+func (b *borrowQueueService) GetGetOneByUserAndItem(ctx context.Context, itemID string, userID string) (*responses.BorrowQueueResponse, error) {
+	// only 1 enqueue per item
+	queue, err := b.bqRepo.GetOneByUserAndItem(ctx, itemID, userID)
+	if err != nil{
+		return nil, err
+	}	
+
+	if queue == nil {
+		return nil, exceptions.ErrBorrowqNotFound
+	}
+
+	return &responses.BorrowQueueResponse {
+		QueueID: queue.QueueID.String(),
+		ItemID: queue.ItemID.String(),
+		IsBorrow: queue.IsBorrow,
+	}, nil
+}
+
+func (b *borrowQueueService) CancelMyQueue(ctx context.Context, queueId string, userID string) error {
+	queueUUID, err := uuid.Parse(queueId)
+	if err != nil {
+		return err
+	}
+
+	queue, err := b.bqRepo.GetQueueByID(ctx, queueUUID, "user_id = ?", userID)
+	if err != nil {
+		return err
+	}
+	if queue == nil {
+		return exceptions.ErrBorrowqNotFound
+	}
+
+	if err = b.bqRepo.DeleteQueue(ctx, queueUUID); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // GetFrontQueue implements BorrowQueueService.
