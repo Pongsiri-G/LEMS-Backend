@@ -10,6 +10,7 @@ import (
 	BorrowRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrow_log"
 	ItemRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
 	logsystem "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/log"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/borrow/state"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/utils"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
@@ -85,6 +86,7 @@ func (i *ItemBorrowable) BorrowItem(ctx context.Context, userID uuid.UUID, item 
 // ReturnItem implements Borrowable.
 func (i *ItemBorrowable) ReturnItem(ctx context.Context, borrowLog *models.BorrowLog, children *[]models.BorrowLog) error {
 	log.Info().Msg("Returning normal item")
+	borrowLogContext := state.NewStateContext(ctx, *borrowLog, i.borrowRepo)
 	item, err := i.itemRepo.GetItemByID(ctx, borrowLog.ItemID)
 	if err != nil {
 		return err
@@ -94,16 +96,17 @@ func (i *ItemBorrowable) ReturnItem(ctx context.Context, borrowLog *models.Borro
 		return exceptions.ErrItemNotFound
 	}
 
-	borrowLog.BorrowStatus = enums.StatusReturned
-	now := utils.BangkokNow()
-	borrowLog.ReturnDate = &now
-	borrowLog.UpdatedAt = now
+	borrowLogContext.GetState().Return(borrowLogContext)
+	// borrowLog.BorrowStatus = enums.StatusReturned
+	// now := utils.BangkokNow()
+	// borrowLog.ReturnDate = &now
+	// borrowLog.UpdatedAt = now
 
-	err = i.borrowRepo.EditBorrowLog(ctx, borrowLog)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to update borrow log")
-		return err
-	}
+	// err = i.borrowRepo.EditBorrowLog(ctx, borrowLog)
+	// if err != nil {
+	// 	log.Error().Err(err).Msg("failed to update borrow log")
+	// 	return err
+	// }
 
 	item.ItemCurrentQuantity += 1
 	err = i.itemRepo.UpdateItem(ctx, item)
