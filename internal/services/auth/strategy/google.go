@@ -74,11 +74,20 @@ func (s *GoogleStrategy) Authenticate(ctx context.Context, req *AuthenticateRequ
 		if err := s.users.Create(ctx, newUser); err != nil {
 			return nil, err
 		}
-		return nil, exceptions.ErrInactiveUser
+		return nil, exceptions.ErrRegistrationSuccess
 	}
 
-	if user.UserStatus != enums.Active {
+	// Check user status
+	switch user.UserStatus {
+	case enums.Pending:
+		return nil, exceptions.ErrUserPending
+	case enums.Deactivated:
+		return nil, exceptions.ErrUserDeactivated
+	case enums.Rejected:
+		return nil, exceptions.ErrUserRejected
+	case enums.Active:
+		return user, nil
+	default:
 		return nil, exceptions.ErrInactiveUser
 	}
-	return user, nil
 }
