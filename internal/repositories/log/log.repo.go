@@ -17,6 +17,7 @@ type Repository interface {
 	CreateReturnLog(ctx context.Context, userID, itemID uuid.UUID) error
 	CreateLoginLog(ctx context.Context, userID uuid.UUID, message string) error
 	CreateRegisterLog(ctx context.Context, userID uuid.UUID) error
+	CreateAdminActionLog(ctx context.Context, adminID uuid.UUID, actionType enums.LogType, targetUserID uuid.UUID) error
 	List(ctx context.Context) ([]models.Log, error)
 }
 
@@ -32,7 +33,6 @@ func NewLogRepository(db *gorm.DB) Repository {
 func (r *RepositoryImpl) CreateBorrowLog(ctx context.Context, userID uuid.UUID, itemID uuid.UUID) error {
 	log.Info().Msg("Creating borrow log")
 	jsonMap := map[string]uuid.UUID{
-		"user_id": userID,
 		"item_id": itemID,
 	}
 	logBytes, err := json.Marshal(jsonMap)
@@ -54,7 +54,6 @@ func (r *RepositoryImpl) CreateBorrowLog(ctx context.Context, userID uuid.UUID, 
 func (r *RepositoryImpl) CreateReturnLog(ctx context.Context, userID uuid.UUID, itemID uuid.UUID) error {
 	log.Info().Msg("Creating return log")
 	jsonMap := map[string]uuid.UUID{
-		"user_id": userID,
 		"item_id": itemID,
 	}
 
@@ -92,20 +91,25 @@ func (r *RepositoryImpl) CreateLoginLog(ctx context.Context, userID uuid.UUID, m
 // CreateRegisterLog implements Repository.
 func (r *RepositoryImpl) CreateRegisterLog(ctx context.Context, userID uuid.UUID) error {
 	log.Info().Msg("Creating register log")
-	jsonMap := map[string]uuid.UUID{
-		"user_id": userID,
-	}
-	logBytes, err := json.Marshal(jsonMap)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to marshal log message to JSON")
-		return err
-	}
-	logMessage := string(logBytes)
+	message := "User registered successfully"
 	logEntry := &models.Log{
 		LogID:      uuid.New(),
 		UserID:     userID,
 		LogType:    enums.LogTypeRegister,
-		LogMessage: &logMessage,
+		LogMessage: &message,
+	}
+	return r.db.WithContext(ctx).Create(logEntry).Error
+}
+
+// CreateAdminActionLog implements Repository.
+func (r *RepositoryImpl) CreateAdminActionLog(ctx context.Context, adminID uuid.UUID, actionType enums.LogType, targetUserID uuid.UUID) error {
+	log.Info().Msgf("Creating admin action log: %s", actionType)
+	message := targetUserID.String()
+	logEntry := &models.Log{
+		LogID:      uuid.New(),
+		UserID:     adminID,
+		LogType:    actionType,
+		LogMessage: &message,
 	}
 	return r.db.WithContext(ctx).Create(logEntry).Error
 }

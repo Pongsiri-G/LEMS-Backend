@@ -5,9 +5,10 @@ import (
 	"strings"
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
-	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/admin"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/utils/contextutil"
 	"github.com/labstack/echo/v4"
 )
 
@@ -102,8 +103,13 @@ func (h handler) GetAllUsers(c echo.Context) error {
 }
 
 func (h handler) Accept(c echo.Context) error {
+	authUser, err := contextutil.GetUserFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, echo.Map{"message": "unauthorized"})
+	}
+
 	userId := c.Param("user_id")
-	err := h.adminSvc.Accept(c.Request().Context(), userId)
+	err = h.adminSvc.Accept(c.Request().Context(), authUser.ID, userId)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"message": exceptions.ErrInternalServer.Error()})
 	}
@@ -111,8 +117,13 @@ func (h handler) Accept(c echo.Context) error {
 }
 
 func (h handler) Reject(c echo.Context) error {
+	authUser, err := contextutil.GetUserFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, echo.Map{"message": "unauthorized"})
+	}
+
 	userId := c.Param("user_id")
-	err := h.adminSvc.Reject(c.Request().Context(), userId)
+	err = h.adminSvc.Reject(c.Request().Context(), authUser.ID, userId)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"message": exceptions.ErrInternalServer.Error()})
 	}
@@ -120,8 +131,13 @@ func (h handler) Reject(c echo.Context) error {
 }
 
 func (h handler) Activate(c echo.Context) error {
+	authUser, err := contextutil.GetUserFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, echo.Map{"message": "unauthorized"})
+	}
+
 	userId := c.Param("user_id")
-	err := h.adminSvc.Activate(c.Request().Context(), userId)
+	err = h.adminSvc.Activate(c.Request().Context(), authUser.ID, userId)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"message": "internal server error"})
 	}
@@ -129,8 +145,13 @@ func (h handler) Activate(c echo.Context) error {
 }
 
 func (h handler) Deactivate(c echo.Context) error {
+	authUser, err := contextutil.GetUserFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, echo.Map{"message": "unauthorized"})
+	}
+
 	userId := c.Param("user_id")
-	err := h.adminSvc.Deactivate(c.Request().Context(), userId)
+	err = h.adminSvc.Deactivate(c.Request().Context(), authUser.ID, userId)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"message": exceptions.ErrInternalServer.Error()})
 	}
@@ -138,8 +159,13 @@ func (h handler) Deactivate(c echo.Context) error {
 }
 
 func (h handler) Delete(c echo.Context) error {
+	authUser, err := contextutil.GetUserFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, echo.Map{"message": "unauthorized"})
+	}
+
 	userId := c.Param("user_id")
-	err := h.adminSvc.Delete(c.Request().Context(), userId)
+	err = h.adminSvc.Delete(c.Request().Context(), authUser.ID, userId)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"message": exceptions.ErrInternalServer.Error()})
 	}
@@ -147,8 +173,13 @@ func (h handler) Delete(c echo.Context) error {
 }
 
 func (h handler) GrantAdmin(c echo.Context) error {
+	authUser, err := contextutil.GetUserFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, echo.Map{"message": "unauthorized"})
+	}
+
 	userId := c.Param("user_id")
-	err := h.adminSvc.GrantAdmin(c.Request().Context(), userId)
+	err = h.adminSvc.GrantAdmin(c.Request().Context(), authUser.ID, userId)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"message": exceptions.ErrInternalServer.Error()})
 	}
@@ -156,8 +187,13 @@ func (h handler) GrantAdmin(c echo.Context) error {
 }
 
 func (h handler) RevokeAdmin(c echo.Context) error {
+	authUser, err := contextutil.GetUserFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, echo.Map{"message": "unauthorized"})
+	}
+
 	userId := c.Param("user_id")
-	err := h.adminSvc.RevokeAdmin(c.Request().Context(), userId)
+	err = h.adminSvc.RevokeAdmin(c.Request().Context(), authUser.ID, userId)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"message": exceptions.ErrInternalServer.Error()})
 	}
