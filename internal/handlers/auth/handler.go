@@ -57,7 +57,7 @@ func (h *authHandler) Login(c echo.Context) error {
 		case exceptions.ErrInactiveUser:
 			return c.JSON(http.StatusForbidden, map[string]string{"error": err.Error()})
 		default:
-			return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})		
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
 		}
 	}
 

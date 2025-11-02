@@ -15,6 +15,8 @@ type Repository interface {
 	Create(ctx context.Context, log *models.Log) error
 	CreateBorrowLog(ctx context.Context, userID, itemID uuid.UUID) error
 	CreateReturnLog(ctx context.Context, userID, itemID uuid.UUID) error
+	CreateLoginLog(ctx context.Context, userID uuid.UUID, message string) error
+	CreateRegisterLog(ctx context.Context, userID uuid.UUID) error
 	List(ctx context.Context) ([]models.Log, error)
 }
 
@@ -73,6 +75,39 @@ func (r *RepositoryImpl) CreateReturnLog(ctx context.Context, userID uuid.UUID, 
 
 func (r *RepositoryImpl) Create(ctx context.Context, log *models.Log) error {
 	return r.db.WithContext(ctx).Create(log).Error
+}
+
+// CreateLoginLog implements Repository.
+func (r *RepositoryImpl) CreateLoginLog(ctx context.Context, userID uuid.UUID, message string) error {
+	log.Info().Msg("Creating login log")
+	logEntry := &models.Log{
+		LogID:      uuid.New(),
+		UserID:     userID,
+		LogType:    enums.LogTypeLogin,
+		LogMessage: &message,
+	}
+	return r.db.WithContext(ctx).Create(logEntry).Error
+}
+
+// CreateRegisterLog implements Repository.
+func (r *RepositoryImpl) CreateRegisterLog(ctx context.Context, userID uuid.UUID) error {
+	log.Info().Msg("Creating register log")
+	jsonMap := map[string]uuid.UUID{
+		"user_id": userID,
+	}
+	logBytes, err := json.Marshal(jsonMap)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to marshal log message to JSON")
+		return err
+	}
+	logMessage := string(logBytes)
+	logEntry := &models.Log{
+		LogID:      uuid.New(),
+		UserID:     userID,
+		LogType:    enums.LogTypeRegister,
+		LogMessage: &logMessage,
+	}
+	return r.db.WithContext(ctx).Create(logEntry).Error
 }
 
 func (r *RepositoryImpl) List(ctx context.Context) ([]models.Log, error) {
