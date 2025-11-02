@@ -71,12 +71,13 @@ func (h *Hub) SendToUser(userID string, msg []byte) {
 
 	log.Info().Str("user", userID).Msg("Boardcasting to user")
 
-	if _, ok:= h.userClients[userID]; ok {
-		for c := range h.clients {
+	if clients, ok:= h.userClients[userID]; ok {
+		for c := range clients {
 			select {
 			case c.send <- msg:
 			default:
 				delete(h.clients, c)
+				delete(h.userClients[userID], c)
 				close(c.send)
 			}
 		}

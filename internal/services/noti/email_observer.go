@@ -43,6 +43,4 @@ func (e *emailObserver) Update(event events.Event) {
 		log.Print("❌ Failed to send email:", err)
 		return
 	}
-
-	log.Print("📧 Email sent to", userEmail)
 }

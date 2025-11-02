@@ -16,7 +16,7 @@ import (
 
 type UserService interface {
 	Register(ctx context.Context, r *requests.RegisterRequest) (*responses.UserResponse, error)
-	MyInfo(ctx context.Context, userID string) (*responses.UserResponse, error)
+	FindByID(ctx context.Context, userID string) (*responses.UserResponse, error)
 }
 
 type userService struct {
@@ -56,35 +56,18 @@ func (s *userService) Register(ctx context.Context, r *requests.RegisterRequest)
 	if err := s.userRepo.Create(ctx, u); err != nil {
 		return nil, err
 	}
-	// return &responses.UserResponse{
-	// 	UserFullName: u.UserFullName,
-	// 	UserEmail:    u.UserEmail,
-	// 	UserPhone:    u.UserPhone,
-	// 	UserRole:     enums.UserRole(enums.User),
-	// 	UserStatus:   enums.UserStatus(enums.Pending),
-	// 	AuthProvider: enums.AuthProvider(enums.Local),
-	// }, nil
+
 	return s.toResponse(u), nil
 }
 
-// Delete implements UserService.
-func (s *userService) Delete(ctx context.Context, userID string) error {
-	panic("unimplemented")
-}
-
 // MyInfo implements UserService.
-func (s *userService) MyInfo(ctx context.Context, userID string) (*responses.UserResponse, error) {
+func (s *userService) FindByID(ctx context.Context, userID string) (*responses.UserResponse, error) {
 	user, err := s.userRepo.FindByID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
 	return s.toResponse(user), nil
-}
-
-// UpdateUserStatus implements UserService.
-func (s *userService) UpdateUserStatus(ctx context.Context, userID string, status string) (*responses.UserResponse, error) {
-	panic("unimplemented")
 }
 
 func (s *userService) toResponse(u *models.User) *responses.UserResponse {

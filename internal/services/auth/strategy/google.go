@@ -60,7 +60,6 @@ func (s *GoogleStrategy) Authenticate(ctx context.Context, req *AuthenticateRequ
 		return nil, err
 	}
 
-	// Lookup user in repository
 	user, err := s.users.FindByEmail(ctx, gUser.Email)
 
 	if err != nil {

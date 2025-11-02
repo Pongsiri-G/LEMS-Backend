@@ -15,6 +15,7 @@ type BorrowQueueRepository interface {
 	PeekOldest(ctx context.Context, itemID string) (*models.BorrowQueue, error)
 	Dequeue(ctx context.Context, queueID uuid.UUID) error
 	Count(ctx context.Context, itemID string) (int, error)
+	GetMemberByUserAndItem(ctx context.Context, itemID string, userID string) (*models.BorrowQueue, error)
 }
 
 type borrowQueueRepository struct {
@@ -75,7 +76,25 @@ func (b *borrowQueueRepository) PeekOldest(ctx context.Context, itemID string) (
 
 	if res.Error != nil {
 		log.Error().Err(res.Error).Msg("failed to get borrow queue")
-		
+
+		return nil, res.Error
+	}
+
+	return queue, nil
+}
+
+// GetMemberByUser implements BorrowQueueRepository.
+func (b *borrowQueueRepository) GetMemberByUserAndItem(ctx context.Context, itemID string, userID string) (*models.BorrowQueue, error) {
+	var queue *models.BorrowQueue
+	res := b.db.WithContext(ctx).Table("borrow_queues AS bq").
+		Select("bq.*").
+		Where("bq.item_id = (?) AND bq.user_id = (?)", itemID, userID).
+		Limit(1).
+		Scan(&queue)
+
+	if res.Error != nil {
+		log.Error().Err(res.Error).Msg("failed to get borrow queue")
+
 		return nil, res.Error
 	}
 

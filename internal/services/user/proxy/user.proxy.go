@@ -38,8 +38,8 @@ func (u *UserServiceProxy) Delete(c echo.Context, targetID string) error {
 }
 
 // MyInfo implements UserService.
-func (u *UserServiceProxy) MyInfo(ctx context.Context, userID string) (*responses.UserResponse, error) {
-	return u.service.MyInfo(ctx, userID)
+func (u *UserServiceProxy) FindByID(ctx context.Context, userID string) (*responses.UserResponse, error) {
+	return u.service.FindByID(ctx, userID)
 }
 
 // Register implements UserService.

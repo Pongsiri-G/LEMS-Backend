@@ -7,4 +7,5 @@ var (
 	ErrFailedToUpdateQuantity        = errors.New("failed to update quantity of the item")
 	ErrBorrowLogNotFound             = errors.New("borrow log not found")
 	ErrCannotReturnChildItemDirectly = errors.New("cannot return child item directly")
+	ErrUserAlreadyBorrowq            = errors.New("user has already enqueued.")
 )

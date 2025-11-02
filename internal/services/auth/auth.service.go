@@ -86,7 +86,7 @@ func (s *authService) RefreshToken(ctx context.Context, tokenStr string) (*respo
 		return nil, err
 	}
 
-	user, err := s.userService.MyInfo(ctx, claims.UserID)
+	user, err := s.userService.FindByID(ctx, claims.UserID)
 	if err != nil {
 		return nil, err
 	}

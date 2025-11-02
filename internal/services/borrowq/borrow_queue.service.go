@@ -5,6 +5,7 @@ import (
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/configs"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/requests"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories"
@@ -40,6 +41,16 @@ func (b *borrowQueueService) Enqueue(ctx context.Context, request requests.Creat
 
 	if err != nil {
 		return err
+	}
+
+	// only 1 enqueue per item
+	existing, err := b.bqRepo.GetMemberByUserAndItem(ctx, request.ItemID.String(), request.UserID)
+	if err != nil{
+		return err
+	}
+
+	if existing != nil {
+		return exceptions.ErrUserAlreadyBorrowq
 	}
 
 	return b.txManager.Do(ctx, func(ctx context.Context) error {
