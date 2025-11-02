@@ -4,6 +4,6 @@ type ItemStatus string
 
 const (
 	ItemStatusAvailable  ItemStatus = "AVAILABLE"
-	ItemStatusInLabOnly ItemStatus = "INLABONLY"
+	ItemStatusInLabOnly  ItemStatus = "IN-LAB ONLY"
 	ItemStatusOutOfStock ItemStatus = "UNAVAILABLE"
 )

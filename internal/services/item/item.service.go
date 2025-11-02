@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/requests"
@@ -285,6 +286,28 @@ func (i *itemService) AssignChild(ctx context.Context, parentID string, childID 
 	if err != nil {
 		log.Error().Err(err).Msg("failed to parse child ID")
 		return exceptions.ErrInvalidUUID
+	}
+
+	parentItem, err := i.itemRepo.GetItemByID(ctx, parentUUID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get parent item by ID")
+		return err
+	}
+
+	childItem, err := i.itemRepo.GetItemByID(ctx, childUUID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get child item by ID")
+		return err
+	}
+
+	if parentItem == nil || childItem == nil {
+		log.Error().Msg("parent or child item not found")
+		return exceptions.ErrItemNotFound
+	}
+
+	if childItem.ItemStatus == enums.ItemStatusInLabOnly {
+		log.Error().Msgf("child item %s is in-lab only, cannot be assigned as child", childItem.ItemID)
+		return exceptions.ErrChildItemInLabOnly
 	}
 
 	itemSet, err := i.itemSetRepo.FindItemSetByParentAndChildID(ctx, parentUUID, childUUID)

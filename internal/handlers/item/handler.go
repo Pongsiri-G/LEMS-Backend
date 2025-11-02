@@ -86,6 +86,10 @@ func (h *handler) CreateItem(c echo.Context) error {
 			})
 		case exceptions.ErrItemNotFound:
 			return c.JSON(http.StatusNotFound, nil)
+		case exceptions.ErrChildItemInLabOnly:
+			return c.JSON(http.StatusBadRequest, echo.Map{
+				"message": "child item is in-lab only and cannot be used as prerequisite",
+			})
 		default:
 			log.Error().Err(err).Msg(exceptions.ErrInternalServer.Error())
 			return c.JSON(http.StatusInternalServerError, echo.Map{
@@ -204,6 +208,10 @@ func (h *handler) AssignItemSet(c echo.Context) error {
 		case exceptions.ErrItemSetAlreadyExists:
 			return c.JSON(http.StatusConflict, echo.Map{
 				"message": "item set already exists",
+			})
+		case exceptions.ErrChildItemInLabOnly:
+			return c.JSON(http.StatusBadRequest, echo.Map{
+				"message": "child item is in-lab only and cannot be used as prerequisite",
 			})
 		default:
 			log.Error().Err(err).Msg(exceptions.ErrInternalServer.Error())
