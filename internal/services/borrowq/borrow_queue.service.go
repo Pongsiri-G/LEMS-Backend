@@ -86,5 +86,5 @@ func (b *borrowQueueService) GetFrontQueue(ctx context.Context, itemID uuid.UUID
 		return nil, exceptions.ErrItemNotFound
 	}
 
-	return b.bqRepo.GetFront(ctx, itemID.String())
+	return b.bqRepo.PeekOldest(ctx, itemID.String())
 }
