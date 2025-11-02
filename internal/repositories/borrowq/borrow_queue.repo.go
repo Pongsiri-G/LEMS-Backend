@@ -16,9 +16,10 @@ type BorrowQueueRepository interface {
 	PeekOldest(ctx context.Context, itemID string) (*models.BorrowQueue, error)
 	Dequeue(ctx context.Context, queueID uuid.UUID) error
 	Count(ctx context.Context, itemID string) (int, error)
-	GetMemberByUserAndItem(ctx context.Context, itemID string, userID string) (*models.BorrowQueue, error)
-	GetQueueByID(ctx context.Context, queueID uuid.UUID) (*models.BorrowQueue, error)
+	GetOneByUserAndItem(ctx context.Context, itemID, userID string) (*models.BorrowQueue, error)
+	GetQueueByID(ctx context.Context, queueID uuid.UUID, where interface{}, arg ...interface{}) (*models.BorrowQueue, error)
 	EditQueue(ctx context.Context, q *models.BorrowQueue) error
+	DeleteQueue(cts context.Context, queueID uuid.UUID) error
 }
 
 type borrowQueueRepository struct {
@@ -49,7 +50,7 @@ func (b *borrowQueueRepository) Count(ctx context.Context, itemID string) (int, 
 
 // Dequeue implements BorrowQueueRepository.
 func (b *borrowQueueRepository) Dequeue(ctx context.Context, queueID uuid.UUID) error {
-	queue, err := b.GetQueueByID(ctx, queueID)
+	queue, err := b.GetQueueByID(ctx, queueID, nil)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get queue by id")
 		return err
@@ -89,14 +90,19 @@ func (b *borrowQueueRepository) PeekOldest(ctx context.Context, itemID string) (
 	if res.Error != nil {
 		log.Error().Err(res.Error).Msg("failed to get borrow queue")
 
-		return nil, res.Error
+		switch res.Error {
+		case gorm.ErrRecordNotFound:
+			return nil, nil
+		default:
+			return nil, res.Error
+		}
 	}
 
 	return queue, nil
 }
 
 // GetMemberByUser implements BorrowQueueRepository.
-func (b *borrowQueueRepository) GetMemberByUserAndItem(ctx context.Context, itemID string, userID string) (*models.BorrowQueue, error) {
+func (b *borrowQueueRepository) GetOneByUserAndItem(ctx context.Context, itemID, userID string) (*models.BorrowQueue, error) {
 	var queue *models.BorrowQueue
 	res := b.db.WithContext(ctx).Table("borrow_queues AS bq").
 		Select("bq.*").
@@ -107,20 +113,52 @@ func (b *borrowQueueRepository) GetMemberByUserAndItem(ctx context.Context, item
 	if res.Error != nil {
 		log.Error().Err(res.Error).Msg("failed to get borrow queue")
 
-		return nil, res.Error
+		switch res.Error {
+		case gorm.ErrRecordNotFound:
+			return nil, nil
+		default:
+			return nil, res.Error
+		}
 	}
 
 	return queue, nil
 }
 
-// GetQueueByID implements BorrowQueueRepository.
-func (b *borrowQueueRepository) GetQueueByID(ctx context.Context, queueID uuid.UUID) (*models.BorrowQueue, error) {
+// GetMemberByUserAndQID implements BorrowQueueRepository.
+func (b *borrowQueueRepository) GetOneByUserAndQID(ctx context.Context, queueID, userID string) (*models.BorrowQueue, error) {
 	var queue *models.BorrowQueue
-	res := b.db.WithContext(ctx).Where("queue_id = ?", queueID).First(&queue)
+	res := b.db.WithContext(ctx).Table("borrow_queues AS bq").
+		Select("bq.*").
+		Where("bq.queue_id = (?) AND bq.user_id = (?)", queueID, userID).
+		Scan(&queue)
+
+	if res.Error != nil {
+		log.Error().Err(res.Error).Msg("failed to get borrow queue")
+
+		switch res.Error {
+		case gorm.ErrRecordNotFound:
+			return nil, nil
+		default:
+			return nil, res.Error
+		}
+	}
+	return queue, nil
+}
+
+// GetQueueByID implements BorrowQueueRepository.
+func (b *borrowQueueRepository) GetQueueByID(ctx context.Context, queueID uuid.UUID, where interface{}, arg ...interface{}) (*models.BorrowQueue, error) {
+	var queue *models.BorrowQueue
+	res := b.db.WithContext(ctx).Where("queue_id = ?", queueID).Where(where, arg...).First(&queue)
 
 	if res.Error != nil {
 		log.Error().Err(res.Error).Msg("failed to get queue by id")
-		return nil, res.Error
+		
+		switch res.Error {
+		case gorm.ErrRecordNotFound:
+			return nil, nil
+		default:
+			return nil, res.Error
+		}
 	}
 
 	return queue, nil
@@ -133,4 +171,9 @@ func (b *borrowQueueRepository) EditQueue(ctx context.Context, q *models.BorrowQ
 		log.Error().Err(err).Msg("failed to edit queue")
 	}
 	return err
+}
+
+// DeleteQueue implements BorrowQueueRepository.
+func (b *borrowQueueRepository) DeleteQueue(ctx context.Context, queueID uuid.UUID) error {
+	return  b.db.WithContext(ctx).Where("queue_id", queueID).Delete(&models.BorrowQueue{}).Error	
 }

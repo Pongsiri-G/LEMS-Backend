@@ -51,10 +51,10 @@ func (h *userHandler) Register(c echo.Context) error {
 		if err == exceptions.ErrEmailAlreadyExists {
 			return c.JSON(http.StatusBadRequest, map[string]string{"error": "email already exists"})
 		}
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": exceptions.ErrInternalServer.Error()})
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
-	// สมัครเสร็จให้ไป login ต่อ
-	return c.JSON(http.StatusCreated, map[string]string{"message": "register success"})
+	// สมัครเสร็จให้ไป login ต่อ พร้อมข้อความแจ้งให้รอการอนุมัติ
+	return c.JSON(http.StatusCreated, map[string]string{"message": exceptions.ErrRegistrationSuccess.Error()})
 }
 
 func (h *userHandler) Me(c echo.Context) error {

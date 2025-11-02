@@ -11,8 +11,6 @@ import (
 
 type BorrowedState struct{}
 type ReturnedState struct{}
-type WaitingState struct{}
-type CanceledState struct{}
 
 // ----------------------------------------------------------------------------------------------------
 // BorrowedState
@@ -36,11 +34,6 @@ func (b *BorrowedState) Borrow(ctx *BorrowStateContext) error {
 	return nil
 }
 
-func (b *BorrowedState) Cancel(ctx *BorrowStateContext) error {
-	fmt.Println("this borrow log can't cancel")
-	return nil
-}
-
 // ----------------------------------------------------------------------------------------------------
 // ReturnedState
 
@@ -51,51 +44,5 @@ func (b *ReturnedState) Return(ctx *BorrowStateContext) error {
 
 func (b *ReturnedState) Borrow(ctx *BorrowStateContext) error {
 	fmt.Println("this borrow log can't borrow")
-	return nil
-}
-
-func (b *ReturnedState) Cancel(ctx *BorrowStateContext) error {
-	fmt.Println("this borrow log can't cancel")
-	return nil
-}
-
-// ----------------------------------------------------------------------------------------------------
-// WaitingState
-
-func (b *WaitingState) Return(ctx *BorrowStateContext) error {
-	fmt.Println("this borrow log can't return")
-	return nil
-}
-
-func (b *WaitingState) Borrow(ctx *BorrowStateContext) error {
-	// Implement logic for check if this Borrow is head of borrow queue then change state to BorrowState
-	return nil
-}
-
-func (b *WaitingState) Cancel(ctx *BorrowStateContext) error {
-	ctx.state = &CanceledState{}
-	err := ctx.borrowRepo.EditBorrowLog(ctx.ctx, ctx.borrowLog)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to update borrow log")
-		return err
-	}
-	return nil
-}
-
-// ----------------------------------------------------------------------------------------------------
-// CancelState
-
-func (b *CanceledState) Return(ctx *BorrowStateContext) error {
-	fmt.Println("this borrow log already cancel can't return")
-	return nil
-}
-
-func (b *CanceledState) Borrow(ctx *BorrowStateContext) error {
-	fmt.Println("this borrow log already cancel can't borrow")
-	return nil
-}
-
-func (b *CanceledState) Cancel(ctx *BorrowStateContext) error {
-	fmt.Println("this borrow log already cancel can't return")
 	return nil
 }

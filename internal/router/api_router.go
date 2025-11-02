@@ -141,5 +141,7 @@ func (r *Router) RegisterRequestRouter() {
 func (r *Router) registerBorrowQueueRouter(route *echo.Group) {
 	bq := route.Group("/bq")
 	bq.POST("/enqueue", r.handlers.BorrowQueue.Enqueue)
-	bq.GET("/front", r.handlers.BorrowQueue.GetFrontQueue)
+	bq.GET("/myqueue/:itemID", r.handlers.BorrowQueue.MyQueue)
+	bq.GET("/front/:item_id", r.handlers.BorrowQueue.GetFrontQueue)
+	bq.PATCH("/:queueID", r.handlers.BorrowQueue.CancelMyQueue)
 }
