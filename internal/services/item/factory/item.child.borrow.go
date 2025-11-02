@@ -73,6 +73,9 @@ func (i *ItemChildBorrowable) BorrowItem(ctx context.Context, userID uuid.UUID, 
 		return exceptions.ErrItemQuantityInSufficient
 	}
 
+	if item.ItemCurrentQuantity-1 == 0 {
+		item.ItemStatus = enums.ItemStatusOutOfStock
+	}
 	item.ItemCurrentQuantity -= 1
 	borrowLogs, err := i.borrowChildItems(userID, parentBorrowLog.BorrowID, itemResp)
 	if err != nil {
@@ -111,6 +114,10 @@ func (i *ItemChildBorrowable) BorrowItem(ctx context.Context, userID uuid.UUID, 
 	}
 
 	for _, child := range *itemResp.Prerequisites {
+
+		if child.CurrentQuantity-1 == 0 {
+			child.Status = enums.ItemStatusOutOfStock
+		}
 		err = i.itemRepo.UpdateItem(ctx, &models.Item{
 			ItemID:              child.ID,
 			ItemQuantity:        child.Quantity,
@@ -182,6 +189,9 @@ func (i *ItemChildBorrowable) ReturnItem(ctx context.Context, borrowLog *models.
 	// borrowLog.BorrowStatus = enums.StatusReturned
 	// borrowLog.ReturnDate = &now
 	// borrowLog.UpdatedAt = now
+	if item.ItemCurrentQuantity == 0 {
+		item.ItemStatus = enums.ItemStatusAvailable
+	}
 	item.ItemCurrentQuantity += 1
 	item.ItemUpdatedAt = now
 	allItem = append(allItem, allItemStruct{
@@ -200,6 +210,9 @@ func (i *ItemChildBorrowable) ReturnItem(ctx context.Context, borrowLog *models.
 		}
 		childBorrowLog.ReturnImgURL = borrowLog.ReturnImgURL
 		childItem.ItemCurrentQuantity += 1
+		if childItem.ItemCurrentQuantity == 0 {
+			childItem.ItemStatus = enums.ItemStatusAvailable
+		}
 
 		childBorrowLogContext := state.NewStateContext(ctx, childBorrowLog, i.borrowRepo)
 		childBorrowLogContext.GetState().Return(childBorrowLogContext)

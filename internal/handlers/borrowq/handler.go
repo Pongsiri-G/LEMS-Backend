@@ -97,22 +97,23 @@ func (q *qorrowQueueHandler) MyQueue(c echo.Context) error {
 
 // GetFrontQueue implements BorrowQueueHandler.
 func (q *qorrowQueueHandler) GetFrontQueue(c echo.Context) error {
-	itemID := c.Param("item_id")
+    itemID := c.Param("item_id")
 
-	itemUUID, err := uuid.Parse(itemID)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{
-			"message": exceptions.ErrInvalidUUID.Error(),
-		})
-	}
+    itemUUID, err := uuid.Parse(itemID)
+    if err != nil {
+        return c.JSON(http.StatusBadRequest, echo.Map{
+            "message": exceptions.ErrInvalidUUID.Error(),
+        })
+    }
 
-	queue, err := q.bqService.GetFrontQueue(c.Request().Context(), itemUUID)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
-	}
+    queue, err := q.bqService.GetFrontQueue(c.Request().Context(), itemUUID)
+    if err != nil {
+        return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+    }
 
-	return c.JSON(http.StatusOK, queue)
+    return c.JSON(http.StatusOK, queue)
 }
+
 
 // CancelMyQueue implements BorrowQueueHandler.
 func (q *qorrowQueueHandler) CancelMyQueue(c echo.Context) error {

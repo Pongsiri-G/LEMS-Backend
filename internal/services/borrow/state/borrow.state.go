@@ -5,5 +5,4 @@ package state
 type State interface {
 	Return(ctx *BorrowStateContext) error
 	Borrow(ctx *BorrowStateContext) error
-	Cancel(ctx *BorrowStateContext) error
 }

@@ -62,6 +62,10 @@ func (i *ItemBorrowable) BorrowItem(ctx context.Context, userID uuid.UUID, item 
 		return exceptions.ErrItemQuantityInSufficient
 	}
 
+	if item.ItemCurrentQuantity-1 == 0 {
+		item.ItemStatus = enums.ItemStatusOutOfStock
+	}
+
 	item.ItemCurrentQuantity -= 1
 	err := i.itemRepo.UpdateItem(ctx, item)
 	if err != nil {
@@ -108,6 +112,9 @@ func (i *ItemBorrowable) ReturnItem(ctx context.Context, borrowLog *models.Borro
 	// 	return err
 	// }
 
+	if item.ItemCurrentQuantity == 0 {
+		item.ItemStatus = enums.ItemStatusAvailable
+	}
 	item.ItemCurrentQuantity += 1
 	err = i.itemRepo.UpdateItem(ctx, item)
 	if err != nil {
