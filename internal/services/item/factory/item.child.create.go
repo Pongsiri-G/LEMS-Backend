@@ -49,6 +49,10 @@ func (i *ItemFactoryWithChildrenConcrete) CreateItem(ctx context.Context) (*mode
 			return nil, exceptions.ErrItemNotFound
 		}
 
+		if item.ItemStatus == enums.ItemStatusInLabOnly {
+			log.Error().Msgf("child item %s is in-lab only, cannot be used as prerequisite", item.ItemID)
+			return nil, exceptions.ErrChildItemInLabOnly
+		}
 		childrenIDs = append(childrenIDs, item.ItemID)
 	}
 	parentItem := models.Item{

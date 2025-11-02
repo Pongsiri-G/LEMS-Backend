@@ -76,7 +76,7 @@ func (i *ItemBorrowable) BorrowItem(ctx context.Context, userID uuid.UUID, item 
 	// }
 	err := itemContext.GetState().Borrow(itemContext)
 	if err != nil {
-		return  err
+		return err
 	}
 
 	err = i.borrowRepo.CreateBorrowLog(ctx, borrowLog)
@@ -85,11 +85,6 @@ func (i *ItemBorrowable) BorrowItem(ctx context.Context, userID uuid.UUID, item 
 		return err
 	}
 
-	err = i.logRepo.CreateBorrowLog(ctx, userID, borrowLog.ItemID)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to create log system borrow log")
-		return err
-	}
 	return nil
 }
 
@@ -137,12 +132,6 @@ func (i *ItemBorrowable) ReturnItem(ctx context.Context, borrowLog *models.Borro
 	// 	log.Error().Err(err).Msg("failed to update quantity of item")
 	// 	return err
 	// }
-
-	err = i.logRepo.CreateReturnLog(ctx, borrowLog.UserID, borrowLog.ItemID)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to create log system return log")
-		return err
-	}
 
 	return nil
 }

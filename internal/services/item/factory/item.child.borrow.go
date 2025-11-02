@@ -92,11 +92,6 @@ func (i *ItemChildBorrowable) BorrowItem(ctx context.Context, userID uuid.UUID, 
 		return err
 	}
 
-	if err := i.logRepo.CreateBorrowLog(ctx, userID, parentBorrowLog.ItemID); err != nil {
-		log.Error().Err(err).Msg("failed to create log system borrow log")
-		return err
-	}
-
 	for _, borrowLog := range borrowLogs {
 		err = i.borrowRepo.CreateBorrowLog(ctx, borrowLog)
 		if err != nil {
@@ -104,10 +99,6 @@ func (i *ItemChildBorrowable) BorrowItem(ctx context.Context, userID uuid.UUID, 
 			return err
 		}
 
-		if err := i.logRepo.CreateBorrowLog(ctx, userID, borrowLog.ItemID); err != nil {
-			log.Error().Err(err).Msg("failed to create log system borrow log for child item")
-			return err
-		}
 	}
 
 	err = itemContext.GetState().Borrow(itemContext)
@@ -118,36 +109,36 @@ func (i *ItemChildBorrowable) BorrowItem(ctx context.Context, userID uuid.UUID, 
 	}
 
 	for _, child := range *itemResp.Prerequisites {
-		childItemContext := stateItem.NewStateContext(ctx, 
+		childItemContext := stateItem.NewStateContext(ctx,
 			models.Item{
-			ItemID:              child.ID,
-			ItemQuantity:        child.Quantity,
-			ItemName:            child.Name,
-			ItemDescription:     child.Description,
-			ItemPictureURL:      child.PictureURL,
-			ItemStatus:          child.Status,
-			ItemCurrentQuantity: child.CurrentQuantity - 1,
-			ItemCreatedAt:       child.CreatedAt,
-			ItemUpdatedAt:       utils.BangkokNow(),
-		}, i.itemRepo)
+				ItemID:              child.ID,
+				ItemQuantity:        child.Quantity,
+				ItemName:            child.Name,
+				ItemDescription:     child.Description,
+				ItemPictureURL:      child.PictureURL,
+				ItemStatus:          child.Status,
+				ItemCurrentQuantity: child.CurrentQuantity - 1,
+				ItemCreatedAt:       child.CreatedAt,
+				ItemUpdatedAt:       utils.BangkokNow(),
+			}, i.itemRepo)
 
-	// 	if child.CurrentQuantity-1 == 0 {
-	// 		child.Status = enums.ItemStatusOutOfStock
-	// 	}
-	// 	err = i.itemRepo.UpdateItem(ctx, 
-	// 		&models.Item{
-	// 		ItemID:              child.ID,
-	// 		ItemQuantity:        child.Quantity,
-	// 		ItemName:            child.Name,
-	// 		ItemDescription:     child.Description,
-	// 		ItemPictureURL:      child.PictureURL,
-	// 		ItemStatus:          child.Status,
-	// 		ItemCurrentQuantity: child.CurrentQuantity - 1,
-	// 		ItemCreatedAt:       child.CreatedAt,
-	// 		ItemUpdatedAt:       utils.BangkokNow(),
-	// 	},
-	// )
-	err = childItemContext.GetState().Borrow(childItemContext)
+		// 	if child.CurrentQuantity-1 == 0 {
+		// 		child.Status = enums.ItemStatusOutOfStock
+		// 	}
+		// 	err = i.itemRepo.UpdateItem(ctx,
+		// 		&models.Item{
+		// 		ItemID:              child.ID,
+		// 		ItemQuantity:        child.Quantity,
+		// 		ItemName:            child.Name,
+		// 		ItemDescription:     child.Description,
+		// 		ItemPictureURL:      child.PictureURL,
+		// 		ItemStatus:          child.Status,
+		// 		ItemCurrentQuantity: child.CurrentQuantity - 1,
+		// 		ItemCreatedAt:       child.CreatedAt,
+		// 		ItemUpdatedAt:       utils.BangkokNow(),
+		// 	},
+		// )
+		err = childItemContext.GetState().Borrow(childItemContext)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to update quantity of child item")
 			return err
@@ -259,25 +250,20 @@ func (i *ItemChildBorrowable) ReturnItem(ctx context.Context, borrowLog *models.
 		})
 	}
 
-	for _, itemStruct := range allItem {
-		// err = i.borrowRepo.EditBorrowLog(ctx, itemStruct.BorrowLog)
-		// if err != nil {
-		// 	log.Error().Err(err).Msg("failed to update borrow log")
-		// 	return err
-		// }
+	// for _, itemStruct := range allItem {
+	// err = i.borrowRepo.EditBorrowLog(ctx, itemStruct.BorrowLog)
+	// if err != nil {
+	// 	log.Error().Err(err).Msg("failed to update borrow log")
+	// 	return err
+	// }
 
-		// err = i.itemRepo.UpdateItem(ctx, itemStruct.Item)
-		// if err != nil {
-		// 	log.Error().Err(err).Msg("failed to update quantity of item")
-		// 	return err
-		// }
+	// err = i.itemRepo.UpdateItem(ctx, itemStruct.Item)
+	// if err != nil {
+	// 	log.Error().Err(err).Msg("failed to update quantity of item")
+	// 	return err
+	// }
 
-		err = i.logRepo.CreateReturnLog(ctx, itemStruct.BorrowLog.UserID, itemStruct.BorrowLog.ItemID)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to create log system return log")
-			return err
-		}
-	}
+	// }
 
 	return nil
 
