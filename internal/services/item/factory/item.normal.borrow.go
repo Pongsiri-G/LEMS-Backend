@@ -80,12 +80,6 @@ func (i *ItemBorrowable) BorrowItem(ctx context.Context, userID uuid.UUID, item 
 		return err
 	}
 
-	err = i.logRepo.CreateBorrowLog(ctx, userID, borrowLog.ItemID)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to create log system borrow log")
-		return err
-	}
-
 	itemContext := stateItem.NewStateContext(ctx, *item, i.itemRepo)
 	err = itemContext.GetState().Borrow(itemContext)
 	if err != nil {
@@ -139,11 +133,6 @@ func (i *ItemBorrowable) ReturnItem(ctx context.Context, borrowLog *models.Borro
 		return err
 	}
 
-	err = i.logRepo.CreateReturnLog(ctx, borrowLog.UserID, borrowLog.ItemID)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to create log system return log")
-		return err
-	}
 
 	return nil
 }
