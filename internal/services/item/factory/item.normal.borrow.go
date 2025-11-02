@@ -108,6 +108,9 @@ func (i *ItemBorrowable) ReturnItem(ctx context.Context, borrowLog *models.Borro
 	// 	return err
 	// }
 
+	if item.ItemCurrentQuantity == 0 {
+		item.ItemStatus = enums.ItemStatusAvailable
+	}
 	item.ItemCurrentQuantity += 1
 	err = i.itemRepo.UpdateItem(ctx, item)
 	if err != nil {
