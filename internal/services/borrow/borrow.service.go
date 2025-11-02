@@ -199,18 +199,17 @@ func (s *service) noitification(ctx context.Context, itemID uuid.UUID) error {
 		return err
 	}
 
+	// err = s.bqRepo.Dequeue(ctx, next.QueueID)
+	// if err != nil {
+	// 	return err
+	// }
 
-	err = s.bqRepo.Dequeue(ctx, next.QueueID)
-	if err != nil {
-		return err
-	}
-	
 	s.events.Notify(events.Event{
 		Type: events.ItemAvaliable,
 		Payload: map[string]interface{}{
-			"userId":      user.UserID.String(),
-			"message":     fmt.Sprintf("Your requested equipment (%s) is ready for pickup", item.ItemName),
-			"email": 	   user.UserEmail,
+			"userId":  user.UserID.String(),
+			"message": fmt.Sprintf("Your requested equipment (%s) is ready for pickup", item.ItemName),
+			"email":   user.UserEmail,
 		},
 	})
 
