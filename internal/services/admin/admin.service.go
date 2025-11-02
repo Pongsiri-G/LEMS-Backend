@@ -15,8 +15,7 @@ import (
 type AdminService interface {
 	// --- Query --
 	GetUser(ctx context.Context, userID string) (*models.User, error)
-	GetUsers(ctx context.Context, filter user.UserFilter) ([]models.User, error)
-	GetAllUsers(ctx context.Context) ([]models.User, error)
+	GetUsers(ctx context.Context, filter user.UserFilter) ([]models.User, error) // Get User by filter
 
 	// --- Command ---
 	Accept(ctx context.Context, adminID, userID string) error

@@ -14,7 +14,6 @@ import (
 
 type AdminHandler interface {
 	GetUsers(c echo.Context) (err error)
-	GetAllUsers(c echo.Context) error
 	Accept(c echo.Context) error
 	Reject(c echo.Context) error
 	Activate(c echo.Context) error
@@ -94,13 +93,6 @@ func (h handler) GetUsers(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, users)
 }
 
-func (h handler) GetAllUsers(c echo.Context) error {
-	users, err := h.adminSvc.GetAllUsers(c.Request().Context())
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
-	}
-	return c.JSON(http.StatusOK, users)
-}
 
 func (h handler) Accept(c echo.Context) error {
 	authUser, err := contextutil.GetUserFromContext(c)
