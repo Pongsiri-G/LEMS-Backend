@@ -23,10 +23,6 @@ func NewStateContext(ctx context.Context, borrowLog models.BorrowLog, borrowRepo
 		s = &BorrowedState{}
 	case enums.StatusReturned:
 		s = &ReturnedState{}
-	case enums.StatusCanceled:
-		s = &CanceledState{}
-	case enums.StatusWaiting:
-		s = &WaitingState{}
 	default:
 		s = &BorrowedState{}
 	}
