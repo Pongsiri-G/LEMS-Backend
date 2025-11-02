@@ -110,10 +110,12 @@ func (s *service) Borrow(ctx context.Context, userID string, itemID string) erro
 		return err
 	}
 
-	err = s.bqRepo.Dequeue(ctx, front.QueueID)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to dequeue borrow queue")
-		return err
+	if front != nil {
+		err = s.bqRepo.Dequeue(ctx, front.QueueID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to dequeue borrow queue")
+			return err
+		}
 	}
 
 	return nil
