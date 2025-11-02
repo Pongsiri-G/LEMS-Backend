@@ -97,7 +97,7 @@ func InitializeAPI() (*server.EchoServer, error) {
 	logService := log2.NewLogService(logRepository, repository)
 	logHandler := log3.NewLogHandler(logService)
 	transactionManager := database.NewTransactionManager(db)
-	borrowQueueService := borrowq2.NewBorrowQueueService(config, borrowQueueRepository, transactionManager, borrowlogRepository)
+	borrowQueueService := borrowq2.NewBorrowQueueService(config, borrowQueueRepository, transactionManager, borrowlogRepository, itemRepository)
 	borrowQueueHandler := borrowq3.NewBorrowQueueHandler(borrowQueueService)
 	wsHandler := ws2.NewWsHandler(hub, subject)
 	handlersHandlers := handlers.NewHandlers(adminHandler, authHandler, fileHandler, borrowHandler, userHandler, itemHandler, tagHandler, requestHandler, logHandler, borrowQueueHandler, wsHandler)

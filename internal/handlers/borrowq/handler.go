@@ -3,14 +3,17 @@ package borrowq
 import (
 	"net/http"
 
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/requests"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/borrowq"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/utils/contextutil"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
 type BorrowQueueHandler interface {
 	Enqueue(c echo.Context) error
+	GetFrontQueue(c echo.Context) error
 }
 
 type qorrowQueueHandler struct {
@@ -26,7 +29,7 @@ func NewBorrowQueueHandler(bqService borrowq.BorrowQueueService) BorrowQueueHand
 // Enqueue implements BorrowQueueHandler.
 func (q *qorrowQueueHandler) Enqueue(c echo.Context) error {
 	authUser, err := contextutil.GetUserFromContext(c)
-	
+
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
@@ -47,7 +50,24 @@ func (q *qorrowQueueHandler) Enqueue(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
 
-	return  c.JSON(http.StatusOK, map[string]string{"message": "enqueue successfully"})
+	return c.JSON(http.StatusOK, map[string]string{"message": "enqueue successfully"})
 }
 
+// GetFrontQueue implements BorrowQueueHandler.
+func (q *qorrowQueueHandler) GetFrontQueue(c echo.Context) error {
+	itemID := c.Param("item_id")
 
+	itemUUID, err := uuid.Parse(itemID)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": exceptions.ErrInvalidUUID.Error(),
+		})
+	}
+
+	queue, err := q.bqService.GetFrontQueue(c.Request().Context(), itemUUID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, queue)
+}

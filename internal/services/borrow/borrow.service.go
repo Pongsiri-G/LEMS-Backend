@@ -192,14 +192,14 @@ func (s *service) noitification(ctx context.Context, itemID uuid.UUID) error {
 	s.events.Notify(events.Event{
 		Type: events.ItemAvaliable,
 		Payload: map[string]interface{}{
-			"userId":      next.UserID.String(),
-			"message":     fmt.Sprintf("Your requested equipment (%s) is ready for pickup", item.ItemName),
+			"userId":  next.UserID.String(),
+			"message": fmt.Sprintf("Your requested equipment (%s) is ready for pickup", item.ItemName),
 		},
-	
-	})	
+	})
 
 	return nil
 }
+
 // GetUsersBorrowedItems implements Service.
 func (s *service) GetUsersBorrowedItems(ctx context.Context, userID string) ([]responses.UserBorrrowResponse, error) {
 	userIDUUID, err := uuid.Parse(userID)
