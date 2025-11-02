@@ -64,7 +64,7 @@ func (r *repository) GetRequests(ctx context.Context, requestType *enums.Request
 		database = database.Where("request_status = ?", *requestStatus)
 	}
 
-	if err := database.Find(&requests).Error; err != nil {
+	if err := database.Find(&requests).Order("updated_at desc").Error; err != nil {
 		log.Error().Err(err).Msg("failed to get requests by type")
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func (r *repository) GetRequestsByUserID(ctx context.Context, userID uuid.UUID, 
 		database = database.Where("request_status = ?", *requestStatus)
 	}
 
-	if err := database.Find(&requests).Error; err != nil {
+	if err := database.Find(&requests).Order("updated_at desc").Error; err != nil {
 		log.Error().Err(err).Msg("failed to get requests by user ID")
 		return nil, err
 	}
