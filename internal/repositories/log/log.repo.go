@@ -70,7 +70,7 @@ func (r *RepositoryImpl) CreateAdminActionLog(ctx context.Context, adminID uuid.
 
 func (r *RepositoryImpl) List(ctx context.Context) ([]models.Log, error) {
 	var logs []models.Log
-	q := r.db.WithContext(ctx).Find(&logs)
+	q := r.db.WithContext(ctx).Order("created_at DESC").Find(&logs)
 	if q.Error != nil {
 		return nil, q.Error
 	}
