@@ -14,6 +14,8 @@ import (
 type BorrowQueueRepository interface {
 	Enqueue(ctx context.Context, q *models.BorrowQueue) error
 	PeekOldest(ctx context.Context, itemID string) (*models.BorrowQueue, error)
+	PopFront(ctx context.Context, itemID string) (*models.BorrowQueue, error)
+	GetFront(ctx context.Context, itemID string) (*models.BorrowQueue, error)
 	Dequeue(ctx context.Context, queueID uuid.UUID) error
 	Count(ctx context.Context, itemID string) (int, error)
 	GetOneByUserAndItem(ctx context.Context, itemID, userID string) (*models.BorrowQueue, error)
@@ -96,6 +98,43 @@ func (b *borrowQueueRepository) PeekOldest(ctx context.Context, itemID string) (
 		default:
 			return nil, res.Error
 		}
+	}
+
+	return queue, nil
+}
+
+// PopFront implements BorrowQueueRepository.
+func (b *borrowQueueRepository) PopFront(ctx context.Context, itemID string) (*models.BorrowQueue, error) {
+	queue, err := b.GetFront(ctx, itemID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to pop front borrow queue")
+		return nil, err
+	}
+
+	err = b.Dequeue(ctx, queue.QueueID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to dequeue borrow queue")
+		return nil, err
+	}
+
+	return queue, nil
+}
+
+// GetFront implements BorrowQueueRepository.
+func (b *borrowQueueRepository) GetFront(ctx context.Context, itemID string) (*models.BorrowQueue, error) {
+	var queue *models.BorrowQueue
+	res := b.db.WithContext(ctx).Table("borrow_queues AS bq").
+		Select("bq.*").
+		Joins("JOIN items i ON i.item_id = bq.item_id").
+		Where("i.item_id = (?) AND bq.is_borrow = (?)", itemID, false).
+		Order("bq.created_at ASC").
+		Limit(1).
+		Scan(&queue)
+
+	if res.Error != nil {
+		log.Error().Err(res.Error).Msg("failed to get borrow queue")
+
+		return nil, res.Error
 	}
 
 	return queue, nil

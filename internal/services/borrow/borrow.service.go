@@ -212,7 +212,7 @@ func (s *service) noitification(ctx context.Context, itemID uuid.UUID) error {
 			"message":     fmt.Sprintf("Your requested equipment (%s) is ready for pickup", item.ItemName),
 			"email": 	   user.UserEmail,
 		},
-	})	
+	})
 
 	return nil
 }
