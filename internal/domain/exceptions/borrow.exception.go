@@ -8,4 +8,5 @@ var (
 	ErrBorrowLogNotFound             = errors.New("borrow log not found")
 	ErrCannotReturnChildItemDirectly = errors.New("cannot return child item directly")
 	ErrUserAlreadyBorrowq            = errors.New("user has already enqueued.")
+	ErrNotYourTurnInQueue            = errors.New("it's not your turn in the borrow queue")
 )

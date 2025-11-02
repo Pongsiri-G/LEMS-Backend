@@ -198,6 +198,8 @@ func (i *ItemChildBorrowable) ReturnItem(ctx context.Context, borrowLog *models.
 			log.Error().Err(err).Msg("item not found")
 			return exceptions.ErrItemNotFound
 		}
+		childBorrowLog.ReturnImgURL = borrowLog.ReturnImgURL
+		childItem.ItemCurrentQuantity += 1
 
 		childBorrowLogContext := state.NewStateContext(ctx, childBorrowLog, i.borrowRepo)
 		childBorrowLogContext.GetState().Return(childBorrowLogContext)
@@ -205,8 +207,6 @@ func (i *ItemChildBorrowable) ReturnItem(ctx context.Context, borrowLog *models.
 		// childBorrowLog.BorrowStatus = enums.StatusReturned
 		// childBorrowLog.ReturnDate = &now
 		// childBorrowLog.UpdatedAt = now
-		childBorrowLog.ReturnImgURL = borrowLog.ReturnImgURL
-		childItem.ItemCurrentQuantity += 1
 		childItem.ItemUpdatedAt = now
 		allItem = append(allItem, allItemStruct{
 			Item:      childItem,

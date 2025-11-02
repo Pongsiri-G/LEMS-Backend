@@ -60,6 +60,15 @@ func NewBorrowService(
 }
 
 func (s *service) Borrow(ctx context.Context, userID string, itemID string) error {
+	front, err := s.bqRepo.PeekOldest(ctx, itemID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get front of borrow queue")
+		return err
+	}
+
+	if front != nil && front.UserID.String() != userID {
+		return exceptions.ErrNotYourTurnInQueue
+	}
 	var borrowFactory factory.Borrowable
 
 	userIDUUID, err := uuid.Parse(userID)
@@ -95,8 +104,21 @@ func (s *service) Borrow(ctx context.Context, userID string, itemID string) erro
 		borrowFactory = factory.NewNormalItemBorrowable(s.itemRepo, s.borrowRepo, s.logRepo)
 	}
 
-	return borrowFactory.BorrowItem(ctx, userIDUUID, item, &children)
+	err = borrowFactory.BorrowItem(ctx, userIDUUID, item, &children)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to borrow item")
+		return err
+	}
 
+	if front != nil {
+		err = s.bqRepo.Dequeue(ctx, front.QueueID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to dequeue borrow queue")
+			return err
+		}
+	}
+
+	return nil
 }
 
 // Return implements Service.
@@ -145,6 +167,7 @@ func (s *service) Return(ctx context.Context, userID string, req *requests.Retur
 
 	err = itemBorrowableFactory.ReturnItem(ctx, borrow, &children)
 	if err != nil {
+		log.Error().Err(err).Msg("failed to send notification")
 		return err
 	}
 
@@ -189,10 +212,12 @@ func (s *service) noitification(ctx context.Context, itemID uuid.UUID) error {
 			"message":     fmt.Sprintf("Your requested equipment (%s) is ready for pickup", item.ItemName),
 			"email": 	   user.UserEmail,
 		},
+	
 	})	
 
 	return nil
 }
+
 // GetUsersBorrowedItems implements Service.
 func (s *service) GetUsersBorrowedItems(ctx context.Context, userID string) ([]responses.UserBorrrowResponse, error) {
 	userIDUUID, err := uuid.Parse(userID)
