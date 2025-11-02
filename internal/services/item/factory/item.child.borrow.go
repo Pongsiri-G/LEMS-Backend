@@ -69,12 +69,12 @@ func (i *ItemChildBorrowable) BorrowItem(ctx context.Context, userID uuid.UUID, 
 		UpdatedAt:    utils.BangkokNow(),
 	}
 
-	itemContext := stateItem.NewStateContext(ctx, *item, i.itemRepo)
 
-	// if item.ItemCurrentQuantity-1 < 0 {
-	// 	log.Error().Err(exceptions.ErrItemQuantityInSufficient).Msg("quantity of the item less than zero")
-	// 	return exceptions.ErrItemQuantityInSufficient
-	// }
+	if item.ItemCurrentQuantity-1 < 0 {
+		log.Error().Err(exceptions.ErrItemQuantityInSufficient).Msg("quantity of the item less than zero")
+		return exceptions.ErrItemQuantityInSufficient
+	}
+	itemContext := stateItem.NewStateContext(ctx, *item, i.itemRepo)
 
 	// if item.ItemCurrentQuantity-1 == 0 {
 	// 	item.ItemStatus = enums.ItemStatusOutOfStock
@@ -131,9 +131,9 @@ func (i *ItemChildBorrowable) BorrowItem(ctx context.Context, userID uuid.UUID, 
 			ItemUpdatedAt:       utils.BangkokNow(),
 		}, i.itemRepo)
 
-	// 	if child.CurrentQuantity-1 == 0 {
-	// 		child.Status = enums.ItemStatusOutOfStock
-	// 	}
+		// if child.CurrentQuantity-1 == 0 {
+		// 	child.Status = enums.ItemStatusOutOfStock
+		// }
 	// 	err = i.itemRepo.UpdateItem(ctx, 
 	// 		&models.Item{
 	// 		ItemID:              child.ID,
@@ -191,7 +191,6 @@ type allItemStruct struct {
 // ReturnItem implements Borrowable.
 func (i *ItemChildBorrowable) ReturnItem(ctx context.Context, borrowLog *models.BorrowLog, children *[]models.BorrowLog) error {
 	log.Info().Msg("Returning child item")
-	borrowLogContext := stateBorrowLog.NewStateContext(ctx, *borrowLog, i.borrowRepo)
 	// now := utils.BangkokNow()
 	var allItem []allItemStruct
 	item, err := i.itemRepo.GetItemByID(ctx, borrowLog.ItemID)
@@ -203,16 +202,11 @@ func (i *ItemChildBorrowable) ReturnItem(ctx context.Context, borrowLog *models.
 		return exceptions.ErrItemNotFound
 	}
 
-	borrowLogContext.GetState().Return(borrowLogContext)
 	// ---------------------------OLD CODE---------------------------
 	// borrowLog.BorrowStatus = enums.StatusReturned
 	// borrowLog.ReturnDate = &now
 	// borrowLog.UpdatedAt = now
-	itemContext := stateItem.NewStateContext(ctx, *item, i.itemRepo)
-	err = itemContext.GetState().Return(itemContext)
-	if err != nil {
-		return err
-	}
+
 	// if item.ItemCurrentQuantity == 0 {
 	// 	item.ItemStatus = enums.ItemStatusAvailable
 	// }
@@ -260,12 +254,23 @@ func (i *ItemChildBorrowable) ReturnItem(ctx context.Context, borrowLog *models.
 	}
 
 	for _, itemStruct := range allItem {
+		borrowLogContext := stateBorrowLog.NewStateContext(ctx, *itemStruct.BorrowLog, i.borrowRepo)
+		err = borrowLogContext.GetState().Return(borrowLogContext)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to update borrow log")
+			return err
+		}
 		// err = i.borrowRepo.EditBorrowLog(ctx, itemStruct.BorrowLog)
 		// if err != nil {
 		// 	log.Error().Err(err).Msg("failed to update borrow log")
 		// 	return err
 		// }
 
+		itemContext := stateItem.NewStateContext(ctx, *itemStruct.Item, i.itemRepo)
+		err = itemContext.GetState().Return(itemContext)
+		if err != nil {
+			return err
+		}
 		// err = i.itemRepo.UpdateItem(ctx, itemStruct.Item)
 		// if err != nil {
 		// 	log.Error().Err(err).Msg("failed to update quantity of item")
