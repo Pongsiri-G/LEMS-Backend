@@ -24,15 +24,25 @@ var ErrInvalidCredentials = errors.New("invalid email or password")
 func (s *LocalStrategy) Authenticate(ctx context.Context, req *AuthenticateRequest) (*models.User, error) {
 	u, err := s.users.FindByEmail(ctx, req.Email)
 
-	if u.UserStatus != enums.Active {
-		return nil, exceptions.ErrInactiveUser
-	}
-
 	if err != nil {
 		return nil, ErrInvalidCredentials
 	}
+
 	if bcrypt.CompareHashAndPassword([]byte(u.UserPassword), []byte(req.Password)) != nil {
 		return nil, ErrInvalidCredentials
 	}
-	return u, nil
+
+	// Check user status after password validation
+	switch u.UserStatus {
+	case enums.Pending:
+		return nil, exceptions.ErrUserPending
+	case enums.Deactivated:
+		return nil, exceptions.ErrUserDeactivated
+	case enums.Rejected:
+		return nil, exceptions.ErrUserRejected
+	case enums.Active:
+		return u, nil
+	default:
+		return nil, exceptions.ErrInactiveUser
+	}
 }

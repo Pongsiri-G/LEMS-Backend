@@ -16,6 +16,7 @@ type Config struct {
 	Google       GoogleConfig `envPrefix:"GOOGLE_"`
 	PG           PGConfig     `envPrefix:"PG_"`
 	MINIO        MINIOConfig  `envPrefix:"MINIO_"`
+	Email        Email
 }
 
 type DBConfig struct {

@@ -14,12 +14,14 @@ type User struct {
 	UserPhone      string             `gorm:"type:varchar(10)" json:"user_phone"`
 	UserPassword   string             `gorm:"type:varchar(100);not null" json:"-"` // hidden in JSON
 	UserRole       enums.UserRole     `gorm:"type:varchar(10);not null;default:'USER'" json:"user_role"`
-	UserStatus     enums.UserStatus   `gorm:"type:varchar(10);not null;default:'ACTIVE'" json:"user_status"`
+	UserStatus     enums.UserStatus   `gorm:"type:varchar(10);not null;default:'PENDING'" json:"user_status"`
 	UserProfileURL string             `gorm:"type:text" json:"user_profile_url"`
 	AuthProvider   enums.AuthProvider `gorm:"type:varchar(50);not null;default:'LOCAL'" json:"auth_provider"`
 	CreatedAt      time.Time          `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt      time.Time          `gorm:"autoUpdateTime" json:"updated_at"`
 	LastLoggedIn   *time.Time         `json:"last_logged_in"`
+
+	BorrowQueues []BorrowQueue `gorm:"foreignKey:UserID"`
 }
 
 func (User) TableName() string { return "users" }

@@ -40,3 +40,8 @@ type ChangeRequestStatus struct {
 type CancelRequest struct {
 	RequestID string `json:"request_id" validate:"required"`
 }
+
+type ExportRequests struct {
+	Requests   []string         `json:"requests" validate:"required"`
+	ExportType enums.ExportType `json:"export_type" validate:"required"`
+}

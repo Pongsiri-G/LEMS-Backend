@@ -21,6 +21,10 @@ type ItemHandler interface {
 	GetChildItemByParentID(c echo.Context) error
 	SearchItems(c echo.Context) error
 	DeleteItem(c echo.Context) error
+
+	AssignItemSet(c echo.Context) error
+	RemoveItemSet(c echo.Context) error
+	EditItem(c echo.Context) error
 }
 
 type handler struct {
@@ -82,6 +86,10 @@ func (h *handler) CreateItem(c echo.Context) error {
 			})
 		case exceptions.ErrItemNotFound:
 			return c.JSON(http.StatusNotFound, nil)
+		case exceptions.ErrChildItemInLabOnly:
+			return c.JSON(http.StatusBadRequest, echo.Map{
+				"message": "child item is in-lab only and cannot be used as prerequisite",
+			})
 		default:
 			log.Error().Err(err).Msg(exceptions.ErrInternalServer.Error())
 			return c.JSON(http.StatusInternalServerError, echo.Map{
@@ -165,6 +173,95 @@ func (h *handler) SearchItems(c echo.Context) error {
 func (h *handler) DeleteItem(c echo.Context) error {
 	itemID := c.Param("item-id")
 	err := h.service.DeleteItem(c.Request().Context(), itemID)
+	if err != nil {
+		switch err {
+		case exceptions.ErrInvalidUUID:
+			return c.JSON(http.StatusBadRequest, echo.Map{
+				"message": "invalid uuid format",
+			})
+		case exceptions.ErrItemNotFound:
+			return c.JSON(http.StatusNotFound, nil)
+		default:
+			log.Error().Err(err).Msg(exceptions.ErrInternalServer.Error())
+			return c.JSON(http.StatusInternalServerError, echo.Map{
+				"message": exceptions.ErrInternalServer.Error(),
+			})
+		}
+	}
+	return c.JSON(http.StatusOK, nil)
+}
+
+// AssignItemSet implements ItemHandler.
+func (h *handler) AssignItemSet(c echo.Context) error {
+	parentID := c.Param("parent_id")
+	childID := c.Param("child_id")
+
+	err := h.service.AssignChild(c.Request().Context(), parentID, childID)
+	if err != nil {
+		switch err {
+		case exceptions.ErrInvalidUUID:
+			return c.JSON(http.StatusBadRequest, echo.Map{
+				"message": "invalid uuid format",
+			})
+		case exceptions.ErrItemNotFound:
+			return c.JSON(http.StatusNotFound, nil)
+		case exceptions.ErrItemSetAlreadyExists:
+			return c.JSON(http.StatusConflict, echo.Map{
+				"message": "item set already exists",
+			})
+		case exceptions.ErrChildItemInLabOnly:
+			return c.JSON(http.StatusBadRequest, echo.Map{
+				"message": "child item is in-lab only and cannot be used as prerequisite",
+			})
+		default:
+			log.Error().Err(err).Msg(exceptions.ErrInternalServer.Error())
+			return c.JSON(http.StatusInternalServerError, echo.Map{
+				"message": exceptions.ErrInternalServer.Error(),
+			})
+		}
+	}
+	return c.JSON(http.StatusCreated, nil)
+}
+
+// EditItem implements ItemHandler.
+func (h *handler) EditItem(c echo.Context) error {
+	var req requests.EditItemRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "invalid request body",
+		})
+	}
+	err := h.service.UpdateItem(c.Request().Context(), &req)
+	if err != nil {
+		switch err {
+		case exceptions.ErrInvalidUUID:
+			return c.JSON(http.StatusBadRequest, echo.Map{
+				"message": "invalid uuid format",
+			})
+		case exceptions.ErrItemNotFound:
+			return c.JSON(http.StatusNotFound, nil)
+		case exceptions.ErrCannotReduceQuantity:
+			return c.JSON(http.StatusBadRequest, echo.Map{
+				"message": "cannot reduce quantity below zero",
+			})
+		default:
+			log.Error().Err(err).Msg(exceptions.ErrInternalServer.Error())
+			return c.JSON(http.StatusInternalServerError, echo.Map{
+				"message": exceptions.ErrInternalServer.Error(),
+			})
+		}
+	}
+	return c.JSON(http.StatusOK, echo.Map{
+		"message": "item edited successfully",
+	})
+}
+
+// RemoveItemSet implements ItemHandler.
+func (h *handler) RemoveItemSet(c echo.Context) error {
+	parentID := c.Param("parent_id")
+	childID := c.Param("child_id")
+
+	err := h.service.RemoveChild(c.Request().Context(), parentID, childID)
 	if err != nil {
 		switch err {
 		case exceptions.ErrInvalidUUID:

@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/requests"
@@ -20,12 +21,17 @@ import (
 
 type Service interface {
 	CreateItem(ctx context.Context, req *requests.CreateItemRequest) error
+	UpdateItem(ctx context.Context, req *requests.EditItemRequest) error
+
 	GetBorrowItem(ctx context.Context, itemID string) (*responses.ItemResponse, error)
 	GetAll(ctx context.Context) ([]responses.ItemResponse, error)
 	GetMyBorrow(ctx context.Context, userID string) ([]responses.ItemResponseBorrow, error)
 	GetChildItemByParentID(ctx context.Context, itemID string) ([]responses.ItemResponse, error)
 	SearchItems(ctx context.Context, strategies ItemRepo.SearchStrategyMap) ([]responses.ItemResponse, error)
 	DeleteItem(ctx context.Context, itemID string) error
+
+	AssignChild(ctx context.Context, parentID, childID string) error
+	RemoveChild(ctx context.Context, parentID, childID string) error
 }
 
 type itemService struct {
@@ -262,6 +268,145 @@ func (i *itemService) DeleteItem(ctx context.Context, itemID string) error {
 	err = i.itemRepo.DeleteItem(ctx, itemUUID)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to delete item")
+		return err
+	}
+
+	return nil
+}
+
+// AssignChild implements Service.
+func (i *itemService) AssignChild(ctx context.Context, parentID string, childID string) error {
+	parentUUID, err := uuid.Parse(parentID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to parse parent ID")
+		return exceptions.ErrInvalidUUID
+	}
+
+	childUUID, err := uuid.Parse(childID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to parse child ID")
+		return exceptions.ErrInvalidUUID
+	}
+
+	parentItem, err := i.itemRepo.GetItemByID(ctx, parentUUID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get parent item by ID")
+		return err
+	}
+
+	childItem, err := i.itemRepo.GetItemByID(ctx, childUUID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get child item by ID")
+		return err
+	}
+
+	if parentItem == nil || childItem == nil {
+		log.Error().Msg("parent or child item not found")
+		return exceptions.ErrItemNotFound
+	}
+
+	if childItem.ItemStatus == enums.ItemStatusInLabOnly {
+		log.Error().Msgf("child item %s is in-lab only, cannot be assigned as child", childItem.ItemID)
+		return exceptions.ErrChildItemInLabOnly
+	}
+
+	itemSet, err := i.itemSetRepo.FindItemSetByParentAndChildID(ctx, parentUUID, childUUID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to find item set by parent and child ID")
+		return err
+	}
+
+	if itemSet != nil {
+		log.Info().Msg("item set already exists")
+		return exceptions.ErrItemSetAlreadyExists
+	}
+
+	err = i.itemSetRepo.CreateItemSet(ctx, parentUUID, childUUID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to assign child item")
+		return err
+	}
+
+	return nil
+}
+
+// RemoveChild implements Service.
+func (i *itemService) RemoveChild(ctx context.Context, parentID string, childID string) error {
+	parentUUID, err := uuid.Parse(parentID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to parse parent ID")
+		return exceptions.ErrInvalidUUID
+	}
+
+	childUUID, err := uuid.Parse(childID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to parse child ID")
+		return exceptions.ErrInvalidUUID
+	}
+
+	err = i.itemSetRepo.DeleteItemSet(ctx, parentUUID, childUUID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to remove child item")
+		return err
+	}
+
+	return nil
+}
+
+// UpdateItem implements Service.
+func (i *itemService) UpdateItem(ctx context.Context, req *requests.EditItemRequest) error {
+	itemID, err := uuid.Parse(req.ItemID)
+	if err != nil {
+		log.Error().Err(err).Msg("invalid uuid format")
+		return exceptions.ErrInvalidUUID
+	}
+
+	item, err := i.itemRepo.GetItemByID(ctx, itemID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get item by ID")
+		return err
+	}
+
+	if item == nil {
+		log.Error().Msg("item not found for ID: " + req.ItemID)
+		return exceptions.ErrItemNotFound
+	}
+
+	if req.Name != nil {
+		item.ItemName = *req.Name
+	}
+	if req.Description != nil {
+		item.ItemDescription = req.Description
+	}
+	if req.ImageURL != nil {
+		item.ItemPictureURL = req.ImageURL
+	}
+	if req.Quantity != nil {
+		// handle quantity update logic
+		if *req.Quantity > item.ItemQuantity {
+			diff := *req.Quantity - item.ItemQuantity
+			item.ItemQuantity += diff
+			item.ItemCurrentQuantity += diff
+		} else if *req.Quantity != item.ItemQuantity {
+			diff := item.ItemQuantity - *req.Quantity
+
+			if item.ItemCurrentQuantity-diff < 0 {
+				log.Error().Msg("cannot reduce quantity below borrowed amount")
+				return exceptions.ErrCannotReduceQuantity
+			}
+
+			item.ItemQuantity -= diff
+			item.ItemCurrentQuantity -= diff
+		}
+
+	}
+	if req.Status != nil {
+		item.ItemStatus = *req.Status
+	}
+
+	err = i.itemRepo.UpdateItem(ctx, item)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to update item")
 		return err
 	}
 

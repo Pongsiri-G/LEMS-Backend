@@ -6,7 +6,6 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/requests"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/user"
-	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/user/proxy"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/utils/contextutil"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/oauth2"
@@ -19,13 +18,13 @@ type UserHandler interface {
 
 type userHandler struct {
 	oauth     *oauth2.Config
-	userProxy proxy.UserServiceProxy
+	userService user.UserService
 }
 
 func NewUserHandler(userService user.UserService, oauth *oauth2.Config) UserHandler {
 	return &userHandler{
 		oauth:     oauth,
-		userProxy: *proxy.NewUserServiceProxy(&userService),
+		userService: userService, 
 	}
 }
 
@@ -42,7 +41,7 @@ func (h *userHandler) Register(c echo.Context) error {
 	}
 
 	// register พร้อมทั้งอัปเดทไปยังฐานข้อมูลหากลงทะเบียนสำเร็จ
-	_, err := h.userProxy.Register(c.Request().Context(), &requests.RegisterRequest{
+	_, err := h.userService.Register(c.Request().Context(), &requests.RegisterRequest{
 		FullName: body.FullName,
 		Email:    body.Email,
 		Phone:    body.Phone,
@@ -52,10 +51,10 @@ func (h *userHandler) Register(c echo.Context) error {
 		if err == exceptions.ErrEmailAlreadyExists {
 			return c.JSON(http.StatusBadRequest, map[string]string{"error": "email already exists"})
 		}
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": exceptions.ErrInternalServer.Error()})
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
-	// สมัครเสร็จให้ไป login ต่อ
-	return c.JSON(http.StatusCreated, map[string]string{"message": "register success"})
+	// สมัครเสร็จให้ไป login ต่อ พร้อมข้อความแจ้งให้รอการอนุมัติ
+	return c.JSON(http.StatusCreated, map[string]string{"message": exceptions.ErrRegistrationSuccess.Error()})
 }
 
 func (h *userHandler) Me(c echo.Context) error {
@@ -65,7 +64,7 @@ func (h *userHandler) Me(c echo.Context) error {
 		return c.JSON(http.StatusForbidden, map[string]string{"error": err.Error()})
 	}
 
-	res, err := h.userProxy.MyInfo(
+	res, err := h.userService.FindByID(
 		c.Request().Context(),
 		authUser.ID,
 	)

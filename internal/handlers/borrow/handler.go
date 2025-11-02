@@ -60,6 +60,10 @@ func (h *handler) Borrow(c echo.Context) error {
 			})
 		case exceptions.ErrItemNotFound:
 			return c.JSON(http.StatusNotFound, nil)
+		case exceptions.ErrNotYourTurnInQueue:
+			return c.JSON(http.StatusBadRequest, echo.Map{
+				"message": exceptions.ErrNotYourTurnInQueue.Error(),
+			})
 		default:
 			log.Error().Err(err).Msg(exceptions.ErrInternalServer.Error())
 			return c.JSON(http.StatusInternalServerError, echo.Map{

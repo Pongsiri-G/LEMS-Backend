@@ -54,10 +54,10 @@ func (h *authHandler) Login(c echo.Context) error {
 		log.Err(err)
 
 		switch err {
-		case exceptions.ErrInactiveUser:
+		case exceptions.ErrUserPending, exceptions.ErrUserDeactivated, exceptions.ErrUserRejected, exceptions.ErrInactiveUser:
 			return c.JSON(http.StatusForbidden, map[string]string{"error": err.Error()})
 		default:
-			return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})		
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
 		}
 	}
 
@@ -87,11 +87,12 @@ func (h *authHandler) GoogleCallback(c echo.Context) error {
 	if err != nil {
 		log.Err(err).Send()
 
-		if err == exceptions.ErrInactiveUser {
+		switch err {
+		case exceptions.ErrRegistrationSuccess, exceptions.ErrUserPending, exceptions.ErrUserDeactivated, exceptions.ErrUserRejected, exceptions.ErrInactiveUser:
 			return c.Redirect(http.StatusTemporaryRedirect, h.redirectWithMsg(err.Error()))
+		default:
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
 		}
-		
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
 	}
 
 	return c.Redirect(http.StatusTemporaryRedirect, h.redirectWithTokens(res))

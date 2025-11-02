@@ -60,12 +60,7 @@ func (s *GoogleStrategy) Authenticate(ctx context.Context, req *AuthenticateRequ
 		return nil, err
 	}
 
-	// Lookup user in repository
 	user, err := s.users.FindByEmail(ctx, gUser.Email)
-
-	if user.UserStatus != enums.Active {
-		return nil, exceptions.ErrInactiveUser
-	}
 
 	if err != nil {
 		// If not found, create new user
@@ -79,8 +74,20 @@ func (s *GoogleStrategy) Authenticate(ctx context.Context, req *AuthenticateRequ
 		if err := s.users.Create(ctx, newUser); err != nil {
 			return nil, err
 		}
-		return newUser, nil
+		return nil, exceptions.ErrRegistrationSuccess
 	}
 
-	return user, nil
+	// Check user status
+	switch user.UserStatus {
+	case enums.Pending:
+		return nil, exceptions.ErrUserPending
+	case enums.Deactivated:
+		return nil, exceptions.ErrUserDeactivated
+	case enums.Rejected:
+		return nil, exceptions.ErrUserRejected
+	case enums.Active:
+		return user, nil
+	default:
+		return nil, exceptions.ErrInactiveUser
+	}
 }
