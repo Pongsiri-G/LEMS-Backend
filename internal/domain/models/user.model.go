@@ -19,6 +19,7 @@ type User struct {
 	AuthProvider   enums.AuthProvider `gorm:"type:varchar(50);not null;default:'LOCAL'" json:"auth_provider"`
 	CreatedAt      time.Time          `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt      time.Time          `gorm:"autoUpdateTime" json:"updated_at"`
+	DeletedAt      *time.Time         `gorm:"index" json:"deleted_at,omitempty"`
 	LastLoggedIn   *time.Time         `json:"last_logged_in"`
 
 	BorrowQueues []BorrowQueue `gorm:"foreignKey:UserID"`

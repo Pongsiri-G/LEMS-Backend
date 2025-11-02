@@ -86,20 +86,10 @@ func (i *ItemChildBorrowable) BorrowItem(ctx context.Context, userID uuid.UUID, 
 		return err
 	}
 
-	if err := i.logRepo.CreateBorrowLog(ctx, userID, parentBorrowLog.ItemID); err != nil {
-		log.Error().Err(err).Msg("failed to create log system borrow log")
-		return err
-	}
-
 	for _, borrowLog := range borrowLogs {
 		err = i.borrowRepo.CreateBorrowLog(ctx, borrowLog)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to create borrow log for child item")
-			return err
-		}
-
-		if err := i.logRepo.CreateBorrowLog(ctx, userID, borrowLog.ItemID); err != nil {
-			log.Error().Err(err).Msg("failed to create log system borrow log for child item")
 			return err
 		}
 	}
@@ -224,12 +214,6 @@ func (i *ItemChildBorrowable) ReturnItem(ctx context.Context, borrowLog *models.
 		err = i.itemRepo.UpdateItem(ctx, itemStruct.Item)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to update quantity of item")
-			return err
-		}
-
-		err = i.logRepo.CreateReturnLog(ctx, itemStruct.BorrowLog.UserID, itemStruct.BorrowLog.ItemID)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to create log system return log")
 			return err
 		}
 	}
