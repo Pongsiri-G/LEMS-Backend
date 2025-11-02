@@ -65,7 +65,7 @@ func (h *userHandler) Me(c echo.Context) error {
 		return c.JSON(http.StatusForbidden, map[string]string{"error": err.Error()})
 	}
 
-	res, err := h.userProxy.MyInfo(
+	res, err := h.userProxy.FindByID(
 		c.Request().Context(),
 		authUser.ID,
 	)

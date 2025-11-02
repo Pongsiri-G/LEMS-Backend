@@ -5,9 +5,10 @@ import (
 	"net/http"
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/events"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/ws"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/noti"
-	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/utils/contextutil"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/user"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
@@ -20,12 +21,14 @@ type WsHandler interface {
 type wsHandler struct {
 	hub *ws.Hub
 	events     noti.Subject
+	userService user.UserService
 }
 
-func NewWsHandler(hub *ws.Hub, events noti.Subject) WsHandler {
+func NewWsHandler(hub *ws.Hub, events noti.Subject, userService user.UserService) WsHandler {
 	return &wsHandler{
 		hub: hub,
 		events: events,
+		userService: userService,
 	}
 }
 
@@ -40,8 +43,7 @@ func (w *wsHandler) Run(e echo.Context) error {
 
 func (w *wsHandler) SendNoti(e echo.Context) error {
 	var req struct{
-		UserID string
-		ItemID string
+		UserID string	`json:"user_id"`
 	}
 
 	if err := e.Bind(&req); err != nil {
@@ -49,18 +51,21 @@ func (w *wsHandler) SendNoti(e echo.Context) error {
 		return e.JSON(http.StatusBadRequest, nil)
 	}
 
-	user, err := contextutil.GetUserFromContext(e)
+	user, err := w.userService.FindByID(e.Request().Context(), req.UserID)
 	if err != nil {
-		return e.JSON(http.StatusUnauthorized, map[string]string{ "message" : "invalid"})
+		return e.JSON(http.StatusInternalServerError, map[string]string{ "message" : err.Error()})
+	}
+
+	if user == nil {
+		return e.JSON(http.StatusNotFound, map[string]string{ "message" : exceptions.ErrUserNotFound.Error()})
 	}
 
 	w.events.Notify(events.Event{
 		Type: "Demo Notification",
 		Payload: map[string]interface{}{
 			"userId":      req.UserID,
-			"equipmentId": req.ItemID,
 			"message":     fmt.Sprintf("Notify to you (%s)", req.UserID),
-			"email": 	   user.Email,
+			"email": 	   user.UserEmail,
 		},
 
 	})	

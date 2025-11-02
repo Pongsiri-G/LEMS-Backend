@@ -47,7 +47,16 @@ func (q *qorrowQueueHandler) Enqueue(c echo.Context) error {
 	})
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		switch err {
+		case exceptions.ErrUserAlreadyBorrowq:
+			return c.JSON(http.StatusConflict, echo.Map{
+				"message": err.Error(),
+			})
+		default:
+			return c.JSON(http.StatusBadRequest, echo.Map{
+				"message": exceptions.ErrInternalServer.Error(),
+			})
+		}
 	}
 
 	return c.JSON(http.StatusOK, map[string]string{"message": "enqueue successfully"})

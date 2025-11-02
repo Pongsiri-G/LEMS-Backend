@@ -49,6 +49,16 @@ func (b *borrowQueueService) Enqueue(ctx context.Context, request requests.Creat
 		return err
 	}
 
+	// only 1 enqueue per item
+	existing, err := b.bqRepo.GetMemberByUserAndItem(ctx, request.ItemID.String(), request.UserID)
+	if err != nil{
+		return err
+	}
+
+	if existing != nil {
+		return exceptions.ErrUserAlreadyBorrowq
+	}
+
 	return b.txManager.Do(ctx, func(ctx context.Context) error {
 		b.borrowlog.CreateBorrowLogTx(ctx, models.BorrowLog{
 			BorrowID:     uuid.New(),

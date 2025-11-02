@@ -165,13 +165,13 @@ func (s *service) Return(ctx context.Context, userID string, req *requests.Retur
 		itemBorrowableFactory = factory.NewNormalItemBorrowable(s.itemRepo, s.borrowRepo, s.logRepo)
 	}
 
-	err = s.noitification(ctx, borrow.ItemID)
+	err = itemBorrowableFactory.ReturnItem(ctx, borrow, &children)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to send notification")
 		return err
 	}
 
-	return itemBorrowableFactory.ReturnItem(ctx, borrow, &children)
+	return s.noitification(ctx, borrow.ItemID)
 }
 
 func (s *service) noitification(ctx context.Context, itemID uuid.UUID) error {
@@ -189,36 +189,31 @@ func (s *service) noitification(ctx context.Context, itemID uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-
 	if next == nil {
 		return nil
 	}
 
-	// parsedUUID, err := uuid.Parse(itemID)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// cur, _ := s.itemRepo.GetItemByID(ctx, parsedUUID)
-
-	// mark the borrow request to READY (simple lookup not shown here; typically tie queue ID to borrow ID)
-	// You can add a find-by(user,equipment,WAITING) here in a real repo
-	err = s.bqRepo.Dequeue(ctx, next.QueueID)
+	// existing user
+	user, err := s.userRepo.FindByID(ctx, next.UserID.String())
 	if err != nil {
 		return err
 	}
 
-	// if s.events == nil {
-	// 	continue
-	// }
 
+	err = s.bqRepo.Dequeue(ctx, next.QueueID)
+	if err != nil {
+		return err
+	}
+	
 	s.events.Notify(events.Event{
 		Type: events.ItemAvaliable,
 		Payload: map[string]interface{}{
-			"userId":  next.UserID.String(),
-			"message": fmt.Sprintf("Your requested equipment (%s) is ready for pickup", item.ItemName),
+			"userId":      user.UserID.String(),
+			"message":     fmt.Sprintf("Your requested equipment (%s) is ready for pickup", item.ItemName),
+			"email": 	   user.UserEmail,
 		},
-	})
+	
+	})	
 
 	return nil
 }

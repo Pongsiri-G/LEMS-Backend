@@ -46,7 +46,7 @@ func (r *Router) RegisterAPIRoutes() {
 	auth.GET("/google/callback", r.handlers.Auth.GoogleCallback)
 	auth.POST("/refresh", r.handlers.Auth.RefreshToken)
 
-	protected := v1.Group("/", r.authMiddleware.Middleware)
+	protected := v1.Group("", r.authMiddleware.Middleware)
 
 	// user group
 	user := v1.Group("/user")
@@ -60,7 +60,7 @@ func (r *Router) RegisterAPIRoutes() {
 
 func (r *Router) RegisterAdminRoutes() {
 	v1 := r.echo.Group("/api/v1")
-	protected := v1.Group("", r.authMiddleware.Middleware) // for testing
+	protected := v1.Group("", r.authMiddleware.Middleware) 
 
 	// wrap rbac middleware to match echo.MiddlewareFunc signature
 	admin := protected.Group("/admin", func(next echo.HandlerFunc) echo.HandlerFunc {
@@ -81,11 +81,6 @@ func (r *Router) RegisterAdminRoutes() {
 	protectd.GET("/p", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{"msg": "success"})
 	})
-
-	// user group
-	user := protectd.Group("/user")
-	user.POST("/register", r.handlers.User.Register)
-	user.GET("/me", r.handlers.User.Me)
 }
 
 func (r *Router) RegisterMinioRoutes() {
@@ -143,7 +138,7 @@ func (r *Router) RegisterRequestRouter() {
 }
 
 func (r *Router) registerBorrowQueueRouter(route *echo.Group) {
-	bq := route.Group("bq")
+	bq := route.Group("/bq")
 	bq.POST("/enqueue", r.handlers.BorrowQueue.Enqueue)
 	bq.GET("/front", r.handlers.BorrowQueue.GetFrontQueue)
 }

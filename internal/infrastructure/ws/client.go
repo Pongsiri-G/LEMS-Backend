@@ -33,31 +33,63 @@ func newClient(conn *websocket.Conn, hub *Hub, userID string) *Client {
 
 // ReadPump listens for messages from the client. 
 func (c *Client) ReadPump() error { 
-	defer func() { 
-		c.hub.Unregister(c) 
-		c.conn.Close() 
-	}() 
-	
-	for { 
-		if _, _, err := c.conn.NextReader(); err != nil { 
-			return err 
-		} 
-	} 
+	defer func() {
+		c.hub.Unregister(c)
+		c.conn.Close()
+	}()
+
+	c.conn.SetReadLimit(512)
+	_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
+	c.conn.SetPongHandler(func(string) error {
+		_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
+		return nil
+	})
+
+	for {
+		if _, _, err := c.conn.NextReader(); err != nil {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				log.Print("unexpected websocket close:", err)
+			}
+			return err
+		}
+	}
 } 
 
 // WritePump sends broadcast messages to the client. 
-func (c *Client) WritePump() error { 
-	defer func () { 
-		c.conn.Close() 
-	}() 
-	
-	for msg := range c.send { 
-		if err := c.conn.WriteMessage(websocket.TextMessage, msg); err != nil { 
-			return err 
-		} 
-	} 
-	
-	return nil 
+func (c *Client) WritePump() error {
+	ticker := time.NewTicker(pingPeriod)
+	defer func() {
+		ticker.Stop()
+		_ = c.conn.WriteMessage(websocket.CloseMessage, []byte{}) // close handshake
+		c.conn.Close()
+	}()
+
+	for {
+		select {
+		case msg, ok := <-c.send:
+			_ = c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if !ok {
+				// hub closed the channel
+				_ = c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				return nil
+			}
+
+			w, err := c.conn.NextWriter(websocket.TextMessage)
+			if err != nil {
+				return err
+			}
+			_, _ = w.Write(msg)
+			if err := w.Close(); err != nil {
+				return err
+			}
+
+		case <-ticker.C:
+			_ = c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				return err
+			}
+		}
+	}
 }
 
 func ServeWS(hub *Hub, w http.ResponseWriter, r *http.Request, userID string) error { 
