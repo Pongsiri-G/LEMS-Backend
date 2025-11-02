@@ -8,16 +8,18 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/exceptions"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/requests"
+	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/responses"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories"
 	borrowlog "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrow_log"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/borrowq"
 	ItemRepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/item"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/utils"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 )
 
 type BorrowQueueService interface {
-	GetFrontQueue(ctx context.Context, itemID uuid.UUID) (*models.BorrowQueue, error)
+	GetFrontQueue(ctx context.Context, itemID uuid.UUID) (*responses.BorrowQueueResponse, error)
 	Enqueue(ctx context.Context, request requests.CreateBorrowQueueRequest) error
 }
 
@@ -76,7 +78,7 @@ func (b *borrowQueueService) Enqueue(ctx context.Context, request requests.Creat
 }
 
 // GetFrontQueue implements BorrowQueueService.
-func (b *borrowQueueService) GetFrontQueue(ctx context.Context, itemID uuid.UUID) (*models.BorrowQueue, error) {
+func (b *borrowQueueService) GetFrontQueue(ctx context.Context, itemID uuid.UUID) (*responses.BorrowQueueResponse, error) {
 	item, err := b.itemRepo.GetItemByID(ctx, itemID)
 	if err != nil {
 		return nil, err
@@ -86,5 +88,23 @@ func (b *borrowQueueService) GetFrontQueue(ctx context.Context, itemID uuid.UUID
 		return nil, exceptions.ErrItemNotFound
 	}
 
-	return b.bqRepo.PeekOldest(ctx, itemID.String())
+	queue, err := b.bqRepo.PeekOldest(ctx, itemID.String())
+	if err != nil {
+		log.Error().Err(err).Msg("failed to peek oldest borrow queue")
+		return nil, err
+	}
+
+	if queue == nil {
+		return nil, nil
+	}
+
+	resp := &responses.BorrowQueueResponse{
+		QueueID:    queue.QueueID.String(),
+		UserID:     queue.UserID.String(),
+		ItemID:     queue.ItemID.String(),
+		CreatedAt:  queue.CreatedAt,
+		BorrowedAt: queue.BorrowedAt,
+	}
+
+	return resp, nil
 }
