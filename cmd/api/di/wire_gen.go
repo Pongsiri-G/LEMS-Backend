@@ -102,7 +102,7 @@ func InitializeAPI() (*server.EchoServer, error) {
 	wsHandler := ws2.NewWsHandler(hub, subject, userService)
 	handlersHandlers := handlers.NewHandlers(adminHandler, authHandler, fileHandler, borrowHandler, userHandler, itemHandler, tagHandler, requestHandler, logHandler, borrowQueueHandler, wsHandler)
 	authMiddleware := middlewares.NewAuthMiddleware(config, userService)
-	rbacMiddleware := middlewares.NewRbacMiddleware(config)
+	rbacMiddleware := middlewares.NewRbacMiddleware(config, userService)
 	echoServer := server.NewEchoServer(config, handlersHandlers, authMiddleware, rbacMiddleware, hub)
 	return echoServer, nil
 }

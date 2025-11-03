@@ -60,11 +60,11 @@ func (r *Router) RegisterAPIRoutes() {
 
 func (r *Router) RegisterAdminRoutes() {
 	v1 := r.echo.Group("/api/v1")
-	protected := v1.Group("", r.authMiddleware.Middleware) 
+	protected := v1.Group("", r.authMiddleware.Middleware)
 
 	// wrap rbac middleware to match echo.MiddlewareFunc signature
 	admin := protected.Group("/admin", func(next echo.HandlerFunc) echo.HandlerFunc {
-		return r.rbacMiddleware.Middleware(next, string(enums.Admin))
+		return r.rbacMiddleware.Middleware(next, enums.Admin)
 	})
 
 	admin.GET("/users", r.handlers.Admin.GetUsers)
