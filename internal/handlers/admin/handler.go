@@ -187,6 +187,9 @@ func (h handler) RevokeAdmin(c echo.Context) error {
 	userId := c.Param("user_id")
 	err = h.adminSvc.RevokeAdmin(c.Request().Context(), authUser.ID, userId)
 	if err != nil {
+		if err == user.ErrRevokeUser {
+			return c.JSON(http.StatusBadRequest, echo.Map{"message": err.Error() })	
+		}
 		return c.JSON(http.StatusInternalServerError, echo.Map{"message": exceptions.ErrInternalServer.Error()})
 	}
 	return c.JSON(http.StatusOK, echo.Map{"message": "success"})

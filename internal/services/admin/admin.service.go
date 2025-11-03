@@ -167,12 +167,17 @@ func (a adminService) GrantAdmin(ctx context.Context, adminID, userID string) er
 }
 
 func (a adminService) RevokeAdmin(ctx context.Context, adminID, userID string) error {
+	if adminID == userID {
+		return user.ErrRevokeUser
+	}	
+	
 	u, err := a.users.FindByID(ctx, userID)
 	if err != nil {
 		return err
 	}
 
 	if u.UserRole != enums.Admin {
+		log.Err(user.ErrRevokeUser)
 		return user.ErrRevokeUser
 	}
 	if err := a.users.UpdateRole(ctx, u.UserID, enums.User); err != nil {
