@@ -117,7 +117,7 @@ func (i *ItemChildBorrowable) BorrowItem(ctx context.Context, userID uuid.UUID, 
 				ItemDescription:     child.Description,
 				ItemPictureURL:      child.PictureURL,
 				ItemStatus:          child.Status,
-				ItemCurrentQuantity: child.CurrentQuantity - 1,
+				ItemCurrentQuantity: child.CurrentQuantity,
 				ItemCreatedAt:       child.CreatedAt,
 				ItemUpdatedAt:       utils.BangkokNow(),
 			}, i.itemRepo)

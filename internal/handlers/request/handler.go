@@ -107,8 +107,6 @@ func (h *handler) EditRequest(c echo.Context) error {
 			return c.JSON(400, echo.Map{
 				"message": exceptions.ErrInvalidUUID.Error(),
 			})
-		case exceptions.ErrRequestNotFound:
-			return c.JSON(404, nil)
 		default:
 			return c.JSON(500, echo.Map{
 				"message": exceptions.ErrInternalServer.Error(),
