@@ -397,15 +397,16 @@ func (i *itemService) UpdateItem(ctx context.Context, req *requests.EditItemRequ
 
 			item.ItemQuantity -= diff
 			item.ItemCurrentQuantity -= diff
-
-			if item.ItemQuantity == 0 {
-				item.ItemStatus = enums.ItemStatusUnavailable
-			}
 		}
 
+		
 	}
 	if req.Status != nil {
 		item.ItemStatus = *req.Status
+	}
+	if item.ItemQuantity <= 0 || item.ItemCurrentQuantity <= 0 {
+		item.ItemStatus = enums.ItemStatusUnavailable
+		log.Debug().Msgf("%d %d", item.ItemQuantity, item.ItemCurrentQuantity)
 	}
 
 	err = i.itemRepo.UpdateItem(ctx, item)
