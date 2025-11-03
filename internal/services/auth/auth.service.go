@@ -9,6 +9,7 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/configs"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/responses"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/infrastructure/auth"
+	logrepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/log"
 	userrepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/auth/strategy"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/services/user"
@@ -28,14 +29,16 @@ type authService struct {
 	strategies  map[string]strategy.AuthStrategy
 	users       userrepo.Repository
 	userService user.UserService
+	logRepo     logrepo.Repository
 }
 
-func NewAuthService(strategies map[string]strategy.AuthStrategy, users userrepo.Repository, userService user.UserService, cfg *configs.Config) AuthService {
+func NewAuthService(strategies map[string]strategy.AuthStrategy, users userrepo.Repository, userService user.UserService, logRepo logrepo.Repository, cfg *configs.Config) AuthService {
 	return &authService{
 		strategies:  strategies,
 		users:       users,
 		cfg:         cfg,
 		userService: userService,
+		logRepo:     logRepo,
 	}
 }
 
@@ -44,6 +47,7 @@ func (s *authService) Login(ctx context.Context, key string, req *strategy.Authe
 	if !ok {
 		return nil, errors.New("strategy not found")
 	}
+
 	u, err := strategy.Authenticate(ctx, req)
 	if err != nil {
 		fmt.Println(err)
@@ -59,6 +63,11 @@ func (s *authService) Login(ctx context.Context, key string, req *strategy.Authe
 
 	// Update last login
 	s.users.UpdateLastLogin(ctx, u.UserID)
+
+	// Create successful login log
+	if err := s.logRepo.CreateLoginLog(ctx, u.UserID, "Login successful"); err != nil {
+		log.Error().Err(err).Msg("Failed to create login log")
+	}
 
 	return &responses.AuthResponse{
 		AccessToken:  accessToken,
