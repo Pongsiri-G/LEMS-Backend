@@ -1,5 +1,81 @@
+# Version control
 .git
+.gitignore
+.gitattributes
+
+# IDE and editor files
 .vscode
 .idea
+*.swp
+*.swo
+*~
+
+# Documentation
 *.md
+README*
+LICENSE
+CHANGELOG*
+
+# Docker files
 docker-compose.yml
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+
+# Environment and configuration files (sensitive)
+.env
+.env.*
+*.env
+.envrc
+config.local.*
+*.local
+
+# Secrets and credentials
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.cer
+secrets/
+credentials/
+
+# Build artifacts and binaries
+bin/
+tmp/
+*.exe
+*.dll
+*.so
+*.dylib
+dist/
+build/
+
+# Dependencies (will be downloaded during build)
+vendor/
+node_modules/
+
+# Test files
+*_test.go
+**/*_test.go
+testdata/
+coverage.out
+*.test
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Temporary files
+*.tmp
+*.temp
+.cache/

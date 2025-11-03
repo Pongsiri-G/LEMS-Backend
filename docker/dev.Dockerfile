@@ -1,11 +1,25 @@
 FROM golang:1.25-alpine
-RUN apk add make
-RUN mkdir app
 
-COPY . /app/
+# Create a non-root user and group
+RUN addgroup -g 1000 appuser && \
+    adduser -D -u 1000 -G appuser appuser
+
+RUN apk add make
+
+# Create app directory with proper ownership
+RUN mkdir -p /app && chown -R appuser:appuser /app
+
+# Switch to non-root user before copying files
+USER appuser
+
+COPY --chown=appuser:appuser . /app/
 
 WORKDIR /app
 
+# Install air as non-root user (will install to /home/appuser/go/bin)
 RUN go install github.com/air-verse/air@latest
+
+# Ensure the air binary is in PATH
+ENV PATH="/home/appuser/go/bin:${PATH}"
 
 CMD ["air", "-c", "/app/.air.toml"]
