@@ -40,7 +40,7 @@ func (a *AvailableState) Borrow(ctx *ItemStateContext) error {
 
 	if ctx.item.ItemCurrentQuantity-1 == 0 {
 		ctx.state = &UnavailableState{}
-		ctx.item.ItemStatus = enums.ItemStatusOutOfStock
+		ctx.item.ItemStatus = enums.ItemStatusUnavailable
 	}
 	ctx.item.ItemUpdatedAt = now
 

@@ -10,9 +10,9 @@ import (
 )
 
 type ItemStateContext struct {
-	ctx        context.Context
-	item  *models.Item
-	state      State
+	ctx      context.Context
+	item     *models.Item
+	state    State
 	itemRepo itemRepository.Repository
 }
 
@@ -21,7 +21,7 @@ func NewStateContext(ctx context.Context, item models.Item, itemRepo itemReposit
 	switch item.ItemStatus {
 	case enums.ItemStatusAvailable:
 		s = &AvailableState{}
-	case enums.ItemStatusOutOfStock:
+	case enums.ItemStatusUnavailable:
 		s = &UnavailableState{}
 	case enums.ItemStatusInLabOnly:
 		s = &InLabOnlyState{}
@@ -29,10 +29,10 @@ func NewStateContext(ctx context.Context, item models.Item, itemRepo itemReposit
 		s = &AvailableState{}
 	}
 	return &ItemStateContext{
-		ctx:        ctx,
-		item:  &item,
+		ctx:      ctx,
+		item:     &item,
 		itemRepo: itemRepo,
-		state:      s,
+		state:    s,
 	}
 }
 
