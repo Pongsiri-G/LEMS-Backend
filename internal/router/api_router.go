@@ -67,7 +67,8 @@ func (r *Router) RegisterAdminRoutes() {
 		return r.rbacMiddleware.Middleware(next, string(enums.Admin))
 	})
 
-	admin.GET("/users", r.handlers.Admin.GetAllUsers)
+	admin.GET("/users", r.handlers.Admin.GetUsers)
+	// admin.GET("/users", r.handlers.Admin.GetAllUsers) Used GetUsers instead
 	admin.POST("/user/:user_id/accept", r.handlers.Admin.Accept)
 	admin.POST("/user/:user_id/reject", r.handlers.Admin.Reject)
 	admin.POST("/user/:user_id/activate", r.handlers.Admin.Activate)

@@ -10,7 +10,9 @@ import (
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/models"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/requests"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/responses"
+	logrepo "github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/log"
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/repositories/user"
+	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -21,12 +23,14 @@ type UserService interface {
 
 type userService struct {
 	userRepo user.Repository
+	logRepo  logrepo.Repository
 	cfg      *configs.Config
 }
 
-func NewUserService(userRepo user.Repository, cfg *configs.Config) UserService {
+func NewUserService(userRepo user.Repository, logRepo logrepo.Repository, cfg *configs.Config) UserService {
 	return &userService{
 		userRepo: userRepo,
+		logRepo:  logRepo,
 		cfg:      cfg,
 	}
 }
@@ -55,6 +59,11 @@ func (s *userService) Register(ctx context.Context, r *requests.RegisterRequest)
 
 	if err := s.userRepo.Create(ctx, u); err != nil {
 		return nil, err
+	}
+
+	// Create register log
+	if err := s.logRepo.CreateRegisterLog(ctx, u.UserID); err != nil {
+		log.Error().Err(err).Msg("Failed to create register log")
 	}
 
 	return s.toResponse(u), nil
