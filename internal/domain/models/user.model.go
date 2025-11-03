@@ -5,6 +5,7 @@ import (
 
 	"github.com/471-68-SE-Classroom/p1-final-project-backend-lems-ya/internal/domain/enums"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type User struct {
@@ -19,7 +20,7 @@ type User struct {
 	AuthProvider   enums.AuthProvider `gorm:"type:varchar(50);not null;default:'LOCAL'" json:"auth_provider"`
 	CreatedAt      time.Time          `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt      time.Time          `gorm:"autoUpdateTime" json:"updated_at"`
-	DeletedAt      *time.Time         `gorm:"index" json:"deleted_at,omitempty"`
+	DeletedAt      gorm.DeletedAt     `gorm:"index" json:"deleted_at,omitempty"`
 	LastLoggedIn   *time.Time         `json:"last_logged_in"`
 
 	BorrowQueues []BorrowQueue `gorm:"foreignKey:UserID"`

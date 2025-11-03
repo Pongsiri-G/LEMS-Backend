@@ -148,7 +148,22 @@ func (r *repository) UpdateLastLogin(ctx context.Context, userID uuid.UUID) erro
 }
 
 func (r *repository) SoftDelete(ctx context.Context, userID uuid.UUID) error {
-	res := r.db.WithContext(ctx).Delete(&models.User{}, "user_id = ?", userID)
+	var user models.User
+	if err := r.db.WithContext(ctx).Where("user_id = ?", userID).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return ErrNotFound
+		}
+		return err
+	}
+
+	var res *gorm.DB
+	// Hard delete for PENDING and REJECTED users so they can register again
+	if user.UserStatus == enums.Rejected || user.UserStatus == enums.Pending {
+		res = r.db.WithContext(ctx).Unscoped().Delete(&models.User{}, "user_id = ?", userID)
+	} else {
+		res = r.db.WithContext(ctx).Delete(&models.User{}, "user_id = ?", userID)
+	}
+
 	if res.Error != nil {
 		return res.Error
 	}
