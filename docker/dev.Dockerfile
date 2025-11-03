@@ -13,6 +13,7 @@ RUN mkdir -p /app && chown -R appuser:appuser /app
 USER appuser
 
 COPY --chown=appuser:appuser . /app/
+RUN chmod -R a-w /app
 
 WORKDIR /app
 

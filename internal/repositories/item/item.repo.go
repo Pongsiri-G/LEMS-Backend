@@ -74,7 +74,7 @@ func (r *repository) UpdateItem(ctx context.Context, item *models.Item) error {
 
 func (r *repository) GetItemByID(ctx context.Context, itemID uuid.UUID) (*models.Item, error) {
 	var item models.Item
-	err := r.db.WithContext(ctx).Where("item_id = ?", itemID).First(&item).Error
+	err := r.db.WithContext(ctx).Unscoped().Where("item_id = ?", itemID).First(&item).Error
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {

@@ -1,3 +1,7 @@
+# SonarQube: Sensitive data protection
+# This file explicitly excludes all sensitive files from Docker context
+# Safe to use COPY . because these patterns block credential exposure
+
 # Version control
 .git
 .gitignore
