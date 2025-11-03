@@ -12,7 +12,8 @@ RUN mkdir -p /app && chown -R appuser:appuser /app
 # Switch to non-root user before copying files
 USER appuser
 
-COPY --chown=appuser:appuser --chmod=555 . /app/
+COPY --chown=appuser:appuser . /app/
+RUN chmod -R a-w /app
 
 WORKDIR /app
 
