@@ -66,6 +66,7 @@ func (r *repository) FindByEmail(ctx context.Context, email string) (*models.Use
 func (r *repository) FindByID(ctx context.Context, userID string) (*models.User, error) {
 	var u models.User
 	if err := r.db.WithContext(ctx).
+		Unscoped().
 		Where("user_id = ?", userID).
 		First(&u).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
