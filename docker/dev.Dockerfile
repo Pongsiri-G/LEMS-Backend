@@ -2,7 +2,7 @@ FROM golang:1.25-alpine
 RUN apk add make
 RUN mkdir app
 
-ADD . /app/
+COPY . /app/
 
 WORKDIR /app
 
