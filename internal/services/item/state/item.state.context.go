@@ -23,6 +23,8 @@ func NewStateContext(ctx context.Context, item models.Item, itemRepo itemReposit
 		s = &AvailableState{}
 	case enums.ItemStatusOutOfStock:
 		s = &UnavailableState{}
+	case enums.ItemStatusInLabOnly:
+		s = &InLabOnlyState{}
 	default:
 		s = &AvailableState{}
 	}
