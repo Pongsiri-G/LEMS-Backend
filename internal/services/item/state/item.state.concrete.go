@@ -11,6 +11,7 @@ import (
 
 type AvailableState struct{}
 type UnavailableState struct{}
+type InLabOnlyState struct{}
 
 // ----------------------------------------------------------------------------------------------------
 // AvailableState
@@ -73,5 +74,18 @@ func (b *UnavailableState) Return(ctx *ItemStateContext) error {
 
 func (b *UnavailableState) Borrow(ctx *ItemStateContext) error {
 	fmt.Println("this item currently unavailable state can't borrow")
+	return nil
+}
+
+// ----------------------------------------------------------------------------------------------------
+// InLabOnlyState
+
+func (i *InLabOnlyState) Return(ctx *ItemStateContext) error {
+	fmt.Println("this item currently in-lab only state can't borrow")
+	return nil
+}
+
+func (i *InLabOnlyState) Borrow(ctx *ItemStateContext) error {
+	fmt.Println("this item currently in-lab only state can't return")
 	return nil
 }
