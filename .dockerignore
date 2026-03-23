@@ -23,7 +23,6 @@ CHANGELOG*
 # Docker files
 docker-compose.yml
 docker-compose*.yml
-Dockerfile*
 .dockerignore
 
 # Environment and configuration files (sensitive)

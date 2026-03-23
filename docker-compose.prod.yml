@@ -1,0 +1,30 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: lems-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:8080:8080"
+    networks:
+      - lems-ya-network
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: lems-migrate
+    env_file:
+      - .env
+    command: ["/app/lems-migrate"]
+    networks:
+      - lems-ya-network
+    profiles:
+      - migration
+
+networks:
+  lems-ya-network:
+    driver: bridge
