@@ -9,60 +9,9 @@ services:
     working_dir: /app
     ports:
       - ${PORT}:${PORT}
-    depends_on:
-      - postgres
     networks:
       - lems-ya-network
 
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: ${DATABASE_NAME}
-      POSTGRES_USER: ${DATABASE_USERNAME}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-    ports:
-      - ${DATABASE_PORT}:5432
-    volumes:
-      - lems-ya-db:/var/lib/postgresql/data
-    networks:
-      - lems-ya-network
-
-  minio:
-     image: minio/minio:latest
-     ports:
-       - "${MINIO_CONSOLE_PORT}:9000"
-       - "${MINIO_PORT}:9001"
-     environment:
-       MINIO_ROOT_USER: ${MINIO_USER}
-       MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD}
-       MINIO_DEFAULT_BUCKETS: ${MINIO_BUCKET}
-     command: server --address ":9001" --console-address ":9000" /data
-     networks:
-      - lems-ya-network
-     volumes:
-       - lems-ya-vol-minio:/data
-  pgadmin:
-   image: dpage/pgadmin4
-   restart: always
-   ports:
-     - "8888:80"
-   depends_on:
-     - postgres
-   environment:
-     PGADMIN_DEFAULT_EMAIL: ${PG_EMAIL}
-     PGADMIN_DEFAULT_PASSWORD: ${PG_PASSWORD}
-   volumes:
-     - lems-ya-vol-pgadmin:/var/lib/pgadmin
-   networks:
-      - lems-ya-network
 networks:
   lems-ya-network:
     driver: bridge
-
-volumes:
-  lems-ya-db:
-    driver: local
-  lems-ya-vol-minio:
-    driver: local
-  lems-ya-vol-pgadmin:
-    driver: local
