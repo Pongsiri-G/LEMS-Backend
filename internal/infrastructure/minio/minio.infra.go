@@ -14,6 +14,7 @@ func NewMinioConnection(cfg *configs.Config) (*minio.Client, error) {
 	minioClient, err := minio.New(cfg.MINIO.Endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(cfg.MINIO.User, cfg.MINIO.Password, ""),
 		Secure: cfg.MINIO.UseSSL,
+		Region: cfg.MINIO.Region, // เพิ่ม Region สำหรับ S3
 	})
 	if err != nil {
 		log.Error().Msgf("Error initializing MinIO client: %v", err)

@@ -44,6 +44,7 @@ type MINIOConfig struct {
 	Password string `env:"PASSWORD"`
 	Bucket   string `env:"BUCKET"`
 	UseSSL   bool   `env:"USE_SSL"`
+	Region   string `env:"REGION"` // เพิ่ม Region สำหรับ S3
 }
 
 func NewConfig() *Config {
