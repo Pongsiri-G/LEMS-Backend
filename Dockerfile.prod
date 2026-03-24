@@ -21,6 +21,7 @@ FROM alpine:3.20
 
 WORKDIR /app
 
+RUN apk add --no-cache tzdata
 # Add non-root user
 RUN addgroup -S app && adduser -S app -G app
 
