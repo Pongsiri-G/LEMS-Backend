@@ -46,8 +46,8 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
-          script_stop: true
-          timeout: 30s
+          sync: true
+          timeout: 60s
           command_timeout: 15m
           script: |
             cd ~/apps/LEMS-Backend
