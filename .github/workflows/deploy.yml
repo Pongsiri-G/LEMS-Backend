@@ -13,7 +13,7 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@0ff4204d59e8e51228ff73bce53f80d53301dee2
         with:
           fetch-depth: 0
 
