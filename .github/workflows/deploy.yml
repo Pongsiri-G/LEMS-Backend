@@ -57,7 +57,7 @@ jobs:
       - name: Health Check
         run: |
           for i in {1..5}; do
-            if curl -sf ${{ env.HEALTH_CHECK_URL }}; then
+            if curl -sf "https://api.my-web-dev.website/health"; then
               echo "Deploy successful"
               exit 0
             fi
