@@ -1,0 +1,19 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: lems-api
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "127.0.0.1:8080:8080"
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: lems-cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TOKEN}
+    depends_on:
+      - api
+    network_mode: host

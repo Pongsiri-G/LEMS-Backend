@@ -11,7 +11,7 @@ import (
 
 func NewPostgrest(cfg *configs.Config) *gorm.DB {
 	connection := fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Bangkok",
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=require TimeZone=Asia/Bangkok",
 		cfg.Database.Host,
 		cfg.Database.Username,
 		cfg.Database.Password,

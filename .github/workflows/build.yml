@@ -1,27 +1,32 @@
-name: Build
+name: Build and Test
 
 on:
-  push:
-    branches:
-      - main
-
+  pull_request:
+    branches: [develop]
 
 jobs:
-  build:
-    name: Build and analyze
+  ci:
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 10
+
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      - uses: SonarSource/sonarqube-scan-action@v5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-      # If you wish to fail your job when the Quality Gate is red, uncomment the
-      # following lines. This would typically be used to fail a deployment.
-      # - uses: SonarSource/sonarqube-quality-gate-action@v1
-      #   timeout-minutes: 5
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test ./... -coverprofile=coverage.out
+
+      # ❌ Disabled because using SonarCloud Automatic Analysis (free plan)
+      # - name: SonarCloud
+      #   uses: SonarSource/sonarqube-scan-action@a31c9398be7ace6bbfaf30c0bd5d415f843d45e9
       #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
