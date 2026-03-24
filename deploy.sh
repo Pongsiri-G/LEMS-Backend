@@ -13,11 +13,11 @@ docker compose -f docker-compose.prod.yml build
 
 # Run migration
 echo "🗄️  Running database migration..."
-docker compose -f docker-compose.prod.yml run --rm migrate
+docker compose -f docker-compose.prod.yml run --rm api /app/lems-migrate
 
-# Restart API service
-echo "♻️  Restarting API service..."
-docker compose -f docker-compose.prod.yml up -d api
+# Restart all services
+echo "♻️  Restarting services..."
+docker compose -f docker-compose.prod.yml up -d
 
 # Clean up old images
 echo "🧹 Cleaning up..."
