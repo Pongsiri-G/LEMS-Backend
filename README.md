@@ -9,7 +9,7 @@
 - **Docker Compose** for local development  
 - **JWT-based authentication**  
 
-# 📂 Project Structure
+# 📂 Project Structure 
 
 ```
 ├── cmd/
